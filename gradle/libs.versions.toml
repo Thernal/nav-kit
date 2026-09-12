@@ -1,0 +1,95 @@
+[versions]
+# Language / toolchain
+kotlin = "2.4.10"
+jvm = "17"
+
+# Build tooling
+agp = "9.2.1"
+
+# Android SDK
+android-compile-sdk = "37"
+android-min-sdk = "24"
+
+# Compose Multiplatform
+compose-multiplatform = "1.12.0"
+
+# Navigation 3
+# navigation3-runtime is the multiplatform AndroidX artifact (Google Maven); the UI layer is the
+# JetBrains port of navigation3-ui. They are released in lockstep, hence one version.
+navigation3 = "1.1.1"
+# The JetBrains lifecycle line the Navigation3 ViewModel decorator is published from; it moves
+# independently of navigation3 itself.
+lifecycle = "2.10.0"
+# The predictive-back event layer Navigation3 is built on; `NavigationBackHandler` comes from here.
+navigationevent = "1.1.0"
+
+# KotlinX
+kotlinx-coroutines = "1.11.0"
+kotlinx-collections-immutable = "0.5.0"
+
+# Deep link URI parsing
+ktor = "3.5.0"
+
+# Dependency injection
+metro = "1.4.2"
+
+# Static analysis
+detekt = "2.0.0-alpha.2"
+
+# Testing (JVM-only, for the custom Detekt rules in build-logic)
+junit4 = "4.13.2"
+
+[libraries]
+# Gradle plugins resolved on the build-logic classpath
+android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+compose-gradle-plugin = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose-multiplatform" }
+compose-compiler-gradle-plugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+
+# Kotlin
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+# Compose Multiplatform
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+compose-animation = { module = "org.jetbrains.compose.animation:animation", version.ref = "compose-multiplatform" }
+
+# Navigation 3
+navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
+navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
+lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
+navigationevent-compose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "navigationevent" }
+
+# KotlinX
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
+
+# Deep link URI parsing
+ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
+
+# Dependency injection
+metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
+
+# Static analysis
+detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
+detekt-test = { module = "dev.detekt:detekt-test", version.ref = "detekt" }
+detekt-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+
+[plugins]
+# Third-party
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+
+# Conventions (build-logic)
+navkit-kmp-library = { id = "io.thernal.navkit.kmp.library" }
+navkit-compose = { id = "io.thernal.navkit.compose" }
+navkit-injection = { id = "io.thernal.navkit.injection" }
