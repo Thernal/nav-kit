@@ -1,0 +1,8 @@
+repo=git@github.com:Thernal/knowledge.git
+kind=skill
+skill=agent-rules
+path=skills/agent-rules
+ref=default
+commit=78bd275c88e797d2c2dc813cc0ec8c21cc00547d
+tree=c633bb4ad2218a22a00df60ff598082d5aec003a
+installed_at=2026-09-12T18:40:27Z

@@ -1,0 +1,8 @@
+repo=git@github.com:Thernal/knowledge.git
+kind=skill
+skill=task-workspace
+path=skills/task-workspace
+ref=default
+commit=78bd275c88e797d2c2dc813cc0ec8c21cc00547d
+tree=4e2c8a734c6034cdd605cfcfbb6971ab97eb8a9e
+installed_at=2026-09-12T18:40:36Z
