@@ -13,13 +13,31 @@ import kotlinx.coroutines.flow.update
 class BackDispatcherImpl : BackDispatcher {
     private val callbacks = MutableStateFlow<List<BackCallback>>(emptyList())
 
+    // Back is dispatched from the UI thread, so a plain flag is enough and a lock would only buy
+    // the illusion of more.
+    private var isDispatching = false
+
     override fun register(callback: BackCallback): AutoCloseable {
         callbacks.update { current -> current + callback }
         return AutoCloseable { callbacks.update { current -> current - callback } }
     }
 
+    /**
+     * A callback that decides to let back through by calling `Navigator.popBack()` from inside its
+     * own handler would otherwise be dispatched to again, forever — the navigator consults this
+     * dispatcher first. While a dispatch is in flight a nested one consumes nothing, so that
+     * re-entrant pop falls through to the stack, which is what the callback meant.
+     */
     override fun dispatch(): Boolean {
-        return callbacks.value.asReversed().any(BackCallback::handle)
+        if (isDispatching) {
+            return false
+        }
+        isDispatching = true
+        try {
+            return callbacks.value.asReversed().any(BackCallback::handle)
+        } finally {
+            isDispatching = false
+        }
     }
 
     override fun hasCallbacks(): Boolean {

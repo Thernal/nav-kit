@@ -68,4 +68,22 @@ class BackDispatcherImplTest {
         assertFalse(dispatcher.hasCallbacks())
         assertFalse(dispatcher.dispatch())
     }
+
+    @Test
+    fun aNestedDispatchConsumesNothing() {
+        // A callback that lets back through by calling the navigator — which consults this
+        // dispatcher first — would otherwise be dispatched to again, forever.
+        val dispatcher = BackDispatcherImpl()
+        var wasNestedConsumed: Boolean? = null
+        dispatcher.register(
+            BackCallback {
+                wasNestedConsumed = dispatcher.dispatch()
+                true
+            },
+        )
+
+        assertTrue(dispatcher.dispatch())
+
+        assertEquals(false, wasNestedConsumed)
+    }
 }

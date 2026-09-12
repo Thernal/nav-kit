@@ -31,6 +31,12 @@ its own. `NavigationHost` builds one per host — see "Mounting a host" below �
 it, so a screen never injects `Navigator` directly: it raises a navigation effect from its state
 holder and replays it against `LocalNavigator.current` at the composable.
 
+Every command that adds routes returns a `NavigationOutcome` — `Applied`, `Rewritten(stack, reason)`
+or `Deferred` — because guards make it a real question whether it happened. Before this the only
+report was an application-wide event stream, so a call site could not tell "we moved" from "we were
+sent somewhere else" from "nothing happened". The pops return a `Boolean`, which is the whole of the
+question there.
+
 `NavigatorExtensions` adds naming aliases over the core operations — `pop()`/`pop(count)` for
 `popBack`, `popTo(...)` for `popBackTo`, `reset(route)`/`reset(routes)` for `replaceAll` — so a
 caller can use back-stack vocabulary without every implementation supplying it.
@@ -60,29 +66,142 @@ that pushes another sheet stays one surface — keeps working unchanged.
 
 ## Guards
 
-A `NavigationGuard` is evaluated by `Navigator` (`push`/`navigate`/`replace`/`replaceAll`, inside
-`BackStackNavigator`) before a route reaches the back stack — never during composition, so a
-blocked route never renders. It returns a `GuardResult` (`Allow`/`Block(reason)`/`Redirect(route)`).
-A route that already sits on the stack passed a guard when it was added, so `pop`/`popBackTo` run
-unguarded. Each feature contributes its guards into the graph; `wiring` collects the
-`Set<NavigationGuard>` into one `NavigationGuardRunner`, which runs every guard against every route
-unconditionally — it does not filter by route type itself.
+A `NavigationGuard` decides which back **stacks** may exist, not which routes may be pushed:
 
-Since a guard applies to a subset of routes, not all of them, mark the routes it applies to with a
-dedicated marker interface named after the guard with a `-Guarded` suffix, and check that marker
-first. This keeps "which routes need this guard" declared on the route itself instead of in a
-separate registry that has to be kept in sync.
+```kotlin
+fun interface NavigationGuard {
+    fun evaluate(old: ImmutableList<Route>, new: ImmutableList<Route>): GuardVerdict
+}
+```
+
+`old` is the stack as it stands, `new` the one being proposed, and every decision is the stack it
+returns — allow is `Resolved(new)`, refuse is `Resolved(old, reason)`, and anything else is a
+rewrite. Seeing the transition rather than a destination is what lets one contract express a
+redirect that keeps the original intent (`Resolved((old + SignIn(next = new.last()))
+.toImmutableList())`) and a refusal to *leave* a screen with unsaved work, which a
+destination-only guard cannot say at all.
+
+It is evaluated in exactly two places, which between them are every way a stack can change:
+
+- `BackStackNavigator.mutate`, the single primitive `push`/`navigate`/`replace`/`replaceAll`/
+  `popBack`/`popBackTo` and a caller's own `buildStack` all run through, before anything is
+  written back;
+- the host, on whatever it was handed directly — a deep link the root applied through
+  `onBackStackChange`, or a stack restored after process death. A pure derivation, so `NavDisplay`
+  is never given the unresolved stack and a refused route never renders; the correction reaches the
+  caller's own state one frame later.
+
+`onBackStackChange` must therefore be a plain setter. The host writes its correction back through
+it, so a callback that filters what it is given, or re-applies a pending link, will overwrite that
+correction and be corrected again. Owning the state is the caller's job; editing it on the way in is
+not.
+
+Guards are folded in contribution order, each seeing the previous one's output as `new`, and the
+fold repeats until the stack stops changing — so a route a guard *introduced* is guarded like any
+other, including by the guard that introduced it. `evaluate` must therefore be pure and cheap. A
+guard may drop and insert routes but may not reorder what it keeps or empty the stack;
+`NavigationGuardRunnerImpl` rejects a verdict that does, loudly, because a malformed stack corrupts
+navigation for every feature.
+
+Each feature contributes its guards into the graph and `wiring` collects the `Set<NavigationGuard>`
+into one application-wide `NavigationGuardRunner`. A single host can add its own on top, through
+`NavigationHostParams.guards` — a wizard's internal rules, or a guard whose dependencies live in a
+feature scope and so could never reach the app graph's multibinding. The caller already holds that
+scope and hands the guard over the same way it hands over `decorators`; `extendedWith` returns the
+app-wide runner unchanged when there are none.
+
+### Staying correct after the answer changes
+
+A guard whose answer depends on something that moves — a session, a role, a flag — overrides
+`invalidations`:
+
+```kotlin
+override val invalidations: Flow<Unit> = session.state.drop(1).map { }
+```
+
+Every mounted host collects the merged stream and revalidates its own stack on each emission,
+`resolve(old = current, new = current)`. That is what makes a route which has *become* invalid leave
+the stack, rather than sitting there until something else happens to navigate. Collection is scoped
+to the host's composition, so an unmounted host costs nothing — and because every mounted host
+collects, make the flow hot; a cold flow that does work per collector does it once per host.
+
+Revalidation runs the same synchronous `resolve` as everything else, which is what keeps it cheap
+and is why an asynchronous verdict will never be reachable from it.
+
+### Writing one
+
+Almost every guard is about the routes of one type, and extends `RouteGuard` rather than
+implementing the interface directly. Mark those routes with an interface named after the guard —
+`AuthGuard` guards routes marked `AuthGuarded` — and pass the narrowing, so the pairing is checked
+by the compiler instead of by a convention each implementation has to remember:
 
 ```kotlin
 interface AuthGuarded : Route
 
-class AuthGuardImpl(private val session: Session) : NavigationGuard {
-    override fun evaluate(route: Route): GuardResult {
-        if (route !is AuthGuarded) return GuardResult.Allow
-        return if (session.isAuthenticated) GuardResult.Allow else GuardResult.Redirect(AuthRoute.SignIn)
+class AuthGuardImpl(private val session: Session) : RouteGuard<AuthGuarded>({ it as? AuthGuarded }) {
+    override val reason = SignInRequired
+
+    override fun redirect(route: AuthGuarded, stack: ImmutableList<Route>): Route? {
+        if (session.isAuthenticated) {
+            return null
+        }
+        return AuthRoute.SignIn
     }
 }
 ```
+
+`final override` on `RouteGuard.evaluate` is the point: a subclass cannot skip the narrowing and
+silently apply itself to every route in the application.
+
+`RouteGuard` judges **every** matching route in the proposed stack, not only those entering, and
+answers by substitution rather than by handing back the previous stack. Both follow from the same
+requirement — "`Secret` requires a session" holds for any stack containing `Secret`, however it got
+there — and both are what make it correct when a stack is revalidated in place
+(`resolve(old = current, new = current)`) and there is no transition to reason about. A rule that
+genuinely is about the transition implements `NavigationGuard` directly, so it can compare `old`
+with `new` — and keeps itself narrow. `old` does not move during the fold, so a rule broad enough to
+reject *any* difference between the two undoes every rewriting guard, which rewrites again, and the
+pair fails at the round limit instead of settling. Phrase it about one screen's own routes ("`Edit`
+may not leave the stack"), never about movement in general.
+
+### Deciding later
+
+`GuardVerdict.Deferred(meanwhile, resolve)` is the answer for a guard that cannot decide yet — a
+token to refresh, a confirmation to collect, a server to ask:
+
+```kotlin
+GuardVerdict.Deferred(meanwhile = old) { navigator ->
+    navigator.push(SignIn)
+    val signedIn = results.await<Boolean>(SIGN_IN_RESULT)
+    if (signedIn) GuardVerdict.Resolved(new) else GuardVerdict.Resolved(old, SignInCancelled)
+}
+```
+
+`meanwhile` is what exists until it settles: `old` holds the navigation without showing anything
+new, `old + Loading` shows a placeholder. Returning `Resolved(new)` at the end continues to the
+route the user originally asked for — which is the point of deferring rather than redirecting, and
+the thing a redirect cannot express because it loses the original intent.
+
+Two rules follow, and both are load-bearing:
+
+- **Only the mounted host awaits a deferral.** It owns a scope tied to its own composition, so an
+  unmounted host cancels what it started, and there is one driver however many ways the stack can
+  change. Everything else — the navigator, composition, revalidation — calls the synchronous
+  `resolve`, which takes a deferral at its `meanwhile` and never starts work. That is what makes a
+  revalidation storm impossible rather than merely unlikely, and the deferral in flight is keyed on
+  the verdict that produced it, so the same one is never launched twice.
+- **A guard that defers must answer synchronously once its deferral has settled**, from a cached
+  result. It is asked again as soon as the settled stack is applied; a guard that defers a second
+  time for the same stack never converges, and the host leaves it alone rather than spinning.
+
+A placeholder shown as `meanwhile` should implement `TransientRoute`. Routes survive process death
+and an in-flight coroutine does not, so a restored `Loading` would be a screen with nothing left to
+resolve it; the host drops transient routes from a restored stack before anything is rendered or
+guarded.
+
+`BlockReason` is an empty-vocabulary interface the application fills in: a navigation layer cannot
+know whether a refusal reads as a sign-in prompt, a paywall or a permission error, so it only
+renders `message` into `NavigationEvent.Blocked`.
 
 ## Deep links
 
@@ -121,7 +240,9 @@ Resolving and applying a link is the single root state holder's job, not `Naviga
 host can be mounted anywhere a feature needs its own local back stack, but there is only one
 cold-start link stream for the whole app. The root collects `DeepLinkEvents`/`DeepLinkDispatcher`
 like any other dependency and applies a resolved `DeepLinkOutcome.Navigate` through the same
-`onBackStackChange` it already owns.
+`onBackStackChange` it already owns. That path does not go through `Navigator`, which is why the
+host resolves what it is handed: a link is the one navigation input that comes from outside the
+app, and it is guarded without the root having to remember to ask.
 
 ## Results
 
@@ -141,6 +262,14 @@ sheet, an in-screen editor — intercept back ahead of the host's own pop, for a
 the composition. It registers against the `BackDispatcher` the mounted host provides through
 `LocalBackDispatcher`, which is the same object the host dispatches through. `BackDispatcher.register`
 is also callable directly and returns an `AutoCloseable`.
+
+**`Navigator.popBack()` consults that same dispatcher**, so an interceptor is heard whether back
+came from the system gesture or from a button in a screen calling `popBack()` itself. Only the
+gesture used to ask, which made "discard unsaved changes?" work in one of the two and silently not
+in the other — the same class of split the port table below records having removed once already.
+`popBackTo` deliberately does not consult it: that is a jump, not a back. A callback that lets back
+through by calling `popBack()` from inside its own handler is not dispatched to again, because a
+nested dispatch consumes nothing.
 
 ## Navigation events
 

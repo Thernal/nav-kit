@@ -3,6 +3,7 @@ package io.thernal.navkit.navigation.api.presentation.model
 import androidx.compose.runtime.Immutable
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.scene.SceneStrategy
+import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuard
 import io.thernal.navkit.navigation.api.presentation.transition.NavTransitionScope
 import io.thernal.navkit.navigation.api.presentation.transition.PredictiveNavTransitionScope
 import kotlinx.collections.immutable.ImmutableList
@@ -23,4 +24,11 @@ data class NavigationHostParams<R : Route>(
     val predictivePopTransitionSpec: PredictiveNavTransitionScope<R>? = null,
     val decorators: ImmutableList<NavEntryDecorator<R>> = persistentListOf(),
     val sceneStrategies: ImmutableList<SceneStrategy<R>> = persistentListOf(),
+    /**
+     * Guards that apply to this host's stack only, on top of the application-wide ones. For a
+     * wizard's internal rules, or a guard whose dependencies live in a feature scope and so could
+     * never be contributed to the app graph's multibinding: the caller already holds that scope,
+     * and hands the guard over here the same way it hands over [decorators].
+     */
+    val guards: ImmutableList<NavigationGuard> = persistentListOf(),
 )

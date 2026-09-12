@@ -19,10 +19,10 @@ fun Navigator.popTo(
     return popBackTo(inclusive = inclusive, predicate = predicate)
 }
 
-fun Navigator.reset(root: Route) {
-    replaceAll(root)
+fun Navigator.reset(root: Route): NavigationOutcome {
+    return replaceAll(root)
 }
 
-fun Navigator.reset(routes: List<Route>) {
-    replaceAll(routes)
+fun Navigator.reset(routes: List<Route>): NavigationOutcome {
+    return replaceAll(routes)
 }
