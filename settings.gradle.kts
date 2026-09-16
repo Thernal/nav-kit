@@ -43,3 +43,5 @@ fun includeModulesUnder(path: String) {
 }
 
 includeModulesUnder("navigation")
+// `sample/iosApp` carries no build file on purpose: it is an Xcode project, not a Gradle module.
+includeModulesUnder("sample")

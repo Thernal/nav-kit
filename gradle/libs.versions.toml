@@ -13,6 +13,14 @@ android-min-sdk = "24"
 # Compose Multiplatform
 compose-multiplatform = "1.12.0"
 
+# Material 3 is the sample's only UI-kit dependency and is versioned apart from the rest of
+# Compose Multiplatform: org.jetbrains.compose.material3 has no 1.12.0 release, only the alpha
+# line that tracks it. Nothing in `navigation/` depends on it.
+compose-material3 = "1.12.0-alpha03"
+
+# AndroidX, for the sample application module only: `setContent` lives in activity-compose.
+androidx-activity = "1.+"
+
 # Navigation 3
 # navigation3-runtime is the multiplatform AndroidX artifact (Google Maven); the UI layer is the
 # JetBrains port of navigation3-ui. They are released in lockstep, hence one version.
@@ -20,6 +28,8 @@ navigation3 = "1.1.1"
 # The JetBrains lifecycle line the Navigation3 ViewModel decorator is published from; it moves
 # independently of navigation3 itself.
 lifecycle = "2.10.0"
+# The AndroidX lifecycle line navigation3-runtime itself depends on.
+androidx-lifecycle = "2.11.0"
 # The predictive-back event layer Navigation3 is built on; `NavigationBackHandler` comes from here.
 navigationevent = "1.1.0"
 
@@ -55,17 +65,26 @@ compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.re
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
 compose-animation = { module = "org.jetbrains.compose.animation:animation", version.ref = "compose-multiplatform" }
+# Material 3 is the sample's only extra: the kit itself draws nothing and stays design-system free.
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
 
 # Navigation 3
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
+# The sample holds its back stacks in ViewModels, the way an application does. The AndroidX
+# coordinate rather than the JetBrains port: navigation3-runtime already pulls the AndroidX
+# lifecycle line, and mixing the two puts two copies of every lifecycle klib on the classpath.
+lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 navigationevent-compose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "navigationevent" }
 
 # KotlinX
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
+
+# AndroidX (sample application only)
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 
 # Deep link URI parsing
 ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
@@ -83,6 +102,7 @@ junit4 = { module = "junit:junit", version.ref = "junit4" }
 [plugins]
 # Third-party
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -93,3 +113,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 navkit-kmp-library = { id = "io.thernal.navkit.kmp.library" }
 navkit-compose = { id = "io.thernal.navkit.compose" }
 navkit-injection = { id = "io.thernal.navkit.injection" }
+navkit-android-application = { id = "io.thernal.navkit.android.application" }
