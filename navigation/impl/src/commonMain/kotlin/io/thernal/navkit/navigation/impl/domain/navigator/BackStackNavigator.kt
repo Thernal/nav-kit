@@ -14,7 +14,7 @@ import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Adapts a caller-owned back stack into the [Navigator] command surface. Holds no state of its own:
- * `NavigationView` builds one per host, over whatever backs `NavigationHostParams.backStack`.
+ * `NavigationHost` builds one per host, over whatever backs `NavigationHostParams.backStack`.
  *
  * `buildBackStack`/`resolveCanPop` are named apart from the [buildStack]/[canPop] members they
  * back — a same-named property and override recurse into each other instead of resolving to the

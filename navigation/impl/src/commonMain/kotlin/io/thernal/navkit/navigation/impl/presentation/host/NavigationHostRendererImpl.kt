@@ -12,7 +12,7 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 
 /**
  * The single application-graph object this module contributes to composition. Everything per-host
- * — the navigator, the back stack adapter — is built inside [NavigationView] instead, because a
+ * — the navigator, the back stack adapter — is built inside [NavigationHostImpl] instead, because a
  * host can be mounted more than once.
  */
 class NavigationHostRendererImpl(
@@ -26,7 +26,7 @@ class NavigationHostRendererImpl(
         modifier: Modifier,
         entries: EntryProviderScope<R>.() -> Unit,
     ) {
-        NavigationView(
+        NavigationHostImpl(
             params = params,
             guardRunner = guardRunner,
             backDispatcher = backDispatcher,

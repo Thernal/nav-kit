@@ -56,7 +56,7 @@ class BackStackNavigatorTest {
         }
     }
 
-    /** Mirrors how `NavigationView` wires a navigator over an external, caller-owned back stack. */
+    /** Mirrors how `NavigationHost` wires a navigator over an external, caller-owned back stack. */
     private class Harness(
         initial: List<Route>,
         guardRunner: NavigationGuardRunner = NavigationGuardRunnerImpl(emptyList()),

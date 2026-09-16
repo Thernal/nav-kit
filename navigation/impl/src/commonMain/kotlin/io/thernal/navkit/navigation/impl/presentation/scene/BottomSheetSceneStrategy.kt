@@ -38,9 +38,8 @@ class BottomSheetSceneStrategy<R : Route> : SceneStrategy<R> {
         val sheetEntries = entries.takeLastWhile { entry ->
             entry.metadata[BOTTOM_SHEET_METADATA_KEY] == true
         }
-        @Suppress("UNCHECKED_CAST")
         return BottomSheetScene(
-            key = sheetEntries.first().contentKey as R,
+            key = sheetEntries.first().contentKey,
             previousEntries = entries.dropLast(sheetEntries.size),
             overlaidEntries = entries.dropLast(sheetEntries.size),
             entries = sheetEntries,
@@ -50,7 +49,10 @@ class BottomSheetSceneStrategy<R : Route> : SceneStrategy<R> {
 }
 
 private class BottomSheetScene<R : Route>(
-    override val key: R,
+    // `Scene.key` is `Any` in Navigation3 and only identifies the scene for the top-level
+    // transition, so the entry's own `contentKey` goes in as it comes — narrowing it to `R` bought
+    // nothing and cost a cast that a caller-supplied `contentKey` would have broken.
+    override val key: Any,
     override val previousEntries: List<NavEntry<R>>,
     override val overlaidEntries: List<NavEntry<R>>,
     override val entries: List<NavEntry<R>>,
