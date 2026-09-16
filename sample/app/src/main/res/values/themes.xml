@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A bare material theme: every pixel the sample draws comes from Compose Multiplatform, so
+         the platform theme only has to keep the system bars sane. -->
+    <style name="Theme.NavKitSample" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
