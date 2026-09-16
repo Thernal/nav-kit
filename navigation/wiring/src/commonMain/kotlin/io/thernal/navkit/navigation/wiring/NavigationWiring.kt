@@ -19,12 +19,13 @@ import io.thernal.navkit.navigation.api.presentation.host.LocalNavigationHostRen
 import io.thernal.navkit.navigation.api.presentation.host.NavigationHostRenderer
 import io.thernal.navkit.navigation.api.presentation.log.NavigationEvent
 import io.thernal.navkit.navigation.api.presentation.log.NavigationEventSink
-import io.thernal.navkit.navigation.api.presentation.result.NavigationResultStore
+import io.thernal.navkit.navigation.api.presentation.result.LocalNavigationResults
+import io.thernal.navkit.navigation.api.presentation.result.NavigationResults
 import io.thernal.navkit.navigation.impl.data.RuntimeDeepLinkBridge
 import io.thernal.navkit.navigation.impl.domain.back.BackDispatcherImpl
 import io.thernal.navkit.navigation.impl.domain.deeplink.DeepLinkDispatcherImpl
 import io.thernal.navkit.navigation.impl.domain.guard.NavigationGuardRunnerImpl
-import io.thernal.navkit.navigation.impl.domain.result.NavigationResultStoreImpl
+import io.thernal.navkit.navigation.impl.domain.result.NavigationResultsImpl
 import io.thernal.navkit.navigation.impl.presentation.host.NavigationHostRendererImpl
 
 /**
@@ -68,8 +69,8 @@ interface NavigationWiring {
 
         @Provides
         @SingleIn(AppScope::class)
-        fun provideNavigationResultStore(): NavigationResultStore {
-            return NavigationResultStoreImpl()
+        fun provideNavigationResults(): NavigationResults {
+            return NavigationResultsImpl()
         }
 
         @Provides
@@ -136,6 +137,12 @@ interface NavigationWiring {
         @IntoSet
         fun provideNavigationHostRendererValue(renderer: NavigationHostRenderer): ProvidedValue<*> {
             return LocalNavigationHostRenderer provides renderer
+        }
+
+        @Provides
+        @IntoSet
+        fun provideNavigationResultsValue(results: NavigationResults): ProvidedValue<*> {
+            return LocalNavigationResults provides results
         }
     }
 }
