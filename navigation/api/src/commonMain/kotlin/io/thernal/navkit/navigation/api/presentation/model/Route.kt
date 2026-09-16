@@ -6,6 +6,10 @@ import androidx.navigation3.runtime.NavKey
 /**
  * Marker for routes exposed across module boundaries.
  *
+ * It extends `NavKey` so that a feature never has to. A destination is declared as
+ * `data object Home : Route`, and Navigation3 stays a detail of `impl` rather than something every
+ * feature module implements against.
+ *
  * Keep payloads small identifiers, not repositories, large models, or platform objects — routes
  * cross module boundaries and often survive process death.
  */

@@ -1,25 +1,31 @@
 # navigation
 
 Public Navigation3 contracts: routes, the navigator command surface, the `NavigationHost` render
-contract, guards, deep links, back handling, and cross-screen results. `impl` owns every concrete
-behavior; `api` never depends on it.
+contract, guards, deep links, back handling, and the two mechanisms for passing data between
+screens. `impl` owns every concrete behavior; `api` never depends on it.
 
 ## Module layout
 
-- `api` — Navigation3 routes, the navigator command surface, deep-link/guard/result/back contracts,
-  the `NavigationHost` render contract, `DeepLinkIngress`, the bottom-sheet route marker, and
-  the `NavigationEvent` stream.
+- `api` — Navigation3 routes, the navigator command surface, deep-link/guard/back contracts,
+  the `NavigationHost` render contract, `NavigationResults` and `NavigationArguments`, `DeepLinkIngress`,
+  the bottom-sheet route marker, and the `NavigationEvent` stream.
 - `impl` — the Navigation3 host (internal), the `BackStackNavigator` command adapter it builds per
-  host, overlay scenes, animations, deep-link dispatch and parsing, guards, results.
-- `wiring` — binds the dispatchers, guard runner, result store and renderer into an application
-  graph, and contributes `NavigationHostRenderer` as a `ProvidedValue`. `Navigator` is not bound
+  host, overlay scenes, animations, deep-link dispatch and parsing, guards, results, arguments.
+- `wiring` — binds the dispatchers, guard runner, result and argument stores and the renderer into
+  an application graph, and contributes each composition local as a `ProvidedValue`.
+
+An `impl` declaration that would collide with an `api` name carries the `Impl` suffix, composables
+included: `NavigationHostImpl` is the internal render of `api`'s `NavigationHost`, the same way
+`NavigationResultsImpl` implements `NavigationResults`. `Navigator` is not bound
   here — it holds no state; `NavigationHost` builds and provides one per host, over the
   caller-owned `backStack`/`onBackStackChange` pair on its `NavigationHostParams`.
 
 ## Routes
 
 `presentation.model.Route` is the marker every route implements (`interface Route : NavKey`,
-`@Immutable`). Public cross-feature routes live in the owning feature's `api`; internal
+`@Immutable`). Carrying Navigation3's marker here is what keeps it out of the features: a route
+is declared as `data object Home : Route`, and no feature module ever names a Navigation3 type
+to describe its own destinations. Public cross-feature routes live in the owning feature's `api`; internal
 wizard/tab/sheet routes stay in its `impl`. Keep payloads small identifiers, not repositories,
 large models, or platform objects — routes cross module boundaries and often survive process death.
 
@@ -246,16 +252,91 @@ like any other dependency and applies a resolved `DeepLinkOutcome.Navigate` thro
 host resolves what it is handed: a link is the one navigation input that comes from outside the
 app, and it is guarded without the root having to remember to ask.
 
-## Results
+## Passing data between screens
 
-`NavigationResultStore` passes a value back from one screen to another without a shared state
-holder. The reified `consume<T>(key)` extension wraps the `KClass<T>` overload:
+Two mechanisms, told apart by direction. Using one for the other is the mistake they exist to
+prevent.
+
+| | Result | Argument |
+|---|---|---|
+| Direction | a closing screen → a screen already in the stack | an opening screen → screens about to be pushed |
+| Who waits | the producer is gone, the consumer stays | the consumer does not exist yet |
+| Lifetime | one delivery, gone once consumed | as long as the screens that need it |
+| Surface | `NavigationResults` | `NavigationArguments` |
+
+Both are application-scoped objects reached through a composition local, contributed by `wiring`
+into the graph's `Set<ProvidedValue<*>>` and installed once at the composition root — the same
+route `LocalNavigationHostRenderer` takes. **Both are in memory only**: a value is lost on process
+death while the routes that would have read it are restored, so a consumer that finds nothing
+treats it as a first visit or restarts its flow, never as an error.
+
+### Results — backwards
+
+A key is declared once, next to the routes of the feature that produces the result, and used by
+both sides. That is what makes a producer and a consumer disagreeing about the type a compile
+error rather than a `null` nobody notices:
 
 ```kotlin
-resultStore.set("selected_photo", photoUri)
-// ... later, on the screen awaiting the result
-val photoUri = resultStore.consume<String>("selected_photo")
+val SelectedPhoto = resultKey<String>("selected_photo")
+
+// the closing screen
+screenResults.post(SelectedPhoto, photoUri)
+
+// the screen it returns to, from its own composable
+ResultEffect(SelectedPhoto) { photoUri -> state.onPhotoSelected(photoUri) }
 ```
+
+`ResultEffect` collects `pending` and consumes inside a `LaunchedEffect`. Navigation3 composes only
+the entries of the current scene, so a covered screen is not composed and the effect does not run —
+it runs when the user comes back to it, which is exactly when a returning result is wanted. The
+composable forwards to its state holder; it does not decide.
+
+`pending` exposes names, not values, so one feature's results are not readable by every screen.
+Consuming removes the value: one delivery, never two. A value posted under a name that another
+feature already declared with a different type throws rather than reading `null`.
+
+### Arguments — forwards
+
+A value set on one screen and read by the next several, without being threaded through every route
+in between. Its lifetime is **derived from the back stack**, never counted:
+
+```kotlin
+val CheckoutDraft = argumentKey<Draft>("checkout_draft")
+
+screenArguments.put(
+    key = CheckoutDraft,
+    value = draft,
+    scope = whileInStack { route -> route is CheckoutRoute },
+)
+navigator.push(CheckoutAmount)
+```
+
+A consumer reference count released on `DisposableEffect` was the obvious design and it does not
+work: Navigation3 composes only the top entry, so a screen that pushes the next one leaves
+composition while it is still in the stack and the count reaches zero one push early. The stack
+already states who is present, so the stack is what decides. Scoping to a sealed flow type rather
+than to one screen is also what makes back, `popBackTo`, a guard rewrite and a deep link all come
+out right without any of them being handled separately.
+
+The mounted host applies this through `ArgumentPruner.pruneFor(stack)` after every stack change.
+That is a second interface on the same object, injected into the host rather than exposed on
+`NavigationArguments`, so `pruneFor` is not reachable from the composition local every screen can read.
+Two rules follow from where it runs:
+
+- **Only the outermost host prunes.** The store is application-scoped while a stack is per host, so
+  a nested host pruning against its own stack would delete the arguments of the flow that mounted
+  it.
+- **Never prune from a guard.** `NavigationGuard.evaluate` must stay pure and runs several times
+  per navigation.
+
+Put an argument in the same action that pushes the routes which read it. An argument that has never
+been alive in the stack is kept until it is, and dropped the first time it is alive and then is not
+— so the stack change that starts a flow cannot delete the value that flow was started with.
+
+For anything that must survive process death, or anything larger than a small serializable value,
+put it in a repository and keep only its id here. A flow mounted as a nested host has a third
+option: the flow's root entry owns a `ViewModel`, and its `SavedStateHandle` is cleared by
+Navigation3 when that entry is popped.
 
 ## Back handling
 
@@ -296,7 +377,7 @@ of those two facts, not a change of design.
 
 | | Android original | Here | Why |
 |---|---|---|---|
-| Result store | `consume(key, Class<T>)` | `consume(key, KClass<T>)` | `KClass.isInstance` is the one runtime type check the common stdlib offers. |
+| Result store | `NavigationResultStore`, `consume(key, Class<T>)` | `NavigationResults`, a declared `ResultKey<T>` | the original asserted the type where the value was read, so a producer writing an `Int` and a consumer asking for a `String` got `null` silently. |
 | Deep-link ingress | `publish(Intent)` on the interface | common `publish(uri)`, `publish(intent)` an `androidMain` extension | an iOS caller never sees a member it cannot satisfy. |
 | Navigation logs | emitted to a global debug-console object | `NavigationEvent` + injected `NavigationEventSink` | the library cannot depend on one app's console; an injected sink is also what lets a test assert on what the navigator emitted. |
 | Back handling | an injected `BackDispatcher` **and** a private global `ComposeBackDispatcher` the host actually consulted | one `BackDispatcher`, provided at the host as `LocalBackDispatcher` | with two mechanisms a caller could register with the one nothing dispatches through, and silently never fire. |
