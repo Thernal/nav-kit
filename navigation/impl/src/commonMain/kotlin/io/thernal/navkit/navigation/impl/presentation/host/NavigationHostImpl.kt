@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.ui.NavDisplay
+import io.thernal.navkit.navigation.api.presentation.argument.ArgumentPruner
 import io.thernal.navkit.navigation.api.presentation.back.BackDispatcher
 import io.thernal.navkit.navigation.api.presentation.back.LocalBackDispatcher
 import io.thernal.navkit.navigation.api.presentation.guard.GuardVerdict
@@ -34,6 +35,7 @@ internal fun <R : Route> NavigationHostImpl(
     params: NavigationHostParams<R>,
     guardRunner: NavigationGuardRunner,
     backDispatcher: BackDispatcher,
+    argumentPruner: ArgumentPruner,
     events: NavigationEventSink,
     modifier: Modifier = Modifier,
     entries: EntryProviderScope<R>.() -> Unit,
@@ -69,11 +71,23 @@ internal fun <R : Route> NavigationHostImpl(
         }
     }
 
+    // An argument outlives the screen that set it and dies with the flow that reads it, which is a
+    // fact about the stack — so the host that owns the stack is what applies it. Depth 0 only: the
+    // store is application-scoped, and a nested host's stack does not contain the outer flow's
+    // routes, so a nested host pruning against it would delete arguments that are still alive.
+    val hostDepth = LocalNavigationHostDepth.current
+    LaunchedEffect(key1 = guarded.resolved, key2 = hostDepth, key3 = argumentPruner) {
+        if (hostDepth == 0) {
+            argumentPruner.pruneFor(guarded.resolved)
+        }
+    }
+
     val config = rememberNavDisplayConfig(params = params, entries = entries)
 
     CompositionLocalProvider(
         LocalNavigator provides navigator,
         LocalBackDispatcher provides backDispatcher,
+        LocalNavigationHostDepth provides hostDepth + 1,
     ) {
         NavDisplay(
             modifier = modifier,

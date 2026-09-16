@@ -3,6 +3,7 @@ package io.thernal.navkit.navigation.impl.presentation.host
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
+import io.thernal.navkit.navigation.api.presentation.argument.ArgumentPruner
 import io.thernal.navkit.navigation.api.presentation.back.BackDispatcher
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuardRunner
 import io.thernal.navkit.navigation.api.presentation.host.NavigationHostRenderer
@@ -18,6 +19,7 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 class NavigationHostRendererImpl(
     private val guardRunner: NavigationGuardRunner,
     private val backDispatcher: BackDispatcher,
+    private val argumentPruner: ArgumentPruner,
     private val events: NavigationEventSink,
 ) : NavigationHostRenderer {
     @Composable
@@ -30,6 +32,7 @@ class NavigationHostRendererImpl(
             params = params,
             guardRunner = guardRunner,
             backDispatcher = backDispatcher,
+            argumentPruner = argumentPruner,
             events = events,
             modifier = modifier,
             entries = entries,

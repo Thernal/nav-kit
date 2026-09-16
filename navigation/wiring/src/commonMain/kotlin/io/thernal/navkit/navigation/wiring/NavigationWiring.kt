@@ -8,6 +8,9 @@ import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Multibinds
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import io.thernal.navkit.navigation.api.presentation.argument.ArgumentPruner
+import io.thernal.navkit.navigation.api.presentation.argument.LocalNavigationArguments
+import io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments
 import io.thernal.navkit.navigation.api.presentation.back.BackDispatcher
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkDispatcher
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkEvents
@@ -22,6 +25,7 @@ import io.thernal.navkit.navigation.api.presentation.log.NavigationEventSink
 import io.thernal.navkit.navigation.api.presentation.result.LocalNavigationResults
 import io.thernal.navkit.navigation.api.presentation.result.NavigationResults
 import io.thernal.navkit.navigation.impl.data.RuntimeDeepLinkBridge
+import io.thernal.navkit.navigation.impl.domain.argument.NavigationArgumentsImpl
 import io.thernal.navkit.navigation.impl.domain.back.BackDispatcherImpl
 import io.thernal.navkit.navigation.impl.domain.deeplink.DeepLinkDispatcherImpl
 import io.thernal.navkit.navigation.impl.domain.guard.NavigationGuardRunnerImpl
@@ -73,6 +77,28 @@ interface NavigationWiring {
             return NavigationResultsImpl()
         }
 
+        /**
+         * One object behind two interfaces: an application reads and writes arguments through
+         * [NavigationArguments], and the mounted host applies their lifetime through [ArgumentPruner].
+         * Splitting the surfaces rather than the instance is what keeps `pruneFor` off the
+         * composition local that every screen can reach.
+         */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideNavigationArgumentsImpl(): NavigationArgumentsImpl {
+            return NavigationArgumentsImpl()
+        }
+
+        @Provides
+        fun provideNavigationArguments(arguments: NavigationArgumentsImpl): NavigationArguments {
+            return arguments
+        }
+
+        @Provides
+        fun provideArgumentPruner(arguments: NavigationArgumentsImpl): ArgumentPruner {
+            return arguments
+        }
+
         @Provides
         @SingleIn(AppScope::class)
         fun provideNavigationGuardRunner(guards: Set<NavigationGuard>): NavigationGuardRunner {
@@ -119,11 +145,13 @@ interface NavigationWiring {
         fun provideNavigationHostRenderer(
             guardRunner: NavigationGuardRunner,
             backDispatcher: BackDispatcher,
+            argumentPruner: ArgumentPruner,
             events: NavigationEventSink,
         ): NavigationHostRenderer {
             return NavigationHostRendererImpl(
                 guardRunner = guardRunner,
                 backDispatcher = backDispatcher,
+                argumentPruner = argumentPruner,
                 events = events,
             )
         }
@@ -143,6 +171,12 @@ interface NavigationWiring {
         @IntoSet
         fun provideNavigationResultsValue(results: NavigationResults): ProvidedValue<*> {
             return LocalNavigationResults provides results
+        }
+
+        @Provides
+        @IntoSet
+        fun provideNavigationArgumentsValue(arguments: NavigationArguments): ProvidedValue<*> {
+            return LocalNavigationArguments provides arguments
         }
     }
 }

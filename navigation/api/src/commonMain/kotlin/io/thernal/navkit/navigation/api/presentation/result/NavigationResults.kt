@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
  * that is already in the stack and is about to be uncovered.
  *
  * It is not for arguments. A value meant for screens that do not exist yet travels forwards and
- * belongs to the route, or to the flow that owns those screens.
+ * belongs to the route, or to the flow that owns those screens — see
+ * [io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments].
  *
  * **In memory only.** A posted result is lost on process death while the routes that would have
  * consumed it are restored, so a consumer treats a missing result the way it treats a first visit,
