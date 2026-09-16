@@ -7,7 +7,7 @@ behavior; `api` never depends on it.
 ## Module layout
 
 - `api` — Navigation3 routes, the navigator command surface, deep-link/guard/result/back contracts,
-  the `NavigationHost` render contract, `DeepLinkIngress`, the bottom-sheet/modal route markers, and
+  the `NavigationHost` render contract, `DeepLinkIngress`, the bottom-sheet route marker, and
   the `NavigationEvent` stream.
 - `impl` — the Navigation3 host (internal), the `BackStackNavigator` command adapter it builds per
   host, overlay scenes, animations, deep-link dispatch and parsing, guards, results.
@@ -51,9 +51,11 @@ holder's job instead of a `NavigationHost` parameter, since a host can be mounte
 feature needs its own local back stack (a bottom sheet's internal steps, a wizard), not just at the
 app root.
 
-`bottomSheetEntry`/`modalEntry` (`presentation.host`) register a route to render in a bottom sheet
-or modal instead of the primary pane — a thin `entry` wrapper that only adds the metadata key the
-host reads to pick the render surface. `transitionSpec`/`popTransitionSpec`/`predictivePopTransitionSpec`
+`bottomSheetEntry` (`presentation.host`) registers a route to render in a bottom sheet instead of
+the primary pane — a thin `entry` wrapper that only adds the metadata key the host reads to pick the
+render surface. An app that wants another surface writes its own `SceneStrategy` and hands it over
+through `NavigationHostParams.sceneStrategies`, which the host consults before its own.
+`transitionSpec`/`popTransitionSpec`/`predictivePopTransitionSpec`
 on `NavigationHostParams` take a `NavTransitionScope<R>`/`PredictiveNavTransitionScope<R>`
 (`presentation.transition` — typealiases over the Navigation3
 `AnimatedContentTransitionScope<Scene<R>>` function types); leave them `null` for `impl`'s

@@ -29,7 +29,6 @@ import io.thernal.navkit.navigation.api.presentation.model.TransientRoute
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.impl.domain.navigator.BackStackNavigator
 import io.thernal.navkit.navigation.impl.presentation.scene.BottomSheetSceneStrategy
-import io.thernal.navkit.navigation.impl.presentation.scene.ModalSceneStrategy
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -177,10 +176,10 @@ internal fun <R : Route> NavigationView(
         rememberSaveableStateHolderNavEntryDecorator<R>(),
         rememberViewModelStoreNavEntryDecorator<R>(),
     )
-    // Caller strategies come first so an app can claim a route before the built-in overlays see it;
+    // Caller strategies come first so an app can claim a route before the built-in overlay sees it;
     // SinglePaneSceneStrategy is last because it claims everything.
     val builtInScenes = remember {
-        persistentListOf<SceneStrategy<R>>(BottomSheetSceneStrategy(), ModalSceneStrategy())
+        persistentListOf<SceneStrategy<R>>(BottomSheetSceneStrategy())
     }
 
     CompositionLocalProvider(
