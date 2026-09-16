@@ -46,7 +46,7 @@ class NavigationArgumentsImpl : NavigationArguments, ArgumentPruner {
                 "Two features have declared the same argument name."
         }
         @Suppress("UNCHECKED_CAST")
-        return argument.value as T
+        return argument.value as? T
     }
 
     override fun remove(key: ArgumentKey<*>) {
