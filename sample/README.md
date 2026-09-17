@@ -1,9 +1,15 @@
 # sample
 
 A runnable demonstration of everything in `navigation/`, on Android and iOS, from one shared
-composition. Each capability has a simple example and a real-life one; the simple one is the
-smallest thing that works, the real-life one is the shape the problem actually takes in an
-application.
+composition. Each capability has a **simple** example — the smallest thing that works — and a
+**real-life** one — the shape the problem actually takes in an application. Every example package has
+a README of its own that walks through the code, says what to notice, and how to try it.
+
+It is also the reference integration: [Set nav-kit up in your own app](#set-nav-kit-up-in-your-own-app)
+below follows it step by step.
+
+- The complete API guide: [`navigation/api/README.md`](../navigation/api/README.md)
+- Why the kit is shaped the way it is: [`navigation/README.md`](../navigation/README.md)
 
 ## Running it
 
@@ -12,81 +18,211 @@ application.
 open sample/iosApp/iosApp.xcodeproj         # iOS, then run the iosApp scheme
 ```
 
-The Xcode project builds the shared framework itself through a run-script phase, so there is no
-separate Gradle step. It sets `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64` because the kit
-targets `iosArm64` and `iosSimulatorArm64` only — the two every Navigation3 artifact in the catalog
-publishes.
+The Xcode project builds the shared framework itself through a run-script phase
+(`./gradlew :sample:shared:embedAndSignAppleFrameworkForXcode`), so there is no separate Gradle step.
+It sets `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64` because the kit targets `iosArm64` and
+`iosSimulatorArm64` only — the two every Navigation3 artifact in the catalog publishes.
 
-Both apps accept `navkit://` links from the platform, cold or warm, and hand them to the same
-ingress the in-app playground uses:
+Both apps accept `navkit://` links from the platform, cold or warm, and hand them to the same ingress
+the in-app playground uses:
 
 ```sh
 adb shell am start -a android.intent.action.VIEW -d navkit://orders/77    # Android
 xcrun simctl openurl booted navkit://orders/77                           # iOS
 ```
 
-## Layout
+## What is where
 
 | Module | What it is |
 |---|---|
-| `shared` | Every screen, route, guard and binding. Android and iOS run this unchanged. |
+| `shared` | Every screen, route, guard, handler and binding. Android and iOS run this unchanged. |
 | `app` | An Android application: an `Application` that owns the graph, one activity that hosts the composition and forwards link intents. |
 | `iosApp` | A SwiftUI shell whose only view is the shared composition, and whose `onOpenURL` forwards links. |
 
-## The three things the composition root does
+Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 
-`SampleApp` is the whole of the integration, and it names no feature. The graph is handed to it
-rather than created by it: the graph lives as long as the process, a composition does not, and a
-graph rebuilt on every rotation took the session, the drafts and the argument store with it.
-
-- **Composition locals arrive in one set.** `wiring` contributes each as a `ProvidedValue<*>`, and
-  the root installs them with a single spread. A screen reaches the navigator, the results mailbox
-  or the argument store without importing the navigation module, and adding a capability to the kit
-  does not change this file.
-- **The back stack is owned outside the host.** `RootViewModel` holds it. The host renders a stack
-  and reports every change; it never owns one.
-- **Screens arrive from the graph too.** Each example contributes a `NavigationGraphProvider`, so
-  the root registers entries it has never heard of. The catalog index works the same way: examples
-  contribute themselves to a `Set<SampleExample>`.
+| Package | Holds |
+|---|---|
+| [`app/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app) | the composition root, the graph, the root back-stack owner, the deep-link log — the integration |
+| [`catalog/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/catalog) | the index screen, built from the examples the graph collected |
+| [`ui/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/ui) | the scaffold, buttons and readouts every example screen uses |
+| `basics/`, `results/`, `arguments/`, `backoverride/`, `guards/`, `tabs/`, `deeplinks/` | one capability each — see below |
 
 ## The examples
 
-| Group | Simple | Real life |
+| Group | Simple | Real life | Teaches |
+|---|---|---|---|
+| [Navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/README.md) | Push and pop | Order flow | the command surface: `push`, `popBack`, `navigate` with a predicate, `popBackTo`, `replaceAll`, and reading `NavigationOutcome`; how a feature registers its screens |
+| [Results](shared/src/commonMain/kotlin/io/thernal/navkit/sample/results/README.md) | Pick a colour | Review request | a typed value handed back to a screen already on the stack: `resultKey`, `post`, `ResultEffect`, `pending`, `clear` |
+| [Arguments](shared/src/commonMain/kotlin/io/thernal/navkit/sample/arguments/README.md) | One value, two screens | Checkout draft | a value shared forwards across a flow, its lifetime derived from the stack: `argumentKey`, `put`, `whileInStack` |
+| [Back handling](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) | Confirm before leaving | Unsaved work | `NavigationBackHandler` for "confirm on back", a transition guard for "refuse every way out" |
+| [Guards](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) | Members area | 401 and a PIN | `RouteGuard` with a redirect that keeps intent, `invalidations`, `GuardVerdict.Deferred`, `TransientRoute` |
+| [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | A stack per tab | a host inside a host; per-tab stacks; an application-wide guard inside a tab |
+| [Deep links](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) | One link, one route | Campaign links | handlers, the parsing rule, stacks rather than destinations, the source, a link meeting a guard |
+
+## Set nav-kit up in your own app
+
+Five steps, each pointing at the file in this sample that does it. The generic version, including
+wiring without a DI framework, is in [Installing](../navigation/api/README.md#installing).
+
+### 1. Depend on the three modules
+
+[`shared/build.gradle.kts`](shared/build.gradle.kts): the contracts (`api`), the implementation that
+backs them (`implementation`), and the Metro bindings that install both (`implementation`). The module
+that declares the graph also applies the Metro plugin. A feature module needs only
+`:navigation:api`.
+
+```kotlin
+commonMain.dependencies {
+    api(projects.navigation.api)
+    implementation(projects.navigation.impl)
+    implementation(projects.navigation.wiring)
+    implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.lifecycle.viewmodel.compose)
+}
+```
+
+### 2. Build one graph for the whole process
+
+[`app/SampleGraph.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleGraph.kt)
+asks for what the root needs, by contract, and names no feature:
+
+```kotlin
+@DependencyGraph(AppScope::class)
+interface SampleGraph {
+    val providedValues: Set<ProvidedValue<*>>          // renderer, results, arguments — from NavigationWiring
+    val graphProviders: Set<NavigationGraphProvider>   // every feature's screens
+    val examples: Set<SampleExample>                   // the sample's own index
+    val deepLinkEvents: DeepLinkEvents
+    val deepLinkDispatcher: DeepLinkDispatcher
+    val deepLinkIngress: DeepLinkIngress
+    val deepLinkLog: DeepLinkLog
+}
+```
+
+[`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt)
+declares the application's own multibindings (`@Multibinds(allowEmpty = true)`). The kit's —
+guards, deep-link handlers, event sinks — are declared by `NavigationWiring`.
+
+The graph is created **once per process** and handed to the composition:
+[`SampleApplication.kt`](app/src/main/kotlin/io/thernal/navkit/sample/android/SampleApplication.kt)
+on Android, a process-wide `lazy` in
+[`MainViewController.kt`](shared/src/iosMain/kotlin/io/thernal/navkit/sample/app/MainViewController.kt)
+on iOS. The sample used to remember the graph in the composition: a rotation rebuilt the session, the
+drafts, the argument store and the results mailbox, while the back stack — in a ViewModel — survived and
+pointed at state that no longer existed.
+
+### 3. Write the composition root
+
+[`app/SampleApp.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleApp.kt) does the
+three things every application does:
+
+```kotlin
+@Composable
+fun SampleApp(graph: SampleGraph) {
+    CompositionLocalProvider(values = graph.providedValues.toTypedArray()) {     // 1. locals, in one set
+        MaterialTheme {
+            val root: RootViewModel = viewModel { RootViewModel() }               // 2. the stack's owner
+            val backStack by root.backStack.collectAsState()
+
+            LaunchedEffect(graph) {                                               // 3. links, resolved once
+                graph.deepLinkEvents.links.collect { incoming ->
+                    val outcome = graph.deepLinkDispatcher.dispatch(raw = incoming.uri, source = incoming.source)
+                    graph.deepLinkLog.record(link = incoming, outcome = outcome)
+                    if (outcome is DeepLinkOutcome.Navigate) {
+                        root.onDeepLink(outcome.routes)
+                    }
+                }
+            }
+
+            NavigationHost(
+                params = NavigationHostParams(backStack = backStack, onBackStackChange = root::onBackStackChange),
+            ) {
+                for (provider in graph.graphProviders) {
+                    with(provider) { provide() }
+                }
+            }
+        }
+    }
+}
+```
+
+- **Composition locals arrive in one set.** A screen reaches the navigator, the results mailbox or the
+  argument store without importing the navigation module, and adding a capability to the kit does not
+  change this file.
+- **Screens arrive from the graph.** The root registers entries it has never heard of; the catalog
+  works the same way over `Set<SampleExample>`.
+- **Links are resolved here, once.** A host can be mounted anywhere; there is one link stream.
+
+### 4. Own the root back stack outside the host
+
+[`app/RootViewModel.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/RootViewModel.kt):
+a `StateFlow<ImmutableList<Route>>`, a **plain** `onBackStackChange` setter — every command, guard
+correction and settled deferral arrives through it — and `onDeepLink(routes)`, which replaces the stack.
+It is typed `Route` rather than a sealed application type, because the entries come from feature
+providers and a closed type would import every feature.
+
+### 5. Contribute each feature
+
+Every example package ends in a `*Bindings.kt` of the same shape — see
+[`basics/BasicsBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/BasicsBindings.kt):
+
+| Contribute `@IntoSet` | Type | Example |
 |---|---|---|
-| Navigation | push and pop | `navigate` with a predicate, `replaceAll`, `popBackTo`, and reading the `NavigationOutcome` |
-| Results | a picker posts one value back | a three-step flow returns a decision to the screen that launched it |
-| Arguments | one value across two screens | a checkout draft read and updated on four screens, dropped when the flow leaves |
-| Back handling | a screen intercepts back while composed | a transition guard refuses every way out, gesture or not |
-| Guards | a destination rule, plus removal when the session ends | a 401 defers the decision, asks for a PIN, then continues where you were going |
-| Nested navigation | one host, tabs as its stack | a stack per tab, preserved across switches, with one guarded tab |
-| Deep links | one link, one route; app scheme and web form agree | a link three screens deep that reads its source and meets a guard |
+| the feature's screens | `NavigationGraphProvider` | every package |
+| an access or transition rule | `NavigationGuard` | [`GuardsBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/GuardsBindings.kt), [`BackBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/BackBindings.kt) |
+| the pages it opens from links | `DeepLinkHandler` | [`DeepLinksBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/DeepLinksBindings.kt) |
+| an observer of navigation | `NavigationEventSink` | — not used by the sample |
 
-### What each one is really showing
+State a guard reads — a session, a draft — is provided `@SingleIn(AppScope::class)`, because a guard
+runs outside composition and cannot see what a screen remembers.
 
-- **Navigation.** Commands answer with a `NavigationOutcome` instead of `Unit`, because a guard can
-  refuse, redirect or defer — so "we moved", "we were sent elsewhere" and "nothing happened" are
-  distinguishable at the call site. The order flow logs each answer outside the step that asked,
-  because the command usually takes that step off the screen.
-- **Results.** A typed `ResultKey<T>` declared next to the producing feature's routes, so the two
-  sides cannot disagree about the type. `ResultEffect` runs when the waiting screen is uncovered,
-  because Navigation3 composes only the current scene — which is also why what a result updates
-  lives in saveable state or an entry-scoped ViewModel, never in a plain `remember`.
-- **Arguments.** Lifetime derived from the back stack rather than counted. A count released on
-  dispose reaches zero one push early, for the same reason. The checkout steps keep each field in
-  their own state and write it through: the argument store is not snapshot state, so a field bound
-  straight to it never shows what is typed.
-- **Back handling.** A screen-level handler only fires while its screen is composed, so it cannot
-  stop a jump that skips the screen. A transition guard can, because it sees every stack change.
-- **Guards.** `RouteGuard` for a rule about destinations, `NavigationGuard` for a rule about the
-  transition, and `GuardVerdict.Deferred` for a rule that cannot answer yet. The PIN example uses a
-  `TransientRoute` for its placeholder so a restored stack cannot come back showing a prompt with
-  nothing left to answer it.
-- **Nested navigation.** Both examples mount a second host inside one entry of the first. The
-  per-tab one also shows what using an application-wide guard in a nested host requires: the nested
-  host must register the route the guard substitutes, or Navigation3's fallback throws on a key it
-  has no entry for.
-- **Deep links.** Resolving a link is the root state holder's job — a host can be mounted anywhere,
-  but there is one link stream for the whole app. The resolved stack still passes through the
-  guards, because the host resolves whatever it is handed before rendering it. What the handler
-  decided — opened, rejected, not found — is logged by the root and shown by the screen that sent
-  the link, since the ingress only knows whether it was queued.
+### Platform entry points
+
+The platform's only navigation duty is to publish links; everything else is shared.
+
+**Android** — [`MainActivity.kt`](app/src/main/kotlin/io/thernal/navkit/sample/android/MainActivity.kt)
+and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
+
+- the activity is `android:launchMode="singleTop"`, so a link arriving while the app is open reaches
+  `onNewIntent` instead of a second activity with a second composition;
+- a `VIEW` intent filter with `DEFAULT`, `BROWSABLE` and `<data android:scheme="navkit" />`;
+- `onCreate` publishes `intent` only when `savedInstanceState == null` — a recreated activity still
+  carries its launch intent, and publishing it again would apply the link twice;
+- `onNewIntent` calls `setIntent(intent)` and publishes it.
+
+**iOS** — [`iOSApp.swift`](iosApp/iosApp/iOSApp.swift), [`ContentView.swift`](iosApp/iosApp/ContentView.swift),
+[`Info.plist`](iosApp/iosApp/Info.plist) and
+[`MainViewController.kt`](shared/src/iosMain/kotlin/io/thernal/navkit/sample/app/MainViewController.kt):
+
+- `ContentView` wraps `MainViewController()` — a `ComposeUIViewController` over the same `SampleApp`;
+- `.onOpenURL` calls the Kotlin `handleDeepLink(url:)`, which publishes to the ingress;
+- `Info.plist` declares the `navkit` scheme under `CFBundleURLTypes`, and sets
+  `CADisableMinimumFrameDurationOnPhone` to `true` — Compose Multiplatform checks that key on its first
+  frame and the app closed at launch without it.
+
+### Checklist
+
+- [ ] One graph per process, handed to the composition root.
+- [ ] The root installs `graph.providedValues`, owns its stack in a ViewModel with a plain setter,
+      registers every `NavigationGraphProvider`, and resolves deep links.
+- [ ] Every route a host can show — including sign-in screens and placeholders that guards put there —
+      has exactly one entry in that host.
+- [ ] Guards, deep-link handlers and event sinks are contributed `@IntoSet`.
+- [ ] Android: `singleTop`, intent filter, publish in `onCreate` (first creation only) and `onNewIntent`.
+- [ ] iOS: URL type, `onOpenURL` → ingress, `CADisableMinimumFrameDurationOnPhone`.
+
+## What the sample does not show
+
+These are part of the API but have no example here; the API guide covers each.
+
+| Capability | Where to read |
+|---|---|
+| bottom sheets — `bottomSheetEntry`, the sheet scene, custom `SceneStrategy`s | [Bottom sheets, scenes and transitions](../navigation/api/README.md#bottom-sheets-scenes-and-transitions) |
+| custom or disabled transitions — `NavAnimations`, `NavigationDefaults` | [Transitions](../navigation/api/README.md#transitions) |
+| guards for one host only — `NavigationHostParams.guards` | [Registering guards](../navigation/api/README.md#registering-guards) |
+| logging and analytics — `NavigationEventSink` | [Navigation events](../navigation/api/README.md#navigation-events) |
+| enum-typed pages — `TypedDeepLinkHandler`, `DeepLinkPage`, `pageOf`, outbound `buildUri` | [Handlers](../navigation/api/README.md#handlers), [Outbound links](../navigation/api/README.md#outbound-links) |
+| navigation decided in a ViewModel and replayed in the composable | [Calling from a ViewModel](../navigation/api/README.md#calling-from-a-viewmodel) |
+| `buildStack`, `whileRouteInStack`, `popBack(count)` | [Commands](../navigation/api/README.md#commands), [Arguments](../navigation/api/README.md#arguments) |
+| unit tests for guards, commands, results, arguments and links | [Testing](../navigation/api/README.md#testing) |
