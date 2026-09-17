@@ -4,10 +4,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
@@ -20,13 +19,12 @@ import io.thernal.navkit.sample.ui.ExampleScaffold
 @Composable
 fun ArticleHomeScreen(drafts: ArticleDraftStore) {
     val navigator = LocalNavigator.current
-    val body by drafts.body.collectAsState()
 
     ExampleScaffold(
         title = "Articles",
         subtitle = "The editor cannot be left with unsaved work — enforced by a guard, not by a screen.",
     ) {
-        ExampleReadout(label = "Saved body", value = body.ifBlank { "—" })
+        ExampleReadout(label = "Saved body", value = drafts.saved.ifBlank { "—" })
         ExampleAction(
             label = "Open the editor",
             onClick = { navigator.push(ArticleEditorRoute) },
@@ -42,15 +40,14 @@ fun ArticleHomeScreen(drafts: ArticleDraftStore) {
 @Composable
 fun ArticleEditorScreen(drafts: ArticleDraftStore) {
     val navigator = LocalNavigator.current
-    val body by drafts.body.collectAsState()
-    var lastRefusal by remember { mutableStateOf("—") }
+    var lastRefusal by rememberSaveable { mutableStateOf("—") }
 
     ExampleScaffold(
         title = "Editor",
         subtitle = "Every way out is refused while the body differs from what was saved.",
     ) {
         OutlinedTextField(
-            value = body,
+            value = drafts.body,
             onValueChange = { entered -> drafts.edit(entered) },
             label = { Text(text = "Body") },
             modifier = Modifier.fillMaxWidth(),

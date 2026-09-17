@@ -4,7 +4,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import io.thernal.navkit.navigation.api.presentation.argument.ArgumentScope
 import io.thernal.navkit.navigation.api.presentation.argument.LocalNavigationArguments
 import io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments
 import io.thernal.navkit.navigation.api.presentation.argument.whileInStack
@@ -13,6 +18,9 @@ import io.thernal.navkit.sample.ui.ExampleAction
 import io.thernal.navkit.sample.ui.ExampleNote
 import io.thernal.navkit.sample.ui.ExampleReadout
 import io.thernal.navkit.sample.ui.ExampleScaffold
+
+/** Alive while any step of the flow is on the stack — the start screen is not a step. */
+private val inCheckout: ArgumentScope = whileInStack { route -> route is CheckoutStepRoute }
 
 /**
  * One value, set once, read and updated on four consecutive screens, and gone the moment the flow
@@ -40,7 +48,7 @@ fun CheckoutStartScreen() {
                 arguments.put(
                     key = CheckoutDraftKey,
                     value = CheckoutDraft(),
-                    scope = whileInStack { it is CheckoutStepRoute },
+                    scope = inCheckout,
                 )
                 navigator.push(CheckoutAmountRoute)
             },
@@ -113,6 +121,11 @@ fun CheckoutSummaryScreen() {
 /**
  * The steps differ only in which field they touch, so they share one body. A real flow would look
  * the same: the argument is read and written through the same key on every screen.
+ *
+ * The field keeps its own state and writes every change through to the argument. The argument
+ * store is not snapshot state, so a field whose value came from it never recomposed: every
+ * keystroke was reverted, and the revert was written back as an empty string. It is read once,
+ * when the step is first shown, and saved with the entry after that.
  */
 @Composable
 private fun CheckoutStep(
@@ -124,16 +137,17 @@ private fun CheckoutStep(
 ) {
     val navigator = LocalNavigator.current
     val arguments = LocalNavigationArguments.current
-    val draft = arguments.get(CheckoutDraftKey) ?: CheckoutDraft()
+    var entered by rememberSaveable { mutableStateOf(read(arguments.draft())) }
 
     ExampleScaffold(
         title = title,
         subtitle = "Reads the shared draft, writes one field back into it.",
     ) {
         OutlinedTextField(
-            value = read(draft),
-            onValueChange = { entered ->
-                arguments.update(write(draft, entered))
+            value = entered,
+            onValueChange = { text ->
+                entered = text
+                arguments.update { draft -> write(draft, text) }
             },
             label = { Text(text = label) },
             modifier = Modifier.fillMaxWidth(),
@@ -145,12 +159,19 @@ private fun CheckoutStep(
     }
 }
 
-/** Re-putting under the same key replaces the value and keeps the scope it was given. */
-private fun NavigationArguments.update(draft: CheckoutDraft) {
+private fun NavigationArguments.draft(): CheckoutDraft {
+    return get(CheckoutDraftKey) ?: CheckoutDraft()
+}
+
+/**
+ * Re-putting under the same key replaces the value. [change] is applied to the draft as it is now,
+ * not as the screen last saw it, so two steps never write over each other's fields.
+ */
+private fun NavigationArguments.update(change: (CheckoutDraft) -> CheckoutDraft) {
     put(
         key = CheckoutDraftKey,
-        value = draft,
-        scope = whileInStack { it is CheckoutStepRoute },
+        value = change(draft()),
+        scope = inCheckout,
     )
 }
 

@@ -60,7 +60,9 @@ publishes.
   sides cannot disagree about the type. `ResultEffect` runs when the waiting screen is uncovered,
   because Navigation3 composes only the current scene.
 - **Arguments.** Lifetime derived from the back stack rather than counted. A count released on
-  dispose reaches zero one push early, for the same reason.
+  dispose reaches zero one push early, for the same reason. The checkout steps keep each field in
+  their own state and write it through: the argument store is not snapshot state, so a field bound
+  straight to it never shows what is typed.
 - **Back handling.** A screen-level handler only fires while its screen is composed, so it cannot
   stop a jump that skips the screen. A transition guard can, because it sees every stack change.
 - **Guards.** `RouteGuard` for a rule about destinations, `NavigationGuard` for a rule about the

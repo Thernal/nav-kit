@@ -8,7 +8,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
@@ -27,8 +27,8 @@ import io.thernal.navkit.sample.ui.ExampleScaffold
 @Composable
 fun DraftEditorScreen() {
     val navigator = LocalNavigator.current
-    var text by remember { mutableStateOf("") }
-    var isAsking by remember { mutableStateOf(false) }
+    var text by rememberSaveable { mutableStateOf("") }
+    var isAsking by rememberSaveable { mutableStateOf(false) }
 
     NavigationBackHandler(enabled = text.isNotBlank()) {
         isAsking = true
