@@ -23,19 +23,15 @@ private class LinkParts(
 /**
  * Reads a raw link into a [DeepLink], against the bases the application registered.
  *
- * The one rule worth stating: **the most specific registered base the link starts with is removed,
- * and what follows is the page.** `navkit://booking/42` against `navkit://` and
- * `https://example.com/booking/42` against `https://example.com` both yield `["booking", "42"]`, so a
- * feature declares its page once and every registered form of the link reaches it. On an app scheme
- * that leaves the host in the page's position — there is no domain there to be a host.
+ * **The most specific registered base the link starts with is removed, and what follows is the
+ * page.** `navkit://booking/42` against `navkit://` and `https://example.com/booking/42` against
+ * `https://example.com` both yield `["booking", "42"]`, so a feature declares its page once and every
+ * registered form of the link reaches it. On an app scheme that leaves the host in the page's
+ * position — there is no domain there to be a host.
  *
- * Registered rather than derived from the scheme, although a registered list has to agree with the
- * schemes and domains declared in `AndroidManifest.xml` and `Info.plist`. Deriving the rule from the
- * scheme bought three failures: `buildDeepLinkUri` could not produce a link this reads back on an app
- * scheme, a web link on a domain the application does not own reached a handler, and a web base could
- * not carry a path.
- *
- * `null` when the link is malformed, starts with no registered base, or names no page after it.
+ * `null` when the link is malformed, starts with no registered base, or names no page after it. The
+ * registered list has to agree with `AndroidManifest.xml` and `Info.plist`; why it is registered
+ * rather than derived from the scheme is in `navigation/README.md`, "Deep links".
  */
 fun parseDeepLink(
     raw: String,

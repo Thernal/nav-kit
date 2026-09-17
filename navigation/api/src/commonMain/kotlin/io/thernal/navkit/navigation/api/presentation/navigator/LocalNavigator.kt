@@ -7,11 +7,9 @@ import kotlinx.collections.immutable.persistentListOf
 val LocalNavigator = staticCompositionLocalOf<Navigator> { NoOpNavigator }
 
 /**
- * Discards every command. A composable resolved above the `NavigationHost` that installs the real
- * [Navigator] (an app root, an isolated preview) reads [LocalNavigator] safely instead of crashing.
- *
- * It reports [NavigationOutcome.Rewritten] over an empty stack rather than `Applied`, because a
- * caller that checks its outcome should read "this did not happen" — which is the truth here.
+ * Discards every command, so a composable above any `NavigationHost` — an app root, a preview —
+ * reads [LocalNavigator] safely. It answers [NavigationOutcome.Rewritten] rather than `Applied`:
+ * a caller that checks its outcome should read "this did not happen".
  */
 private object NoOpNavigator : Navigator {
     private val nothing = NavigationOutcome.Rewritten(stack = persistentListOf(), reason = null)

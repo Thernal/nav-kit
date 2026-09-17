@@ -14,10 +14,9 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * The two navigators a host builds over one stack. [screens] is what the host provides to its
- * content: a command that moves the stack walks away from a waiting deferral, and a command that is
- * deferred hands its deferral to the host. [deferral] is what a deferral itself is given, and does
- * neither — its placeholder push is part of the wait, not a way out of it.
+ * The two navigators a host builds over one stack. [screens] goes to the host's content: it abandons
+ * a waiting deferral when it moves the stack, and submits the deferrals it meets. [deferral] is what
+ * a running deferral is given and does neither — its placeholder push is part of the wait.
  */
 internal class HostNavigators(
     val screens: Navigator,
@@ -25,10 +24,9 @@ internal class HostNavigators(
 )
 
 /**
- * Built once so their identity stays stable across recompositions — every read goes through the
- * [rememberUpdatedState] boxes below and every write through [writer], rather than through anything
- * captured at construction. A navigator that captured the first composition's stack would keep
- * writing over it forever.
+ * Built once so their identity is stable across recompositions: every read goes through the
+ * [rememberUpdatedState] boxes below and every write through [writer]. A navigator that captured the
+ * first composition's stack would keep writing over it forever.
  */
 @Composable
 internal fun <R : Route> rememberHostNavigators(
@@ -44,9 +42,8 @@ internal fun <R : Route> rememberHostNavigators(
 
     return remember(key1 = writer, key2 = deferrals) {
         val buildBackStack: (MutableList<Route>.() -> Unit) -> Unit = { builder ->
-            // A fresh `MutableList<Route>` rather than a cast of the host's own list: the builder
-            // may add any `Route`, and handing it a list typed `R` would be a lie that outlives this
-            // call. `ImmutableList` is covariant, so the copy needs no cast.
+            // A fresh `MutableList<Route>`, not a cast of the host's own list: the builder may add
+            // any `Route`, and a list typed `R` would be a lie that outlives this call.
             val mutable: MutableList<Route> = writer.newestOr(currentBackStack).toMutableList()
             mutable.builder()
             writer.write(mutable.toImmutableList().asHostStack())

@@ -120,7 +120,9 @@ into one application-wide `NavigationGuardRunner`. A single host can add its own
 `NavigationHostParams.guards` — a wizard's internal rules, or a guard whose dependencies live in a
 feature scope and so could never reach the app graph's multibinding. The caller already holds that
 scope and hands the guard over the same way it hands over `decorators`; `extendedWith` returns the
-app-wide runner unchanged when there are none.
+app-wide runner unchanged when there are none. Contributed guards run after the app-wide ones, and
+because the fold repeats to a fixpoint that ordering only decides the intermediate steps, never
+which rule ultimately holds.
 
 ### Staying correct after the answer changes
 

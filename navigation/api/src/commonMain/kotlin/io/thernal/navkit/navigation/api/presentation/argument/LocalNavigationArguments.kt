@@ -2,11 +2,7 @@ package io.thernal.navkit.navigation.api.presentation.argument
 
 import androidx.compose.runtime.staticCompositionLocalOf
 
-/**
- * The application's [NavigationArguments]. `wiring` contributes it to the graph's `ProvidedValue<*>`
- * set and the composition root installs it, the same way `LocalNavigationHostRenderer` is
- * installed.
- */
+/** The application's [NavigationArguments], contributed by `wiring` and installed at the root. */
 val LocalNavigationArguments = staticCompositionLocalOf<NavigationArguments> { NoOpNavigationArguments }
 
 /** Holds nothing, so a screen composed outside the app graph — a preview — still composes. */

@@ -6,17 +6,15 @@ import kotlinx.collections.immutable.ImmutableList
 /**
  * Every stack this host writes, kept until the owner hands it back.
  *
- * The owner is a controlled input and it answers late: a `StateFlow` collected into composition
- * reaches the host a frame after `onBackStackChange` returned. For that frame the stack on screen is
- * not the stack the navigator last wrote, and a command built on the screen would undo the one
- * before it — `popBack(2)` popped once. So a command builds on [newestOr] instead.
+ * The owner answers late — a `StateFlow` reaches the host a frame after `onBackStackChange` returned
+ * — so for that frame the stack on screen is not the one last written, and a command built on the
+ * screen would undo the command before it (`popBack(2)` popped once). Commands build on [newestOr].
  *
- * The same record tells a stack this host wrote apart from one that arrived from elsewhere — a deep
- * link the root applied, a tab bar handing over a different list — and that is the signal a waiting
- * deferral needs in order to be walked away from. See [acknowledge].
+ * The same record tells a stack this host wrote apart from one that arrived from elsewhere, which is
+ * what a waiting deferral needs in order to be walked away from. See [acknowledge].
  *
- * Plain fields rather than snapshot state: nothing here decides what composes, and a snapshot write
- * from inside a command would invalidate the composition reading it.
+ * Plain fields, not snapshot state: nothing here decides what composes, and a snapshot write from
+ * inside a command would invalidate the composition reading it.
  */
 internal class HostStackWriter<R : Route>(private val deliver: (ImmutableList<R>) -> Unit) {
     private var handed: ImmutableList<R>? = null
@@ -35,12 +33,9 @@ internal class HostStackWriter<R : Route>(private val deliver: (ImmutableList<R>
     }
 
     /**
-     * Records the stack the owner handed in on this composition, and answers whether it was changed
-     * by a hand other than this host's.
-     *
-     * The first stack is nobody's change, and a stack equal to the last one is no change at all. A
-     * handed-back write confirms itself and every write before it; anything else is external, and
-     * the writes still waiting are dropped, because the owner has moved on without them.
+     * Records the stack the owner handed in, and answers whether it was changed by a hand other than
+     * this host's. The first stack is nobody's change; a handed-back write confirms itself and every
+     * write before it; anything else is external, and the waiting writes are dropped.
      */
     fun acknowledge(stack: ImmutableList<R>): Boolean {
         val previous = handed

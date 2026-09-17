@@ -4,10 +4,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-/**
- * The application's [NavigationResults]. `wiring` contributes it to the graph's `ProvidedValue<*>` set
- * and the composition root installs it, the same way `LocalNavigationHostRenderer` is installed.
- */
+/** The application's [NavigationResults], contributed by `wiring` and installed at the root. */
 val LocalNavigationResults = staticCompositionLocalOf<NavigationResults> { NoOpNavigationResults }
 
 /** Holds nothing, so a screen composed outside the app graph — a preview — still composes. */

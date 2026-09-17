@@ -10,10 +10,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 /**
- * Controlled like a `TextField`: the caller owns [backStack] (its own `StateFlow`-backed state,
- * typically) and is notified of every navigation command through [onBackStackChange].
- * `NavigationHost` builds a [io.thernal.navkit.navigation.api.presentation.navigator.Navigator]
- * over this pair and provides it to its own content, so the navigation module never owns state.
+ * Controlled like a `TextField`: the caller owns [backStack] and is notified of every navigation
+ * command through [onBackStackChange], which must be a plain setter — the host writes its own guard
+ * corrections back through it. `NavigationHost` builds a
+ * [io.thernal.navkit.navigation.api.presentation.navigator.Navigator] over the pair.
  */
 @Immutable
 data class NavigationHostParams<R : Route>(
@@ -25,10 +25,8 @@ data class NavigationHostParams<R : Route>(
     val decorators: ImmutableList<NavEntryDecorator<R>> = persistentListOf(),
     val sceneStrategies: ImmutableList<SceneStrategy<R>> = persistentListOf(),
     /**
-     * Guards that apply to this host's stack only, on top of the application-wide ones. For a
-     * wizard's internal rules, or a guard whose dependencies live in a feature scope and so could
-     * never be contributed to the app graph's multibinding: the caller already holds that scope,
-     * and hands the guard over here the same way it hands over [decorators].
+     * Guards that apply to this host's stack only, on top of the application-wide ones — a wizard's
+     * internal rules, or a guard whose dependencies live in a scope the app graph cannot reach.
      */
     val guards: ImmutableList<NavigationGuard> = persistentListOf(),
 )

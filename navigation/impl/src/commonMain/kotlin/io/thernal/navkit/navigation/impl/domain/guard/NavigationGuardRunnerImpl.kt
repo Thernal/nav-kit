@@ -9,29 +9,20 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 
-/**
- * Bounds the fixpoint below. Two guards that rewrite each other's output would otherwise spin
- * forever; reaching this many rounds is a bug in the guards, not a stack worth returning.
- */
+/** Bounds the fixpoint below: reaching this many rounds is a bug in the guards, not a stack. */
 private const val MAX_ROUNDS = 8
 
 /**
- * Folds every guard over the proposed stack, then repeats the fold until the stack stops changing.
- *
- * The repetition is what closes the hole a per-route runner has: a redirect target used to be
- * pushed exactly as the guard named it, unseen by every guard including the one that produced it.
- * Here a rewritten stack is simply the next proposal, so an injected route is guarded like any
+ * Folds every guard over the proposed stack, then repeats the fold until the stack stops changing —
+ * a rewritten stack is simply the next proposal, so a route a guard introduced is guarded like any
  * other.
  *
- * Each guard's output is checked before it is adopted. A guard may drop routes and insert routes,
- * but reordering what it keeps or emptying the stack corrupts navigation state for every other
- * feature, so it fails loudly rather than being silently repaired — the same choice
- * `DeepLinkDispatcherImpl` makes for two handlers claiming one page.
+ * Each guard's output is checked before it is adopted, and a malformed one fails loudly rather than
+ * being silently repaired: it would corrupt navigation for every other feature.
  */
 class NavigationGuardRunnerImpl(private val guards: List<NavigationGuard>) : NavigationGuardRunner {
 
-    // Built once rather than per collector: the merge is over a fixed list, and a host resubscribes
-    // whenever its runner changes identity.
+    // Built once rather than per collector: the merge is over a fixed list.
     override val invalidations: Flow<Unit> = guards.map { guard -> guard.invalidations }.merge()
 
     override fun extendedWith(guards: ImmutableList<NavigationGuard>): NavigationGuardRunner {
@@ -62,9 +53,8 @@ class NavigationGuardRunnerImpl(private val guards: List<NavigationGuard>) : Nav
         var reason: BlockReason? = null
         var round = 0
         while (round < MAX_ROUNDS) {
-            // A round settles only when no guard rewrote anything, not when the round happens to
-            // end where it started: two guards that undo each other leave a stack the first one
-            // would reject again, and comparing only the round's net effect calls that settled.
+            // A round settles when no guard rewrote anything, not when it ends where it started:
+            // two guards that undo each other leave a stack the first would reject again.
             var didRewrite = false
             guards.forEach { guard ->
                 when (val verdict = guard.evaluate(old = old, new = current)) {

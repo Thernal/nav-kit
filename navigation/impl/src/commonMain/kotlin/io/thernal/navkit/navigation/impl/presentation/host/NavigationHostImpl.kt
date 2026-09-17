@@ -22,17 +22,14 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 
 /**
- * Assembles one mounted host out of three parts, each of which owns one question:
+ * Assembles one mounted host out of three parts, each owning one question:
  * [rememberGuardedBackStack] what may be rendered, [rememberHostNavigators] how it is commanded,
- * and [rememberNavDisplayConfig] how it is drawn. What is left here is the wiring between them —
- * which is also the only place that holds a verdict, a navigator and a scope together, and
- * therefore the only place a deferral can be awaited.
+ * [rememberNavDisplayConfig] how it is drawn. What is left here is the wiring between them — and the
+ * only place that holds a verdict, a navigator and a scope together, so the only place a deferral
+ * can be awaited.
  *
- * The `Impl` suffix is the module's rule for a declaration that would otherwise collide with an
- * `api` name: `api`'s `NavigationHost` only reads
- * [io.thernal.navkit.navigation.api.presentation.host.LocalNavigationHostRenderer] and hands the
- * call on, and this is where it lands. Calling that one from here would loop back through the
- * renderer forever, which is exactly the misreading the suffix removes.
+ * `api`'s `NavigationHost` reads `LocalNavigationHostRenderer` and lands here; calling that one from
+ * here would loop back through the renderer forever, which is what the `Impl` suffix guards against.
  */
 @Composable
 internal fun <R : Route> NavigationHostImpl(
@@ -62,9 +59,8 @@ internal fun <R : Route> NavigationHostImpl(
         events = events,
     )
 
-    // A stack this host did not write — a deep link the root applied, a tab bar handing over a
-    // different list — is a way out of whatever deferral was waiting, exactly like a command that
-    // moved the stack. After composition, so it runs before any effect of this frame submits one.
+    // A stack this host did not write — a deep link, a tab bar handing over a different list — is a
+    // way out of a waiting deferral. After composition, so it runs before this frame submits one.
     SideEffect {
         if (writer.acknowledge(params.backStack)) {
             deferrals.abandon()
@@ -72,8 +68,7 @@ internal fun <R : Route> NavigationHostImpl(
     }
 
     // A deferral this host found itself, on a stack it was handed or revalidated. The navigator
-    // submits its own; both land in the same slot, which ignores a second submission for the same
-    // attempted stack.
+    // submits its own; both land in the same slot.
     LaunchedEffect(guarded.verdict) {
         val verdict = guarded.verdict
         if (verdict is GuardVerdict.Deferred) {
@@ -81,11 +76,9 @@ internal fun <R : Route> NavigationHostImpl(
         }
     }
 
-    // The one place a deferral is awaited. The host owns a scope tied to its own composition, so an
-    // unmounted host cancels what it started. Keyed on the pending run rather than on the verdict:
-    // the run's own placeholder push changes the verdict, and must not cancel the run that made it.
-    // A settled verdict is applied through the navigator, which resolves it again like any other
-    // stack change; a guard that defers a second time for the same stack is left alone.
+    // The one place a deferral is awaited: the host's scope is tied to its composition, so an
+    // unmounted host cancels what it started. Keyed on the run, not the verdict — the run's own
+    // placeholder push changes the verdict and must not cancel the run that made it.
     val pending = deferrals.pending
     LaunchedEffect(pending) {
         if (pending != null) {
@@ -93,10 +86,8 @@ internal fun <R : Route> NavigationHostImpl(
         }
     }
 
-    // An argument outlives the screen that set it and dies with the flow that reads it, which is a
-    // fact about the stack — so the host that owns the stack is what applies it. Depth 0 only: the
-    // store is application-scoped, and a nested host's stack does not contain the outer flow's
-    // routes, so a nested host pruning against it would delete arguments that are still alive.
+    // An argument's lifetime is a fact about the stack, so the host that owns the stack applies it.
+    // Depth 0 only — see LocalNavigationHostDepth.
     val hostDepth = LocalNavigationHostDepth.current
     LaunchedEffect(key1 = guarded.resolved, key2 = hostDepth, key3 = argumentPruner) {
         if (hostDepth == 0) {
@@ -115,7 +106,7 @@ internal fun <R : Route> NavigationHostImpl(
             modifier = modifier,
             backStack = guarded.resolved,
             // The navigator consults the same dispatcher, so back has one path whether it came from
-            // here or from a button in a screen calling `popBack()` itself.
+            // here or from a screen calling `popBack()`.
             onBack = { navigators.screens.popBack() },
             sceneStrategies = config.sceneStrategies,
             transitionSpec = config.transitionSpec,

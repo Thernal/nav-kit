@@ -6,14 +6,9 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * What actually happened to a command that adds routes.
- *
- * A navigator command is not a request that always succeeds: guards can refuse it, rewrite it into
- * something else, or need time to decide. Returning that instead of `Unit` is what lets a caller
- * tell "we moved" from "we were sent somewhere else" from "nothing happened" — none of which the
- * call site could see before, since the only report was an application-wide event stream.
- *
- * The pops return a plain `Boolean` instead: "did the stack move" is the whole question there.
+ * What actually happened to a command that adds routes: guards can refuse it, rewrite it, or need
+ * time to decide, so a call site can tell "we moved" from "we were sent somewhere else" from
+ * "nothing happened".
  */
 @Immutable
 sealed interface NavigationOutcome {

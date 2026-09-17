@@ -8,8 +8,8 @@ import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkHandler
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkOutcome
 
 /**
- * The page -> handler table is built once, at construction, and a page claimed twice fails there
- * rather than resolving to whichever handler the set happened to yield last.
+ * The page -> handler table is built at construction, and a page claimed twice fails there rather
+ * than resolving to whichever handler the set happened to yield last.
  *
  * Handlers with no [bases] to read links against fail there too: every link would resolve to
  * `NotFound`, and nothing would say why.

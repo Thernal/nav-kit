@@ -1,9 +1,8 @@
 package io.thernal.navkit.navigation.api.presentation.log
 
 /**
- * Where [NavigationEvent]s go. An injected seam rather than a global logger object: a test
- * substitutes a recording sink and asserts on what the navigator emitted, which is the whole
- * reason the type exists.
+ * Where [NavigationEvent]s go. Injected rather than global, so a test can substitute a recording sink
+ * and assert on what the navigator emitted.
  */
 fun interface NavigationEventSink {
     fun emit(event: NavigationEvent)

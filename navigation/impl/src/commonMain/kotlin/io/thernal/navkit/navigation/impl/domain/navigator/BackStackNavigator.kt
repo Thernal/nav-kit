@@ -12,11 +12,9 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * What one call to [BackStackNavigator.mutate] did: the stack it started from, the stack the command
- * asked for, and what the guards made of it.
- *
- * [didMove] compares against [old] rather than trusting the command's own bookkeeping, because a
- * command only knows what it *asked* for — a guard can hand the previous stack back afterwards.
+ * What one call to [BackStackNavigator.mutate] did. [didMove] compares against [old] rather than
+ * trusting the command's own bookkeeping: a command knows only what it *asked* for, and a guard can
+ * hand the previous stack back afterwards.
  */
 private class Mutation(
     val old: ImmutableList<Route>,
@@ -34,28 +32,16 @@ private class Mutation(
  * Adapts a caller-owned back stack into the [Navigator] command surface. Holds no state of its own:
  * `NavigationHost` builds one per host, over whatever backs `NavigationHostParams.backStack`.
  *
- * `buildBackStack`/`resolveCanPop` are named apart from the [buildStack]/[canPop] members they
- * back — a same-named property and override recurse into each other instead of resolving to the
- * constructor value. [resolveGuardRunner] is a supplier for the same reason the other two are: a
- * host derives its runner from its own `NavigationHostParams.guards`, and a navigator that captured
- * one at construction would keep using it after those changed.
+ * **Every command goes through [mutate], and [mutate] is the only place a stack is written**, so
+ * every one of them is guarded by construction — pops included, which is how a screen with unsaved
+ * work refuses to be left.
  *
- * **Every command goes through [mutate], and [mutate] is the only place a stack is written.** It
- * hands the stack the command started from and the stack the command proposes to the guard runner
- * together, before anything is written back. So `push`, `navigate`, `replace`, `replaceAll`, both
- * `popBack`s, `popBackTo` and a caller's own [buildStack] are guarded by construction, rather than
- * each one remembering to ask — which is what previously left `buildStack` unguarded and had
- * `replaceAll` checking only its last route.
+ * The constructor takes suppliers, not values: a runner or a stack captured at construction would
+ * outlive the host's own. `buildBackStack`/`resolveCanPop` are named apart from the
+ * [buildStack]/[canPop] members they back because a same-named property and override recurse.
  *
- * Pops are guarded too: a guard sees the transition, so refusing one is how a screen with unsaved
- * work says so.
- *
- * The navigator cannot await a deferral — it has no scope, and a command returns synchronously — so
- * it hands every one it meets to [onDeferred], together with the stack the command attempted, and the
- * host that owns a scope awaits it. [onMoved] reports a command that actually changed the stack,
- * which is how the host knows a deferral still waiting has been walked away from. A navigator given
- * to a deferral itself leaves both empty: its placeholder push is not the user leaving, and a
- * deferral that defers again is left alone rather than spun on.
+ * The navigator has no scope, so it hands every deferral it meets to [onDeferred] and the host
+ * awaits it; [onMoved] tells the host a waiting deferral has been walked away from.
  */
 class BackStackNavigator(
     private val buildBackStack: (MutableList<Route>.() -> Unit) -> Unit,
@@ -92,9 +78,8 @@ class BackStackNavigator(
     }
 
     /**
-     * One stack write, not a pop followed by a push: the guards see the destination the caller
-     * actually asked for, and a caller-supplied [predicate] is matched against the stack as it
-     * stands rather than against a stack half-way through being rebuilt.
+     * One stack write, not a pop followed by a push: the guards see the destination the caller asked
+     * for, and [predicate] matches the stack as it stands rather than one half-way rebuilt.
      */
     override fun navigate(
         route: Route,
@@ -149,9 +134,8 @@ class BackStackNavigator(
     }
 
     override fun popBack(force: Boolean): Boolean {
-        // The same dispatcher the host's own back gesture goes through, consulted here so a screen
-        // that intercepts back is heard whichever of the two triggered it. Previously only the
-        // gesture asked, and an in-app back button calling this bypassed every callback.
+        // The same dispatcher the host's back gesture goes through, so a screen that intercepts back
+        // is heard whichever of the two triggered it.
         if (backDispatcher.dispatch()) {
             return true
         }
@@ -179,9 +163,8 @@ class BackStackNavigator(
     }
 
     /**
-     * Answers whether the stack moved, not whether a match was found: a guard refusing the jump, or
-     * a predicate matching the top route, leaves the stack where it was, and a caller reporting
-     * "left the screen" off a found match would be reporting something that did not happen.
+     * Answers whether the stack moved, not whether a match was found — a guard refusing the jump, or
+     * a predicate matching the top route, leaves it where it was.
      */
     override fun popBackTo(
         inclusive: Boolean,
@@ -214,14 +197,12 @@ class BackStackNavigator(
     }
 
     /**
-     * Runs [builder] against the current stack, resolves what it produced through the host's guard
-     * runner, and writes back what the guards allowed. [event] describes the command in its own
-     * terms and is emitted only when the guards left the proposal intact; otherwise the refusal or
-     * the deferral is what gets reported, so the event stream never claims a push that did not
-     * happen.
+     * Runs [builder] against the current stack, resolves it through the host's guard runner, and
+     * writes back what the guards allowed. [event] is emitted only when they left the proposal
+     * intact, so the event stream never claims a push that did not happen.
      *
-     * [onMoved] and [onDeferred] run after the write, in that order: a command that moves the stack
-     * walks away from whatever deferral was waiting before the one it may have started replaces it.
+     * [onMoved] runs before [onDeferred]: a command that moves the stack walks away from the waiting
+     * deferral before the one it may have started replaces it.
      */
     private fun mutate(
         builder: MutableList<Route>.() -> Unit,

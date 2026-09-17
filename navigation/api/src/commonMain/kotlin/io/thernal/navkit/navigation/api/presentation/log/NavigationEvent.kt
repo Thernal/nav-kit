@@ -4,11 +4,7 @@ import io.thernal.navkit.navigation.api.presentation.guard.BlockReason
 import io.thernal.navkit.navigation.api.presentation.model.Route
 import kotlinx.collections.immutable.ImmutableList
 
-/**
- * Everything a navigator did, as data. Public rather than internal to `impl`: an app renders these
- * in whatever debug console it already has, and there is no way to do that from outside if the
- * type is hidden.
- */
+/** Everything a navigator did, as data, for whatever debug console an app already has. */
 sealed interface NavigationEvent {
     /** One line, for a list. */
     val message: String
@@ -55,9 +51,8 @@ sealed interface NavigationEvent {
     }
 
     /**
-     * A guard refused the proposed stack. Reported at stack level rather than as one rejected
-     * route, because a guard decides about a transition: what it refused may be a push, a pop, or
-     * a deep link's whole multi-route stack.
+     * A guard refused the proposed stack — at stack level, because what it refused may be a push, a
+     * pop, or a deep link's whole multi-route stack.
      */
     data class Blocked(
         val attempted: ImmutableList<Route>,

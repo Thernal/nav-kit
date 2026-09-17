@@ -36,15 +36,11 @@ import io.thernal.navkit.navigation.impl.presentation.host.NavigationHostRendere
 /**
  * Binds the navigation capability into an application graph.
  *
- * This module is the worked example of how the other two are installed, not a fixed part of them:
- * `api` and `impl` name no injection framework at all, so an app on a different container writes
- * its own equivalent of this file and changes nothing else. Metro is what this repository happens
- * to demonstrate it with.
+ * A worked example rather than a fixed part of the kit: `api` and `impl` name no injection framework,
+ * so an app on a different container writes its own equivalent of this file and changes nothing else.
  *
- * `Navigator` is deliberately **not** bound here. It holds no state — `NavigationHost` builds one
- * per host over the caller-owned `backStack`/`onBackStackChange` pair on its `NavigationHostParams`
- * — so an application-graph binding for it would be a second, unscoped navigator pointing at
- * nothing.
+ * `Navigator` is deliberately **not** bound here. It holds no state — `NavigationHost` builds one per
+ * host — so an application-graph binding would be a second, unscoped navigator pointing at nothing.
  */
 @BindingContainer
 @ContributesTo(AppScope::class)
@@ -66,9 +62,8 @@ interface NavigationWiring {
     val navigationGuards: Set<NavigationGuard>
 
     /**
-     * Observers of [NavigationEvent]. A multibinding rather than a single overridable binding: a
-     * debug console, an analytics tracker and a test recorder all want the same stream, and none
-     * of them should have to displace the others to get it.
+     * Observers of [NavigationEvent]. A multibinding, so a debug console, an analytics tracker and a
+     * test recorder can all have the stream without displacing each other.
      */
     @Multibinds(allowEmpty = true)
     val navigationEventSinks: Set<NavigationEventSink>
@@ -87,10 +82,11 @@ interface NavigationWiring {
         }
 
         /**
-         * One object behind two interfaces: an application reads and writes arguments through
-         * [NavigationArguments], and the mounted host applies their lifetime through [ArgumentPruner].
-         * Splitting the surfaces rather than the instance is what keeps `pruneFor` off the
-         * composition local that every screen can reach.
+         * One instance behind two interfaces — [NavigationArguments] for the application,
+         * [ArgumentPruner] for the mounted host — which is what keeps `pruneFor` off the composition
+         * local every screen can reach. The scope sits on the instance and the two below alias it:
+         * scoping them separately would build two stores, and the host would prune the one nothing
+         * writes to.
          */
         @Provides
         @SingleIn(AppScope::class)
@@ -124,8 +120,8 @@ interface NavigationWiring {
         }
 
         /**
-         * One bridge, two contracts: the publisher an entry point calls and the stream the root
-         * collects have to be the same object or a cold-start link is dropped on the floor.
+         * The same aliasing: the publisher an entry point calls and the stream the root collects have
+         * to be one object, or a cold-start link is dropped on the floor.
          */
         @Provides
         @SingleIn(AppScope::class)
@@ -169,9 +165,8 @@ interface NavigationWiring {
         }
 
         /**
-         * Contributed into the graph's `Set<ProvidedValue<*>>` so a composition root installs every
-         * feature's composition locals in one `CompositionLocalProvider(*values.toTypedArray())`,
-         * instead of importing this module to name [LocalNavigationHostRenderer] itself.
+         * Contributed into the graph's `Set<ProvidedValue<*>>`, so a composition root installs every
+         * feature's composition locals in one `CompositionLocalProvider` without naming any of them.
          */
         @Provides
         @IntoSet

@@ -10,10 +10,8 @@ import io.thernal.navkit.navigation.api.presentation.navigator.Navigator
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * One deferral a host is waiting on, with the stack whose command produced it.
- *
- * A plain class rather than a data class on purpose: the host's effect is keyed on its identity, so
- * two submissions are two runs however alike they look.
+ * One deferral a host is waiting on, with the stack whose command produced it. A plain class, not a
+ * data one: the host's effect is keyed on its identity, so two submissions are two runs.
  */
 internal class PendingDeferral(
     val attempted: ImmutableList<Route>,
@@ -21,17 +19,12 @@ internal class PendingDeferral(
 )
 
 /**
- * The deferral a host is awaiting — at most one at a time.
+ * The deferral a host is awaiting — at most one at a time. The navigator feeds it, and so does the
+ * host when a stack it was handed defers; the host's effect drains it, keyed on [pending].
  *
- * Two things feed it: the host's navigator, when a command it ran was deferred, and the host
- * itself, when a stack it was handed or revalidated was. One thing drains it: the host's effect,
- * keyed on [pending]. Keying the run here rather than on the verdict is the point. The verdict is
- * derived from the stack, a deferral's own placeholder push changes the stack, and a run keyed on
- * the verdict cancelled itself the moment it showed its prompt.
- *
- * A run ends in one of three ways: it settles and its stack is applied, a newer deferral replaces
- * it, or it is [abandon]ed because the stack moved without it — the user backed out of the prompt,
- * a deep link arrived, the host was handed another list.
+ * **Keyed on the run, never on the verdict.** The verdict is derived from the stack, and a
+ * deferral's own placeholder push changes the stack — a run keyed on the verdict cancels itself the
+ * moment it shows its prompt.
  */
 @Stable
 internal class HostDeferrals {
@@ -40,7 +33,7 @@ internal class HostDeferrals {
 
     /**
      * Starts waiting on [deferral], unless a run for the same [attempted] stack already is: a double
-     * tap, or a revalidation landing before the host's write-back, must not show the prompt twice.
+     * tap, or a revalidation landing before the write-back, must not show the prompt twice.
      */
     fun submit(
         attempted: ImmutableList<Route>,
@@ -57,14 +50,12 @@ internal class HostDeferrals {
     }
 
     /**
-     * Awaits [run] through [navigator] and applies what it settled on.
+     * Awaits [run] through [navigator] and applies what it settled on. [navigator] must be one that
+     * neither abandons nor submits — see [HostNavigators].
      *
-     * [navigator] must be one that neither abandons nor submits: the run's own placeholder push is
-     * not the user leaving, and a deferral that defers again is left alone rather than spun on.
-     *
-     * A run abandoned before it started, or while it was finishing, does nothing. Cancelling the
-     * effect waits for the next composition: the host can launch a run in the same frame that
-     * abandoned it, and a run's answer can arrive before the cancellation does.
+     * Both identity checks are load-bearing: cancelling the effect waits for the next composition,
+     * so a run can be abandoned in the same frame it was launched, and an answer can arrive before
+     * the cancellation does.
      */
     suspend fun drive(
         run: PendingDeferral,

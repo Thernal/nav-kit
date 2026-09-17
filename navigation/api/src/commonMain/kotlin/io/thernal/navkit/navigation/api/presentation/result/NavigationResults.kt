@@ -3,22 +3,16 @@ package io.thernal.navkit.navigation.api.presentation.result
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * A keyed mailbox for values travelling **backwards**: a closing screen leaves one for a screen
- * that is already in the stack and is about to be uncovered.
- *
- * It is not for arguments. A value meant for screens that do not exist yet travels forwards and
- * belongs to the route, or to the flow that owns those screens — see
+ * A keyed mailbox for values travelling **backwards**: a closing screen leaves one for a screen that
+ * is already in the stack and is about to be uncovered. A value meant for screens that do not exist
+ * yet travels forwards and belongs in
  * [io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments].
  *
- * **In memory only.** A posted result is lost on process death while the routes that would have
- * consumed it are restored, so a consumer treats a missing result the way it treats a first visit,
- * never as an error.
+ * **In memory only**: a posted result is lost on process death while the routes that would have
+ * consumed it are restored, so a consumer treats a missing result as a first visit, never an error.
  */
 interface NavigationResults {
-    /**
-     * The names that currently have a value waiting. Names rather than the values themselves, so
-     * one feature's pending results are not readable by every screen in the app.
-     */
+    /** The names with a value waiting — names, so one feature's results are not readable by every screen. */
     val pending: StateFlow<Set<String>>
 
     /** Leaves [value] for whoever consumes [key]. A second post for the same key replaces the first. */
@@ -28,11 +22,8 @@ interface NavigationResults {
     )
 
     /**
-     * Takes the value and removes it: one delivery, never two.
-     *
-     * Throws if a value was posted under the same name with a different type, which can only mean
-     * two features declared the same name — a mistake worth failing on rather than answering
-     * `null` to.
+     * Takes the value and removes it: one delivery, never two. Throws if it was posted under the
+     * same name with a different type, which can only mean two features chose one name.
      */
     fun <T : Any> consume(key: ResultKey<T>): T?
 

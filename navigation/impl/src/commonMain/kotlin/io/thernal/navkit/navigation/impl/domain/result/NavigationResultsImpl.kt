@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * One posted value, kept with the key that posted it so a consumer asking under the same name with
- * a different type can be told rather than quietly handed nothing.
+ * One posted value, kept with the key that posted it so a consumer asking under the same name with a
+ * different type can be told rather than quietly handed nothing.
  */
 private class PostedResult(
     val key: ResultKey<*>,
@@ -48,9 +48,9 @@ class NavigationResultsImpl : NavigationResults {
     }
 
     /**
-     * Republishes the names until they match the map they were read from. [posted] is the single
-     * source of truth and [pendingNames] only mirrors it, so a writer that observed an older map
-     * loops and publishes the newer one instead of leaving a stale set behind.
+     * Republishes the names until they match the map they were read from: [posted] is the source of
+     * truth and [pendingNames] only mirrors it, so a writer that observed an older map loops rather
+     * than leaving a stale set behind.
      */
     private fun publish() {
         var snapshot = posted.value

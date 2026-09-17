@@ -6,15 +6,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * Callbacks are held in a [MutableStateFlow] over an immutable list rather than a synchronized
- * collection: `update` is a compare-and-set loop on every platform, and [dispatch] iterates a
- * snapshot, so a callback that unregisters itself while being dispatched cannot corrupt the walk.
+ * Callbacks live in a [MutableStateFlow] over an immutable list rather than a synchronized
+ * collection: `update` is a compare-and-set loop on every platform, and [dispatch] walks a snapshot,
+ * so a callback that unregisters itself mid-dispatch cannot corrupt the walk.
  */
 class BackDispatcherImpl : BackDispatcher {
     private val callbacks = MutableStateFlow<List<BackCallback>>(emptyList())
 
-    // Back is dispatched from the UI thread, so a plain flag is enough and a lock would only buy
-    // the illusion of more.
+    // Back is dispatched from the UI thread, so a plain flag is enough.
     private var isDispatching = false
 
     override fun register(callback: BackCallback): AutoCloseable {
@@ -23,10 +22,9 @@ class BackDispatcherImpl : BackDispatcher {
     }
 
     /**
-     * A callback that decides to let back through by calling `Navigator.popBack()` from inside its
-     * own handler would otherwise be dispatched to again, forever — the navigator consults this
-     * dispatcher first. While a dispatch is in flight a nested one consumes nothing, so that
-     * re-entrant pop falls through to the stack, which is what the callback meant.
+     * A nested dispatch consumes nothing. The navigator consults this dispatcher first, so a callback
+     * that lets back through by calling `popBack()` from inside its own handler would otherwise be
+     * dispatched to forever; instead that re-entrant pop falls through to the stack.
      */
     override fun dispatch(): Boolean {
         if (isDispatching) {

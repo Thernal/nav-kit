@@ -12,11 +12,8 @@ import kotlin.reflect.safeCast
 /**
  * One stored argument. [wasAlive] is the latch that makes ordering forgiving: an argument put just
  * before the routes that read it are pushed has not been alive in any stack yet, and pruning it on
- * that first stack change would delete it one frame before its flow starts.
- *
- * A put whose flow is already in the stack starts latched. A flow that updates its own argument on
- * every screen is exactly that case, and a value that started over as "never alive" would outlive
- * the flow the first time the user backed out of it.
+ * that first stack change would delete it one frame before its flow starts. A put whose flow is
+ * already in the stack starts latched, so a flow that updates its own argument still dies with it.
  */
 private class StoredArgument(
     val key: ArgumentKey<*>,

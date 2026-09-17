@@ -8,13 +8,9 @@ import io.thernal.navkit.navigation.api.presentation.back.BackCallback
 import io.thernal.navkit.navigation.api.presentation.back.LocalBackDispatcher
 
 /**
- * Intercepts back ahead of the host's own pop, for as long as this composable is in the
- * composition.
- *
- * Registers against the dispatcher the mounted host provides, not a second global one: the
- * JVM original carried both an injected `BackDispatcher` nothing dispatched through and a private
- * `ComposeBackDispatcher` object the host actually consulted, so a caller could register with the
- * wrong one and silently never fire.
+ * Intercepts back ahead of the host's own pop, for as long as this composable is in the composition.
+ * It registers against the dispatcher the mounted host provides — the same object back is dispatched
+ * through, whether it came from the gesture or from a screen calling `popBack()`.
  */
 @Composable
 fun NavigationBackHandler(
@@ -26,7 +22,7 @@ fun NavigationBackHandler(
     val isCurrentlyEnabled by rememberUpdatedState(enabled)
 
     // Keyed on the dispatcher alone: `enabled` and `onBack` are read through the state above, so
-    // toggling either re-registers nothing and cannot reorder this callback among its siblings.
+    // toggling either cannot reorder this callback among its siblings.
     DisposableEffect(dispatcher) {
         val registration = dispatcher.register(
             BackCallback {

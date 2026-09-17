@@ -3,12 +3,8 @@ package io.thernal.navkit.navigation.api.presentation.argument
 import kotlin.reflect.KClass
 
 /**
- * Names one forward argument and fixes its type, declared next to the routes of the flow that
- * reads it.
- *
- * ```kotlin
- * val CheckoutDraft = argumentKey<Draft>("checkout_draft")
- * ```
+ * Names one forward argument and fixes its type, declared next to the routes of the flow that reads
+ * it: `val CheckoutDraft = argumentKey<Draft>("checkout_draft")`.
  */
 data class ArgumentKey<T : Any>(
     val name: String,
