@@ -27,7 +27,9 @@ publishes.
 
 ## The three things the composition root does
 
-`SampleApp` is the whole of the integration, and it names no feature:
+`SampleApp` is the whole of the integration, and it names no feature. The graph is handed to it
+rather than created by it: the graph lives as long as the process, a composition does not, and a
+graph rebuilt on every rotation took the session, the drafts and the argument store with it.
 
 - **Composition locals arrive in one set.** `wiring` contributes each as a `ProvidedValue<*>`, and
   the root installs them with a single spread. A screen reaches the navigator, the results mailbox

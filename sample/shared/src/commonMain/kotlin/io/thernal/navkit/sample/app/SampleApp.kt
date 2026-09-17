@@ -6,26 +6,26 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkOutcome
 import io.thernal.navkit.navigation.api.presentation.host.NavigationHost
 import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
 
 /**
- * The composition root, and the only place the sample differs from a real application: an app would
- * hold its graph in a platform container rather than remembering it here.
+ * The composition root.
  *
  * Three things happen, and they are the three things every application using this kit does. The
  * graph's composition locals are installed in one spread, so no screen ever imports the navigation
  * module to reach a navigator, a results mailbox or an argument store. The root back stack is owned
  * outside the host, by [RootViewModel]. And every feature's screens are registered from the
  * `NavigationGraphProvider` set, so this file names none of them.
+ *
+ * [graph] is handed in rather than created here: it lives as long as the process — the Android
+ * `Application`, the iOS entry point — and a composition does not. A graph remembered by the
+ * composition was rebuilt on every rotation.
  */
 @Composable
-fun SampleApp() {
-    val graph = remember { createSampleGraph() }
-
+fun SampleApp(graph: SampleGraph) {
     // `values =` rather than a spread: the root installs whatever the graph collected without
     // naming a single one of them, and the named vararg says so without a suppression.
     CompositionLocalProvider(

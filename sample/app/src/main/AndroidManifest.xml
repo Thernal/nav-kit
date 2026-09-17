@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:name="io.thernal.navkit.sample.android.SampleApplication"
         android:allowBackup="false"
         android:label="nav-kit sample"
         android:supportsRtl="true"

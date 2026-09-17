@@ -1,8 +1,8 @@
 package io.thernal.navkit.sample.android
 
 import android.os.Bundle
-import androidx.activity.compose.setContent
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import io.thernal.navkit.sample.app.SampleApp
 
 /**
@@ -13,8 +13,9 @@ import io.thernal.navkit.sample.app.SampleApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val graph = (application as SampleApplication).graph
         setContent {
-            SampleApp()
+            SampleApp(graph)
         }
     }
 }
