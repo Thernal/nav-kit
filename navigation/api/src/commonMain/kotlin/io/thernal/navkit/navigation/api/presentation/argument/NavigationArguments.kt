@@ -14,7 +14,8 @@ package io.thernal.navkit.navigation.api.presentation.argument
  *
  * Put an argument in the same action that pushes the routes which read it. An argument that has
  * never been alive in the stack is kept until it is, and dropped the first time it is alive and
- * then is not.
+ * then is not. A put whose scope is already alive — a flow updating its own argument — counts as
+ * alive from the start, so it still dies with the flow.
  */
 interface NavigationArguments {
     /** Stores [value] for as long as [scope] says it is alive. A second put replaces the first. */

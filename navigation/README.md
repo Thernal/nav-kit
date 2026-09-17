@@ -331,7 +331,9 @@ Two rules follow from where it runs:
 
 Put an argument in the same action that pushes the routes which read it. An argument that has never
 been alive in the stack is kept until it is, and dropped the first time it is alive and then is not
-— so the stack change that starts a flow cannot delete the value that flow was started with.
+— so the stack change that starts a flow cannot delete the value that flow was started with. A put
+whose scope is already alive in the last pruned stack counts as alive from the start: a flow that
+updates its own argument on every screen still loses it when the user backs out of the flow.
 
 For anything that must survive process death, or anything larger than a small serializable value,
 put it in a repository and keep only its id here. A flow mounted as a nested host has a third

@@ -89,4 +89,42 @@ class NavigationArgumentsImplTest {
     fun aBlankKeyIsRejected() {
         assertFailsWith<IllegalArgumentException> { argumentKey<String>(" ") }
     }
+
+    @Test
+    fun aValueReplacedInsideItsFlowStillDiesWithTheFlow() {
+        // A flow that updates its own argument re-puts it while its routes are already on the
+        // stack. That put used to start over as "never alive", and backing out kept it forever.
+        val arguments = NavigationArgumentsImpl()
+        arguments.put(key = draft, value = "draft-1", scope = inCheckout)
+        arguments.pruneFor(listOf(Root, CheckoutAmount))
+
+        arguments.put(key = draft, value = "draft-2", scope = inCheckout)
+        arguments.pruneFor(listOf(Root))
+
+        assertNull(arguments.get(draft))
+    }
+
+    @Test
+    fun aValuePutAheadOfItsRoutesStillWaitsForThem() {
+        val arguments = NavigationArgumentsImpl()
+        arguments.pruneFor(listOf(Root))
+
+        arguments.put(key = draft, value = "draft-1", scope = inCheckout)
+        arguments.pruneFor(listOf(Root))
+        arguments.pruneFor(listOf(Root, CheckoutAmount))
+
+        assertEquals("draft-1", arguments.get(draft))
+    }
+
+    @Test
+    fun aReplacementUnderANewScopeDoesNotInheritTheOldLifetime() {
+        val arguments = NavigationArgumentsImpl()
+        arguments.put(key = draft, value = "draft-1", scope = inCheckout)
+        arguments.pruneFor(listOf(Root, CheckoutAmount))
+
+        arguments.put(key = draft, value = "draft-2", scope = whileRouteInStack<CheckoutConfirm>())
+        arguments.pruneFor(listOf(Root))
+
+        assertEquals("draft-2", arguments.get(draft))
+    }
 }
