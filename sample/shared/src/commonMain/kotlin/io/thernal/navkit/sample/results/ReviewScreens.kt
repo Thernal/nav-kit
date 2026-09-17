@@ -3,9 +3,8 @@ package io.thernal.navkit.sample.results
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.api.presentation.navigator.Navigator
 import io.thernal.navkit.navigation.api.presentation.result.LocalNavigationResults
@@ -31,10 +30,16 @@ private const val REVIEW_STEPS = 3
 fun ReviewHomeScreen() {
     val navigator = LocalNavigator.current
     val results = LocalNavigationResults.current
+    val model: ReviewHomeViewModel = viewModel { ReviewHomeViewModel() }
+    val decision by model.decision.collectAsState()
     val pending by results.pending.collectAsState()
-    var decision by remember { mutableStateOf<ReviewDecision?>(null) }
 
-    ResultEffect(ReviewOutcome) { outcome -> decision = outcome }
+    // Read as this screen is composed, before `ResultEffect` consumes. Coming back from the flow is
+    // the only moment a pending name can be seen from here: while the flow is open, this screen is
+    // not composed at all.
+    val pendingOnArrival = remember { results.pending.value }
+
+    ResultEffect(key = ReviewOutcome, onResult = model::onDecision)
 
     ExampleScaffold(
         title = "Review request",
@@ -51,14 +56,8 @@ fun ReviewHomeScreen() {
                 "$verdict — ${made.note}"
             } ?: "not reviewed yet",
         )
-        ExampleReadout(
-            label = "Pending result names",
-            value = if (pending.isEmpty()) {
-                "none"
-            } else {
-                pending.joinToString()
-            },
-        )
+        ExampleReadout(label = "Pending when this screen came back", value = pendingOnArrival.describe())
+        ExampleReadout(label = "Pending now", value = pending.describe())
         ExampleAction(
             label = "Start the review",
             onClick = { navigator.push(ReviewStepRoute(step = 1)) },
@@ -67,15 +66,15 @@ fun ReviewHomeScreen() {
             label = "Clear the decision",
             onClick = {
                 results.clear(ReviewOutcome)
-                decision = null
+                model.clear()
             },
             enabled = decision != null,
         )
         ExampleNote(
             text = "`pending` exposes names, never values, so one feature's results are not " +
-                "readable by every screen in the app. Watch it while the flow is open: the name " +
-                "appears the moment the last step posts and is gone the moment this screen " +
-                "consumes it.",
+                "readable by every screen in the app. Finish the flow and compare the two " +
+                "readouts: the name was waiting when this screen came back, and was gone once it " +
+                "had consumed it.",
         )
     }
 }
@@ -127,6 +126,13 @@ fun ReviewStepScreen(route: ReviewStepRoute) {
                 "consult the back dispatcher — it is a jump, not a back.",
         )
     }
+}
+
+private fun Set<String>.describe(): String {
+    if (isEmpty()) {
+        return "none"
+    }
+    return joinToString()
 }
 
 private fun finish(

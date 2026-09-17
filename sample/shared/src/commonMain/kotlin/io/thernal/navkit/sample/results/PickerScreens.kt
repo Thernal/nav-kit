@@ -3,7 +3,7 @@ package io.thernal.navkit.sample.results
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.api.presentation.result.LocalNavigationResults
@@ -20,7 +20,9 @@ import io.thernal.navkit.sample.ui.ExampleScaffold
 @Composable
 fun PickerHomeScreen() {
     val navigator = LocalNavigator.current
-    var colour by remember { mutableStateOf<String?>(null) }
+    // Saveable, not remembered: this screen leaves composition whenever the picker covers it, and
+    // a plain `remember` forgot the last pick every time the picker was opened again.
+    var colour by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Navigation3 composes only the entries of the current scene, so this screen is not composed
     // while the picker covers it and the effect does not run. It runs when the user comes back —

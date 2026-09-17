@@ -1,10 +1,8 @@
 package io.thernal.navkit.sample.basics
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationOutcome
 import io.thernal.navkit.sample.catalog.CatalogRoute
@@ -23,29 +21,44 @@ private const val LAST_STEP = 3
  * redirect it, or need time. Without an answer the call site cannot tell "we moved" from "we were
  * sent somewhere else" from "nothing happened", and the only report was an app-wide event stream
  * nobody at the call site was reading.
+ *
+ * The answers go to [OrderFlowLog] rather than to the step that asked: a command usually takes that
+ * step off the screen, and the answer would go with it.
  */
 @Composable
-fun WizardScreen() {
+fun WizardScreen(log: OrderFlowLog) {
     val navigator = LocalNavigator.current
+    val lastOutcome by log.last.collectAsState()
+
     ExampleScaffold(
         title = "Order flow",
         subtitle = "`navigate` with a predicate, `replaceAll`, `popBackTo`, and reading the outcome.",
     ) {
+        ExampleReadout(label = "Last outcome", value = lastOutcome)
         ExampleNote(
             text = "Start the flow and walk forward. Every button reports what actually happened " +
                 "to the stack, which is the difference between a command surface and a setter.",
         )
         ExampleAction(
             label = "Start at step 1",
-            onClick = { navigator.push(WizardStepRoute(step = 1)) },
+            onClick = {
+                log.reset()
+                log.record(
+                    command = "push step 1",
+                    outcome = navigator.push(WizardStepRoute(step = 1)).describe(),
+                )
+            },
         )
     }
 }
 
 @Composable
-fun WizardStepScreen(route: WizardStepRoute) {
+fun WizardStepScreen(
+    route: WizardStepRoute,
+    log: OrderFlowLog,
+) {
     val navigator = LocalNavigator.current
-    var lastOutcome by remember { mutableStateOf("—") }
+    val lastOutcome by log.last.collectAsState()
 
     ExampleScaffold(
         title = "Step ${route.step} of $LAST_STEP",
@@ -57,7 +70,11 @@ fun WizardStepScreen(route: WizardStepRoute) {
             ExampleAction(
                 label = "Next step (push)",
                 onClick = {
-                    lastOutcome = navigator.push(WizardStepRoute(step = route.step + 1)).describe()
+                    val next = route.step + 1
+                    log.record(
+                        command = "push step $next",
+                        outcome = navigator.push(WizardStepRoute(step = next)).describe(),
+                    )
                 },
             )
         }
@@ -72,22 +89,21 @@ fun WizardStepScreen(route: WizardStepRoute) {
                     route = WizardStepRoute(step = 1),
                     predicate = { candidate -> candidate is WizardStepRoute && candidate.step == 1 },
                 )
-                lastOutcome = outcome.describe()
+                log.record(command = "navigate to step 1", outcome = outcome.describe())
             },
             enabled = route.step > 1,
         )
 
         ExampleAction(
-            label = "Leave the flow root (popBackTo, inclusive)",
+            label = "Back to the flow start (popBackTo)",
             onClick = {
-                val didMove = navigator.popBackTo(inclusive = true) { candidate ->
-                    candidate is WizardRoute
-                }
-                lastOutcome = if (didMove) {
-                    "popped past the flow root"
+                val didMove = navigator.popBackTo { candidate -> candidate is WizardRoute }
+                val outcome = if (didMove) {
+                    "the stack moved"
                 } else {
-                    "nothing to pop to"
+                    "the stack did not move"
                 }
+                log.record(command = "popBackTo the flow start", outcome = outcome)
             },
         )
 
@@ -98,25 +114,29 @@ fun WizardStepScreen(route: WizardStepRoute) {
                 // proposes, not just the last one — the thing the kit fixed when guards moved from
                 // deciding about a route to deciding about a stack.
                 val outcome = navigator.replaceAll(listOf(CatalogRoute, WizardDoneRoute))
-                lastOutcome = outcome.describe()
+                log.record(command = "replaceAll", outcome = outcome.describe())
             },
         )
 
         ExampleNote(
             text = "`popBack` consults the host's back dispatcher first, so a screen intercepting " +
                 "back is heard whether it came from the system gesture or from a button. " +
-                "`popBackTo` deliberately does not: that is a jump, not a back.",
+                "`popBackTo` deliberately does not: that is a jump, not a back. It answers whether " +
+                "the stack moved; pass `inclusive = true` to pop the matched route as well.",
         )
     }
 }
 
 @Composable
-fun WizardDoneScreen() {
+fun WizardDoneScreen(log: OrderFlowLog) {
     val navigator = LocalNavigator.current
+    val lastOutcome by log.last.collectAsState()
+
     ExampleScaffold(
         title = "Done",
         subtitle = "The stack is now catalog → done, built in one `replaceAll`.",
     ) {
+        ExampleReadout(label = "Last outcome", value = lastOutcome)
         ExampleReadout(
             label = "Can pop?",
             value = navigator.canPop().toString(),
@@ -130,8 +150,8 @@ fun WizardDoneScreen() {
 
 private fun NavigationOutcome.describe(): String {
     return when (this) {
-        is NavigationOutcome.Applied -> "Applied · ${stack.size} route(s)"
-        is NavigationOutcome.Rewritten -> "Rewritten by a guard · ${reason?.message ?: "no reason given"}"
-        is NavigationOutcome.Deferred -> "Deferred · a guard needs time"
+        is NavigationOutcome.Applied -> "applied · ${stack.size} route(s)"
+        is NavigationOutcome.Rewritten -> "rewritten by a guard · ${reason?.message ?: "no reason given"}"
+        is NavigationOutcome.Deferred -> "deferred · a guard needs time"
     }
 }

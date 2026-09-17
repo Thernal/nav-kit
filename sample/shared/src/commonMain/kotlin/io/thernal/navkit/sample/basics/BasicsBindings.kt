@@ -6,6 +6,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import io.thernal.navkit.navigation.api.presentation.host.navEntry
 import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
@@ -16,13 +17,13 @@ import io.thernal.navkit.sample.app.SampleExample
  * What a feature module contributes to the application: its screens, and its place in the index.
  * The composition root imports neither.
  */
-private class BasicsGraph : NavigationGraphProvider {
+private class BasicsGraph(private val log: OrderFlowLog) : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
         navEntry<BasicsHomeRoute> { BasicsHomeScreen() }
         navEntry<BasicsDetailRoute> { route -> BasicsDetailScreen(route) }
-        navEntry<WizardRoute> { WizardScreen() }
-        navEntry<WizardStepRoute> { route -> WizardStepScreen(route) }
-        navEntry<WizardDoneRoute> { WizardDoneScreen() }
+        navEntry<WizardRoute> { WizardScreen(log) }
+        navEntry<WizardStepRoute> { route -> WizardStepScreen(route = route, log = log) }
+        navEntry<WizardDoneRoute> { WizardDoneScreen(log) }
     }
 }
 
@@ -31,9 +32,15 @@ private class BasicsGraph : NavigationGraphProvider {
 interface BasicsBindings {
     companion object {
         @Provides
+        @SingleIn(AppScope::class)
+        fun provideOrderFlowLog(): OrderFlowLog {
+            return OrderFlowLog()
+        }
+
+        @Provides
         @IntoSet
-        fun provideBasicsGraph(): NavigationGraphProvider {
-            return BasicsGraph()
+        fun provideBasicsGraph(log: OrderFlowLog): NavigationGraphProvider {
+            return BasicsGraph(log)
         }
 
         @Provides

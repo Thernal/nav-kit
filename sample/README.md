@@ -65,10 +65,12 @@ graph rebuilt on every rotation took the session, the drafts and the argument st
 
 - **Navigation.** Commands answer with a `NavigationOutcome` instead of `Unit`, because a guard can
   refuse, redirect or defer — so "we moved", "we were sent elsewhere" and "nothing happened" are
-  distinguishable at the call site.
+  distinguishable at the call site. The order flow logs each answer outside the step that asked,
+  because the command usually takes that step off the screen.
 - **Results.** A typed `ResultKey<T>` declared next to the producing feature's routes, so the two
   sides cannot disagree about the type. `ResultEffect` runs when the waiting screen is uncovered,
-  because Navigation3 composes only the current scene.
+  because Navigation3 composes only the current scene — which is also why what a result updates
+  lives in saveable state or an entry-scoped ViewModel, never in a plain `remember`.
 - **Arguments.** Lifetime derived from the back stack rather than counted. A count released on
   dispose reaches zero one push early, for the same reason. The checkout steps keep each field in
   their own state and write it through: the argument store is not snapshot state, so a field bound
