@@ -4,6 +4,8 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Multibinds
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
 
 /**
@@ -20,4 +22,13 @@ interface SampleBindings {
     /** …and its catalog entry here, so the index screen imports none of them either. */
     @Multibinds(allowEmpty = true)
     val examples: Set<SampleExample>
+
+    companion object {
+        /** Written by the root, which resolves links, and read by the screens that send them. */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideDeepLinkLog(): DeepLinkLog {
+            return DeepLinkLog()
+        }
+    }
 }

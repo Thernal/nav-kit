@@ -17,13 +17,21 @@ separate Gradle step. It sets `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64` be
 targets `iosArm64` and `iosSimulatorArm64` only — the two every Navigation3 artifact in the catalog
 publishes.
 
+Both apps accept `navkit://` links from the platform, cold or warm, and hand them to the same
+ingress the in-app playground uses:
+
+```sh
+adb shell am start -a android.intent.action.VIEW -d navkit://orders/77    # Android
+xcrun simctl openurl booted navkit://orders/77                           # iOS
+```
+
 ## Layout
 
 | Module | What it is |
 |---|---|
 | `shared` | Every screen, route, guard and binding. Android and iOS run this unchanged. |
-| `app` | An Android application with one activity and one `setContent`. |
-| `iosApp` | A SwiftUI shell whose only view is the shared composition. |
+| `app` | An Android application: an `Application` that owns the graph, one activity that hosts the composition and forwards link intents. |
+| `iosApp` | A SwiftUI shell whose only view is the shared composition, and whose `onOpenURL` forwards links. |
 
 ## The three things the composition root does
 
@@ -77,4 +85,6 @@ graph rebuilt on every rotation took the session, the drafts and the argument st
   has no entry for.
 - **Deep links.** Resolving a link is the root state holder's job — a host can be mounted anywhere,
   but there is one link stream for the whole app. The resolved stack still passes through the
-  guards, because the host resolves whatever it is handed before rendering it.
+  guards, because the host resolves whatever it is handed before rendering it. What the handler
+  decided — opened, rejected, not found — is logged by the root and shown by the screen that sent
+  the link, since the ingress only knows whether it was queued.

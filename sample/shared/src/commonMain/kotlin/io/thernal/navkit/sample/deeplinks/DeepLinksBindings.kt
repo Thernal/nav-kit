@@ -11,14 +11,18 @@ import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkIngress
 import io.thernal.navkit.navigation.api.presentation.host.navEntry
 import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
+import io.thernal.navkit.sample.app.DeepLinkLog
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
 
-private class DeepLinksGraph(private val ingress: DeepLinkIngress) : NavigationGraphProvider {
+private class DeepLinksGraph(
+    private val ingress: DeepLinkIngress,
+    private val log: DeepLinkLog,
+) : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
-        navEntry<LinkPlaygroundRoute> { LinkPlaygroundScreen(ingress) }
+        navEntry<LinkPlaygroundRoute> { LinkPlaygroundScreen(ingress = ingress, log = log) }
         navEntry<ProductRoute> { route -> ProductScreen(route) }
-        navEntry<LinkCampaignRoute> { LinkCampaignScreen(ingress) }
+        navEntry<LinkCampaignRoute> { LinkCampaignScreen(ingress = ingress, log = log) }
         navEntry<OrdersRoute> { OrdersScreen() }
         navEntry<OrderRoute> { route -> OrderScreen(route) }
     }
@@ -48,8 +52,11 @@ interface DeepLinksBindings {
 
         @Provides
         @IntoSet
-        fun provideDeepLinksGraph(ingress: DeepLinkIngress): NavigationGraphProvider {
-            return DeepLinksGraph(ingress)
+        fun provideDeepLinksGraph(
+            ingress: DeepLinkIngress,
+            log: DeepLinkLog,
+        ): NavigationGraphProvider {
+            return DeepLinksGraph(ingress = ingress, log = log)
         }
 
         @Provides

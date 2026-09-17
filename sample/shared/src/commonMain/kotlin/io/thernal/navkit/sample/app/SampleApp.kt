@@ -36,13 +36,15 @@ fun SampleApp(graph: SampleGraph) {
             val backStack by root.backStack.collectAsState()
 
             // Resolving an inbound link is the root state holder's job: a host can be mounted
-            // anywhere, but there is only one link stream for the whole application.
+            // anywhere, but there is only one link stream for the whole application. What the
+            // handler decided is logged whether or not it navigates, so a refusal is visible.
             LaunchedEffect(graph) {
                 graph.deepLinkEvents.links.collect { incoming ->
                     val outcome = graph.deepLinkDispatcher.dispatch(
                         raw = incoming.uri,
                         source = incoming.source,
                     )
+                    graph.deepLinkLog.record(link = incoming, outcome = outcome)
                     if (outcome is DeepLinkOutcome.Navigate) {
                         root.onDeepLink(outcome.routes)
                     }

@@ -23,8 +23,10 @@ class ProductDeepLinkHandler : DeepLinkHandler {
     override suspend fun resolve(request: DeepLinkRequest): DeepLinkOutcome {
         val id = request.deepLink.pathSegments.getOrNull(1)
             ?: return DeepLinkOutcome.Rejected(reason = "A product link needs an id")
+        // The catalog stays at the bottom: a link replaces the whole stack, and one that dropped the
+        // app's own root left back with nowhere to go but out of the app.
         return DeepLinkOutcome.Navigate(
-            routes = listOf(LinkPlaygroundRoute, ProductRoute(id = id)),
+            routes = listOf(CatalogRoute, LinkPlaygroundRoute, ProductRoute(id = id)),
         )
     }
 }

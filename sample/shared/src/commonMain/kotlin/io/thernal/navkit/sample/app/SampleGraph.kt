@@ -29,6 +29,8 @@ interface SampleGraph {
     val deepLinkDispatcher: DeepLinkDispatcher
 
     val deepLinkIngress: DeepLinkIngress
+
+    val deepLinkLog: DeepLinkLog
 }
 
 fun createSampleGraph(): SampleGraph {
