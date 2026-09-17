@@ -60,7 +60,8 @@ Start from what you are trying to do; the section named is where the mechanism i
 | ask "discard changes?" when back is pressed on one screen | `NavigationBackHandler` | [Back handling](#back-handling) | [backoverride](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) |
 | refuse every way out of a screen, not only back | a transition `NavigationGuard` | [Transition rules](#transition-rules) | [backoverride](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) |
 | open the app from a link or a notification | `DeepLinkHandler` + `DeepLinkIngress` | [Deep links](#deep-links) | [deeplinks](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) |
-| build a link to share | `buildDeepLinkUri` / `DeepLinkPage.buildUri` | [Outbound links](#outbound-links) | — |
+| accept links on a scheme or a domain | a `DeepLinkBase` contributed `@IntoSet` | [Link bases](#link-bases) | [deeplinks](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) |
+| build a link to share | `buildDeepLinkUri(base, page)` / `DeepLinkPage.buildUri(base)` | [Outbound links](#outbound-links) | — |
 | tabs, or a wizard with a back stack of its own | a nested `NavigationHost` | [Nested hosts and tabs](#nested-hosts-and-tabs) | [tabs](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) |
 | show a route as a bottom sheet | `bottomSheetEntry` | [Bottom sheets](#bottom-sheets-scenes-and-transitions) | — |
 | change or turn off the animations | `transitionSpec` and friends on `NavigationHostParams` | [Transitions](#transitions) | — |
@@ -132,7 +133,7 @@ picks it up once the module is on the classpath. It binds:
 |---|---|---|
 | `NavigationHostRenderer` | single | the guard runner, back dispatcher, argument pruner and event sink below |
 | `NavigationGuardRunner` | single | `Set<NavigationGuard>` — contribute guards `@IntoSet` |
-| `DeepLinkDispatcher` | single | `Set<DeepLinkHandler>` — contribute handlers `@IntoSet` |
+| `DeepLinkDispatcher` | single | `Set<DeepLinkHandler>` and `Set<DeepLinkBase>` — contribute both `@IntoSet` |
 | `NavigationEventSink` | single | `Set<NavigationEventSink>` fanned out; `NoOp` when empty |
 | `DeepLinkIngress` + `DeepLinkEvents` | single, **one object** | `RuntimeDeepLinkBridge` |
 | `NavigationArguments` + `ArgumentPruner` | single, **one object** | `NavigationArgumentsImpl` |
@@ -142,7 +143,8 @@ picks it up once the module is on the classpath. It binds:
 
 `Navigator` is deliberately not bound: a host builds its own.
 
-The application declares its graph and its own multibinding for screens:
+The application declares its graph, its own multibinding for screens, and the bases its links start
+with:
 
 ```kotlin
 @DependencyGraph(AppScope::class)
@@ -159,6 +161,21 @@ interface AppGraph {
 interface AppBindings {
     @Multibinds(allowEmpty = true)
     val graphProviders: Set<NavigationGraphProvider>
+
+    companion object {
+        // The scheme and the origin AndroidManifest.xml and Info.plist declare — see "Link bases".
+        @Provides
+        @IntoSet
+        fun provideAppSchemeBase(): DeepLinkBase {
+            return DeepLinkBase("navkit://")
+        }
+
+        @Provides
+        @IntoSet
+        fun provideWebOriginBase(): DeepLinkBase {
+            return DeepLinkBase("https://example.com")
+        }
+    }
 }
 ```
 
@@ -175,6 +192,7 @@ the root back stack, held by a ViewModel, survives and points at state that no l
 class Navigation(
     guards: List<NavigationGuard>,
     deepLinkHandlers: Set<DeepLinkHandler>,
+    deepLinkBases: Set<DeepLinkBase>,
     sinks: List<NavigationEventSink> = emptyList(),
 ) {
     private val bridge = RuntimeDeepLinkBridge()
@@ -183,7 +201,10 @@ class Navigation(
 
     val deepLinkIngress: DeepLinkIngress = bridge
     val deepLinkEvents: DeepLinkEvents = bridge
-    val deepLinkDispatcher: DeepLinkDispatcher = DeepLinkDispatcherImpl(deepLinkHandlers)
+    val deepLinkDispatcher: DeepLinkDispatcher = DeepLinkDispatcherImpl(
+        handlers = deepLinkHandlers,
+        bases = deepLinkBases,
+    )
 
     private val renderer: NavigationHostRenderer = NavigationHostRendererImpl(
         guardRunner = NavigationGuardRunnerImpl(guards),
@@ -902,21 +923,47 @@ platform ──publish(uri, source)──▶ DeepLinkIngress ═ DeepLinkEvents.
                         root.onDeepLink(routes) ─▶ host guards the stack ─▶ rendered
 ```
 
-### How a link is read
+### Link bases
 
-On a custom scheme the host **is** the first page; on `http`/`https` the host is a domain and only
-the path counts. Both forms of a link therefore reach the same handler, with no list of app schemes
-to keep in sync with the manifest and `Info.plist`.
+A `DeepLinkBase` is a prefix the application's links start with: an app scheme, or a web origin with
+an optional path. The application contributes one for every scheme and domain it answers to:
 
-| Raw link | `pathSegments` | `page` | `query` |
-|---|---|---|---|
-| `navkit://orders/77` | `orders`, `77` | `orders` | — |
-| `https://example.com/orders/77` | `orders`, `77` | `orders` | — |
-| `navkit://search?q=bar%20table&tag=a&tag=b` | `search` | `search` | `q` → `bar table`; `tag` → `a`, `b` |
-| `https://example.com` | — | — | not a link: `NotFound` |
+```kotlin
+@Provides
+@IntoSet
+fun provideAppSchemeBase(): DeepLinkBase {
+    return DeepLinkBase("navkit://")
+}
+```
 
-`DeepLink` exposes `raw`, `scheme`, `host`, `pathSegments`, `query`, `page` (the first segment) and
-`query(key)` (the first value). Segments and values arrive decoded.
+**A link is read by removing the most specific registered base it starts with; what follows is the
+page and its segments.** Every registered form of a link therefore reaches the same handler, and a
+feature declares its page once.
+
+| Registered bases | Raw link | `base` | `pathSegments` | `page` |
+|---|---|---|---|---|
+| `navkit://` | `navkit://orders/77` | `navkit://` | `orders`, `77` | `orders` |
+| `https://example.com` | `https://example.com/orders/77` | `https://example.com` | `orders`, `77` | `orders` |
+| `https://example.com`, `https://example.com/app` | `https://example.com/app/orders` | `https://example.com/app` | `orders` | `orders` |
+| `navkit://` | `navkit://search?q=bar%20table&tag=a&tag=b` | `navkit://` | `search` | `search`; `q` → `bar table`, `tag` → `a`, `b` |
+| `https://example.com` | `https://elsewhere.example/orders/77` | — | — | none: `NotFound` |
+| `https://example.com` | `https://example.com` | — | — | none: `NotFound` |
+
+- On an app-scheme base the host is the first page: `navkit://orders` has no domain to be a host.
+- The scheme and the host compare case-insensitively; a base's path compares whole segments, exactly —
+  `https://example.com/app` does not match `https://example.com/apple/…`.
+- A base carries no query or fragment; a web base (`http`, `https`) names a host; a base without a host
+  has no path. Anything else fails when the base is created.
+- A link that starts with **no** registered base resolves to `NotFound`: a domain the application does
+  not own never reaches a handler. Handlers registered with no base at all fail when the dispatcher is
+  built (`Deep link handlers are registered but no DeepLinkBase is…`).
+- **Keep the bases in step with the platform declarations** — the schemes in the Android intent filters
+  and `CFBundleURLTypes`, the verified domains. A scheme the platform delivers but nothing registers
+  resolves to `NotFound`.
+
+`DeepLink` exposes `raw`, `base` (the base that matched), `scheme`, `host` (as written — on an app
+scheme, the page), `pathSegments`, `query`, `page` (the first segment) and `query(key)` (the first
+value). Segments and values arrive decoded.
 
 ### Handlers
 
@@ -966,7 +1013,7 @@ class ProfileDeepLinkHandler : TypedDeepLinkHandler<ProfilePage>(ProfilePage.ent
 |---|---|
 | `Navigate(routes)` | the **whole stack** to show. Keep the app's root at the bottom, so back goes somewhere sensible instead of out of the app. |
 | `Rejected(reason)` | the page is ours, the request is not acceptable |
-| `NotFound` | not a link, or no handler owns the page |
+| `NotFound` | not a link, no registered base, no page after the base, or no handler owns the page |
 
 - **Return a stack, not a destination.** A link to an order leaves the order list behind it.
 - **Do not check access in a handler.** A resolved stack is guarded by the host before it renders;
@@ -991,7 +1038,8 @@ arrives.
 
 See [Platform entry points](#platform-entry-points): Android publishes `intent` from `onCreate`
 (first creation only) and `onNewIntent`, with a `singleTop` activity and a `VIEW`/`BROWSABLE` intent
-filter; iOS publishes from SwiftUI's `onOpenURL`, with the scheme in `CFBundleURLTypes`.
+filter; iOS publishes from SwiftUI's `onOpenURL`, with the scheme in `CFBundleURLTypes`. Every scheme
+and domain declared there is also registered as a [`DeepLinkBase`](#link-bases).
 
 ```sh
 adb shell am start -a android.intent.action.VIEW -d navkit://orders/77
@@ -1001,17 +1049,19 @@ xcrun simctl openurl booted navkit://orders/77
 ### Outbound links
 
 ```kotlin
-buildDeepLinkUri(baseUrl = "https://example.com", page = "orders", query = mapOf("tab" to "open"))
-// https://example.com/orders?tab=open
+val appScheme = DeepLinkBase("navkit://")
+val web = DeepLinkBase("https://example.com")
 
-ProfilePage.View.buildUri(baseUrl = "https://example.com", query = mapOf("id" to "42"))
+buildDeepLinkUri(base = appScheme, page = "orders", query = mapOf("tab" to "open"))
+// navkit://orders?tab=open
+
+ProfilePage.View.buildUri(base = web, query = mapOf("id" to "42"))
 // https://example.com/profile?id=42
 ```
 
-The parser reads both back to the same page. **Build outbound links on an `http(s)` base URL.** On
-a custom-scheme base the builder has no host to append to and supplies one:
-`buildDeepLinkUri("navkit://", "profile")` yields `navkit://localhost/profile`, which the parser —
-treating a custom scheme's host as the first page — reads as the page `localhost`.
+Building appends the page to a base and parsing removes the base, so a link built on a registered base
+is read back as the same page — on an app scheme the page takes the host's position. Share the
+`DeepLinkBase` values the application registers rather than repeating the strings.
 
 ## Nested hosts and tabs
 
@@ -1202,8 +1252,8 @@ fun signedOutAccountBecomesSignIn() {
 | results | `NavigationResultsImpl()` |
 | arguments | `NavigationArgumentsImpl()`, calling `pruneFor(stack)` for each stack change |
 | back interception | `BackDispatcherImpl()` |
-| deep-link handlers | `DeepLinkDispatcherImpl(setOf(handler)).dispatch(raw, source)` in `runTest` |
-| link parsing | `parseDeepLink(raw)` |
+| deep-link handlers | `DeepLinkDispatcherImpl(handlers = setOf(handler), bases = setOf(base)).dispatch(raw, source)` in `runTest` |
+| link parsing and building | `parseDeepLink(raw, bases)`; `buildDeepLinkUri(base, page)` read back through it |
 
 `navigation/impl/src/commonTest` holds the kit's own tests in exactly this shape.
 
@@ -1226,6 +1276,8 @@ fun signedOutAccountBecomesSignIn() {
 - [ ] Arguments are put in the same action that pushes their flow, scoped to a sealed flow type in the
       outermost stack.
 - [ ] Deep links are resolved at the root and return whole stacks; handlers do not check access.
+- [ ] Every scheme and domain the platform declares is registered as a `DeepLinkBase`, and outbound
+      links are built on those bases.
 - [ ] "Refuse every way out" is a transition guard; "confirm on back" is `NavigationBackHandler`.
 
 ## Known limitations
@@ -1257,7 +1309,7 @@ fun signedOutAccountBecomesSignIn() {
 | `presentation.deeplink` | `DeepLinkHandler`, `TypedDeepLinkHandler`, `DeepLinkOutcome`, `DeepLinkDispatcher`, `DeepLinkIngress`, `DeepLinkEvents`; `DeepLinkIngress.publish(intent)` on Android |
 | `presentation.transition` | `NavTransitionScope`, `PredictiveNavTransitionScope`, `NavigationDefaults` |
 | `presentation.log` | `NavigationEvent`, `NavigationEventSink` |
-| `domain` | `DeepLink`, `DeepLinkPage`, `DeepLinkRequest`, `DeepLinkSource`, `IncomingDeepLink`, `buildDeepLinkUri`, `DeepLinkPage.buildUri`, `pageOf` |
+| `domain` | `DeepLink`, `DeepLinkBase`, `DeepLinkPage`, `DeepLinkRequest`, `DeepLinkSource`, `IncomingDeepLink`, `buildDeepLinkUri`, `DeepLinkPage.buildUri`, `pageOf` |
 
 `impl` declarations an application reaches for — package prefix `io.thernal.navkit.navigation.impl`:
 

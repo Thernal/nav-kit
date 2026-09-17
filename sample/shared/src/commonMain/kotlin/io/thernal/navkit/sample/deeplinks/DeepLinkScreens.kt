@@ -54,11 +54,19 @@ fun LinkPlaygroundScreen(
                 deliver(ingress = ingress, log = log, uri = uri)
             },
         )
+        ExampleAction(
+            label = "Try a domain the app does not own",
+            onClick = {
+                uri = "https://elsewhere.example/product/42"
+                deliver(ingress = ingress, log = log, uri = uri)
+            },
+        )
         ExampleNote(
-            text = "Both forms reach the same handler. A feature declares its page once and gets " +
-                "the app-scheme and the web form for free, because the parser derives the rule " +
-                "from the scheme instead of reading a configured list of app schemes. The platform " +
-                "delivers the same way: `adb shell am start -d navkit://product/7` on Android, " +
+            text = "Both registered forms reach the same handler: the parser removes whichever " +
+                "registered base a link starts with — navkit:// or https://example.com — and what " +
+                "follows is the page. A feature declares its page once. A link on any other domain " +
+                "starts with no registered base and is not found. The platform delivers the same " +
+                "way: `adb shell am start -d navkit://product/7` on Android, " +
                 "`xcrun simctl openurl booted navkit://product/7` on iOS.",
         )
     }

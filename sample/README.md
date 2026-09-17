@@ -58,7 +58,7 @@ Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 | [Back handling](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) | Confirm before leaving | Unsaved work | `NavigationBackHandler` for "confirm on back", a transition guard for "refuse every way out" |
 | [Guards](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) | Members area | 401 and a PIN | `RouteGuard` with a redirect that keeps intent, `invalidations`, `GuardVerdict.Deferred`, `TransientRoute` |
 | [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | A stack per tab | a host inside a host; per-tab stacks; an application-wide guard inside a tab |
-| [Deep links](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) | One link, one route | Campaign links | handlers, the parsing rule, stacks rather than destinations, the source, a link meeting a guard |
+| [Deep links](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) | One link, one route | Campaign links | registered link bases, handlers, stacks rather than destinations, the source, a link meeting a guard |
 
 ## Set nav-kit up in your own app
 
@@ -101,8 +101,9 @@ interface SampleGraph {
 ```
 
 [`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt)
-declares the application's own multibindings (`@Multibinds(allowEmpty = true)`). The kit's —
-guards, deep-link handlers, event sinks — are declared by `NavigationWiring`.
+declares the application's own multibindings (`@Multibinds(allowEmpty = true)`) and the two
+`DeepLinkBase`s its links start with. The kit's multibindings — guards, deep-link handlers, deep-link
+bases, event sinks — are declared by `NavigationWiring`.
 
 The graph is created **once per process** and handed to the composition:
 [`SampleApplication.kt`](app/src/main/kotlin/io/thernal/navkit/sample/android/SampleApplication.kt)
@@ -172,6 +173,7 @@ Every example package ends in a `*Bindings.kt` of the same shape — see
 | the feature's screens | `NavigationGraphProvider` | every package |
 | an access or transition rule | `NavigationGuard` | [`GuardsBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/GuardsBindings.kt), [`BackBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/BackBindings.kt) |
 | the pages it opens from links | `DeepLinkHandler` | [`DeepLinksBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/DeepLinksBindings.kt) |
+| the schemes and domains the app's links start with — once, by the application | `DeepLinkBase` | [`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) |
 | an observer of navigation | `NavigationEventSink` | — not used by the sample |
 
 State a guard reads — a session, a draft — is provided `@SingleIn(AppScope::class)`, because a guard
@@ -179,7 +181,10 @@ runs outside composition and cannot see what a screen remembers.
 
 ### Platform entry points
 
-The platform's only navigation duty is to publish links; everything else is shared.
+The platform's only navigation duty is to publish links; everything else is shared. Every scheme the
+platform declares is also registered as a `DeepLinkBase` in
+[`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) —
+a link whose scheme or domain is not registered resolves to `NotFound`.
 
 **Android** — [`MainActivity.kt`](app/src/main/kotlin/io/thernal/navkit/sample/android/MainActivity.kt)
 and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
@@ -209,6 +214,7 @@ and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
 - [ ] Every route a host can show — including sign-in screens and placeholders that guards put there —
       has exactly one entry in that host.
 - [ ] Guards, deep-link handlers and event sinks are contributed `@IntoSet`.
+- [ ] Every scheme and domain in the manifest and `Info.plist` is registered as a `DeepLinkBase`.
 - [ ] Android: `singleTop`, intent filter, publish in `onCreate` (first creation only) and `onNewIntent`.
 - [ ] iOS: URL type, `onOpenURL` → ingress, `CADisableMinimumFrameDurationOnPhone`.
 

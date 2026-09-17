@@ -54,8 +54,8 @@ Dependencies: `kotlin-test`, `kotlinx-coroutines-test`, and `:navigation:impl`.
 | back interception | `BackDispatcherImpl()` + `BackStackNavigator` | `popBack()` returns `true` and the list is unchanged |
 | results | `NavigationResultsImpl()` | `consume` once, then `null`; `pending` names |
 | arguments | `NavigationArgumentsImpl()` + `pruneFor(stack)` per stack change | `get` before and after the flow leaves |
-| deep links | `DeepLinkDispatcherImpl(setOf(handler))` in `runTest` | the `DeepLinkOutcome` |
-| parsing | `parseDeepLink(raw)` | `page`, `pathSegments`, `query` |
+| deep links | `DeepLinkDispatcherImpl(handlers = setOf(handler), bases = setOf(base))` in `runTest` | the `DeepLinkOutcome`, including `NotFound` for an unregistered domain |
+| parsing and building | `parseDeepLink(raw, bases)`; `buildDeepLinkUri(base, page)` | `page`, `pathSegments`, `query`, `base`; built links read back as the same page |
 
 ```kotlin
 private class Harness(initial: List<Route>, guards: List<NavigationGuard> = emptyList()) {

@@ -8,6 +8,7 @@ import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Multibinds
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import io.thernal.navkit.navigation.api.domain.DeepLinkBase
 import io.thernal.navkit.navigation.api.presentation.argument.ArgumentPruner
 import io.thernal.navkit.navigation.api.presentation.argument.LocalNavigationArguments
 import io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments
@@ -51,6 +52,14 @@ interface NavigationWiring {
     /** Features contribute `@IntoSet`; an app with none still resolves the empty set. */
     @Multibinds(allowEmpty = true)
     val deepLinkHandlers: Set<DeepLinkHandler>
+
+    /**
+     * The app schemes and web origins the application's links start with, contributed `@IntoSet` by
+     * the application. A link that starts with none of them resolves to `NotFound`, and handlers with
+     * none registered fail when the dispatcher is built.
+     */
+    @Multibinds(allowEmpty = true)
+    val deepLinkBases: Set<DeepLinkBase>
 
     /** Features contribute `@IntoSet`; an app with none still resolves the empty set. */
     @Multibinds(allowEmpty = true)
@@ -107,8 +116,11 @@ interface NavigationWiring {
 
         @Provides
         @SingleIn(AppScope::class)
-        fun provideDeepLinkDispatcher(handlers: Set<DeepLinkHandler>): DeepLinkDispatcher {
-            return DeepLinkDispatcherImpl(handlers)
+        fun provideDeepLinkDispatcher(
+            handlers: Set<DeepLinkHandler>,
+            bases: Set<DeepLinkBase>,
+        ): DeepLinkDispatcher {
+            return DeepLinkDispatcherImpl(handlers = handlers, bases = bases)
         }
 
         /**

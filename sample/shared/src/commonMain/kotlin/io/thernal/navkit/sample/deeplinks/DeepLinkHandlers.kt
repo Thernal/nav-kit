@@ -13,9 +13,9 @@ import io.thernal.navkit.sample.guards.MembersSecretRoute
  * A handler declares the pages it owns and the dispatcher routes by that — each page has exactly
  * one owning handler, and a duplicate is a startup error rather than a silent last-one-wins.
  *
- * The parser derives the shape from the scheme, so this handler answers `navkit://product/42` and
- * `https://example.com/product/42` without knowing either form exists: on a custom scheme the host
- * *is* the first page, on http(s) the host is a domain and only the path counts.
+ * The parser removes whichever registered base a link starts with, so this handler answers
+ * `navkit://product/42` and `https://example.com/product/42` without knowing either form exists. The
+ * bases are the application's business, registered once in `SampleBindings`.
  */
 class ProductDeepLinkHandler : DeepLinkHandler {
     override val pages: Set<String> = setOf("product")

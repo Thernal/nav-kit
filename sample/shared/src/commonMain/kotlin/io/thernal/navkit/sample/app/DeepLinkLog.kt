@@ -26,7 +26,7 @@ class DeepLinkLog {
         val result = when (outcome) {
             is DeepLinkOutcome.Navigate -> "opened a stack of ${outcome.routes.size}"
             is DeepLinkOutcome.Rejected -> "rejected — ${outcome.reason}"
-            DeepLinkOutcome.NotFound -> "no handler owns this link"
+            DeepLinkOutcome.NotFound -> "not found — it starts with no registered base, or no handler owns its page"
         }
         mutableLast.value = "${link.uri} (${link.source.name.lowercase()}): $result"
     }

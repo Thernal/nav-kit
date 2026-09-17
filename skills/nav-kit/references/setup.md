@@ -31,9 +31,9 @@ The root back stack lives in a ViewModel, so the app module also needs
 ### With Metro
 
 `NavigationWiring` is `@BindingContainer @ContributesTo(AppScope::class)`: a graph over `AppScope`
-includes it automatically. It declares `Set<NavigationGuard>`, `Set<DeepLinkHandler>` and
-`Set<NavigationEventSink>` as empty-allowed multibindings, binds every service as a singleton, and
-contributes three `ProvidedValue<*>` — the renderer, results and arguments locals.
+includes it automatically. It declares `Set<NavigationGuard>`, `Set<DeepLinkHandler>`,
+`Set<DeepLinkBase>` and `Set<NavigationEventSink>` as empty-allowed multibindings, binds every service
+as a singleton, and contributes three `ProvidedValue<*>` — the renderer, results and arguments locals.
 
 ```kotlin
 @DependencyGraph(AppScope::class)
@@ -51,6 +51,22 @@ interface AppGraph {
 interface AppBindings {
     @Multibinds(allowEmpty = true)
     val graphProviders: Set<NavigationGraphProvider>
+
+    companion object {
+        // One per scheme and domain the platform declarations below name. Handlers with no base fail
+        // when the dispatcher is built; a link matching no base is NotFound.
+        @Provides
+        @IntoSet
+        fun provideAppSchemeBase(): DeepLinkBase {
+            return DeepLinkBase("myapp://")
+        }
+
+        @Provides
+        @IntoSet
+        fun provideWebOriginBase(): DeepLinkBase {
+            return DeepLinkBase("https://example.com")
+        }
+    }
 }
 
 fun createAppGraph(): AppGraph {
@@ -66,6 +82,7 @@ Do not bind `Navigator`: a host builds its own per host.
 class Navigation(
     guards: List<NavigationGuard>,
     deepLinkHandlers: Set<DeepLinkHandler>,
+    deepLinkBases: Set<DeepLinkBase>,             // e.g. setOf(DeepLinkBase("myapp://"))
     sinks: List<NavigationEventSink> = emptyList(),
 ) {
     private val bridge = RuntimeDeepLinkBridge()          // ONE object behind ingress and events
@@ -74,7 +91,10 @@ class Navigation(
 
     val deepLinkIngress: DeepLinkIngress = bridge
     val deepLinkEvents: DeepLinkEvents = bridge
-    val deepLinkDispatcher: DeepLinkDispatcher = DeepLinkDispatcherImpl(deepLinkHandlers)
+    val deepLinkDispatcher: DeepLinkDispatcher = DeepLinkDispatcherImpl(
+        handlers = deepLinkHandlers,
+        bases = deepLinkBases,
+    )
 
     private val renderer: NavigationHostRenderer = NavigationHostRendererImpl(
         guardRunner = NavigationGuardRunnerImpl(guards),
@@ -243,7 +263,10 @@ struct iOSApp: App {
 }
 ```
 
-`Info.plist`: `CFBundleURLTypes` with the scheme, and `CADisableMinimumFrameDurationOnPhone` = `true` —
+The scheme in the intent filter must also be a registered `DeepLinkBase` (section 2).
+
+`Info.plist`: `CFBundleURLTypes` with the scheme (registered as a `DeepLinkBase` too), and
+`CADisableMinimumFrameDurationOnPhone` = `true` —
 Compose Multiplatform checks it on the first frame and the app closes at launch without it. The Kotlin
 file name decides the Swift name (`MainViewController.kt` → `MainViewControllerKt`).
 

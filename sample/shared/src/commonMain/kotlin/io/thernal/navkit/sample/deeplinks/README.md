@@ -10,7 +10,7 @@ A link travels through four hands, and each does one thing:
 platform (intent, onOpenURL) ─publish─▶ DeepLinkIngress ═══ DeepLinkEvents
                                                                 │ collected by the root (SampleApp)
                                                                 ▼
-                                   DeepLinkDispatcher ─▶ the handler that owns the page
+              DeepLinkDispatcher ─ removes the registered base ─▶ the handler that owns the page
                                                                 │ DeepLinkOutcome
                                                                 ▼
                         RootViewModel.onDeepLink(routes) ─▶ root host guards the stack ─▶ screen
@@ -22,10 +22,31 @@ platform (intent, onOpenURL) ─publish─▶ DeepLinkIngress ═══ DeepLink
 | [`DeepLinkScreens.kt`](DeepLinkScreens.kt) | a playground that publishes links by hand, and the screens the links open |
 | [`DeepLinkRoutes.kt`](DeepLinkRoutes.kt) | the routes |
 | [`DeepLinksBindings.kt`](DeepLinksBindings.kt) | contributes the handlers into the kit's handler set |
+| [`../app/SampleBindings.kt`](../app/SampleBindings.kt) | registers the two bases links start with: `navkit://` and `https://example.com` |
 | [`../app/SampleApp.kt`](../app/SampleApp.kt) | where links are resolved and applied |
 | [`../app/DeepLinkLog.kt`](../app/DeepLinkLog.kt) | where what a handler decided is recorded |
 
 ## Simple: One link, one route
+
+The application first says which links are its own. Each `DeepLinkBase` is a prefix — a scheme, or a
+web origin — and the parser removes the one a link starts with before looking for the page:
+
+```kotlin
+// app/SampleBindings.kt
+@Provides
+@IntoSet
+fun provideAppSchemeBase(): DeepLinkBase {
+    return DeepLinkBase("navkit://")        // the scheme the manifest and Info.plist declare
+}
+
+@Provides
+@IntoSet
+fun provideWebOriginBase(): DeepLinkBase {
+    return DeepLinkBase("https://example.com")
+}
+```
+
+A feature then only names its page:
 
 ```kotlin
 class ProductDeepLinkHandler : DeepLinkHandler {
@@ -62,10 +83,14 @@ private fun deliver(ingress: DeepLinkIngress, log: DeepLinkLog, uri: String, sou
 
 What to notice:
 
-- **Both forms of a link reach the same handler.** On a custom scheme the host *is* the first page;
-  on `http(s)` the host is a domain and only the path counts. `navkit://product/42` and
-  `https://example.com/product/42` both parse to the page `product` with segments `product`, `42` — so a
-  feature declares its page once and there is no list of app schemes to keep in sync with the manifest.
+- **Every registered form of a link reaches the same handler.** The parser removes the registered base
+  a link starts with: `navkit://product/42` minus `navkit://` and `https://example.com/product/42` minus
+  `https://example.com` both leave `product`, `42`. A feature declares its page once; the bases are the
+  application's, registered in one place.
+- **A domain the app does not own is refused.** `https://elsewhere.example/product/42` starts with no
+  registered base, so it is `NotFound` before any handler sees it.
+- **The bases have to agree with the platform.** The Android intent filter and the iOS URL type deliver
+  `navkit://`; if nothing registered `navkit://`, every such link would be `NotFound`.
 - **One owner per page.** The dispatcher is built from the handler set; two handlers claiming a page fail
   at construction instead of last-one-wins.
 - **A link resolves to a stack, not a destination.** Back from the product goes to the playground, then
@@ -74,7 +99,8 @@ What to notice:
   the handler decided arrives later, at the root.
 
 **Try it:** open *One link, one route*, deliver `navkit://product/42`, go back; then *Try the web form
-instead*. Edit the link to `navkit://product` — the readout says it was rejected, and why. From a terminal:
+instead*, and *Try a domain the app does not own* — the readout says it was not found. Edit the link to
+`navkit://product` — the readout says it was rejected, and why. From a terminal:
 `adb shell am start -a android.intent.action.VIEW -d navkit://product/7` or
 `xcrun simctl openurl booted navkit://product/7`.
 
@@ -142,15 +168,18 @@ stack), the in-app notification (rejected — the readout says why), and the sec
 
 ## Doing this in your app
 
-1. Handle each page in one `DeepLinkHandler` (or a `TypedDeepLinkHandler` over an enum of
+1. Register a `DeepLinkBase` `@IntoSet` for every scheme and domain the app answers to — the same ones
+   the platform declarations below name.
+2. Handle each page in one `DeepLinkHandler` (or a `TypedDeepLinkHandler` over an enum of
    `DeepLinkPage`s), returning the **whole stack**, the app's root at the bottom. Contribute it
    `@IntoSet`.
-2. At the root: collect `DeepLinkEvents.links`, `dispatch`, apply `Navigate(routes)` through the same
+3. At the root: collect `DeepLinkEvents.links`, `dispatch`, apply `Navigate(routes)` through the same
    setter the root host uses. Log `Rejected`/`NotFound` if anyone needs to see them.
-3. Android: `singleTop` activity with a `VIEW`/`BROWSABLE` intent filter for your scheme; publish
+4. Android: `singleTop` activity with a `VIEW`/`BROWSABLE` intent filter for your scheme; publish
    `intent` in `onCreate` when `savedInstanceState == null`, and in `onNewIntent`.
-4. iOS: the scheme in `CFBundleURLTypes`; `.onOpenURL` calls a Kotlin function that publishes.
-5. Do not check access in handlers — guards run on the applied stack. Do validate what the link carries.
+5. iOS: the scheme in `CFBundleURLTypes`; `.onOpenURL` calls a Kotlin function that publishes.
+6. Build outbound links with `buildDeepLinkUri(base, page)` on a registered base.
+7. Do not check access in handlers — guards run on the applied stack. Do validate what the link carries.
 
 ## Pitfalls
 
@@ -159,11 +188,12 @@ stack), the in-app notification (rejected — the readout says why), and the sec
 - **Resolving links inside a nested host** — there is one stream; resolve at the root.
 - **Two handlers owning one page** — construction fails.
 - **Expecting the ingress's `true` to mean the link opened** — it means queued.
-- **Building a custom-scheme link with `buildDeepLinkUri("navkit://", page)`** — the builder supplies
-  `localhost` as the host, which the parser reads as the page. Build outbound links on an `http(s)` base.
+- **A scheme or domain the platform delivers but nothing registers** — every such link is `NotFound`.
+  Change the manifest, `Info.plist` and the registered bases together.
+- **Handlers without any registered base** — the dispatcher fails when it is built.
 
 ## Read more
 
-- [Deep links](../../../../../../../../../../navigation/api/README.md#deep-links) in the API guide — parsing table, typed handlers, outbound links
+- [Deep links](../../../../../../../../../../navigation/api/README.md#deep-links) in the API guide — link bases, typed handlers, outbound links
 - [Guards](../guards/README.md) — the `AuthGuard` the secret link meets
 - [All examples](../../../../../../../../../README.md#the-examples)

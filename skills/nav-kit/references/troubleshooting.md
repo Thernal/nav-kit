@@ -20,6 +20,9 @@
 | `X returned a stack with a duplicate route: …` | a rewrite put the same route on the stack twice | de-duplicate, or use `RouteGuard` (it de-duplicates) |
 | `Deep link page 'p' is claimed by A and B` | two handlers list the same page | one owner per page |
 | `Deep link page cannot be blank` | a handler's `pages` contains `""` | fix the page set |
+| `Deep link handlers are registered but no DeepLinkBase is, so every link would be NotFound` | handlers contributed, no `DeepLinkBase` | contribute a `DeepLinkBase` per scheme/domain |
+| `A deep link base is scheme://host/path with no query or fragment, got '…'` / `A web deep link base needs a host…` / `A deep link base without a host cannot have a path…` | malformed `DeepLinkBase("…")` | `myapp://`, `https://example.com`, `https://example.com/app` |
+| `A deep link page cannot be blank` | `buildDeepLinkUri` with a blank page | pass the page name |
 | `` Result `n` was posted as A and read as B. `` / `` Argument `n` was put as A and read as B. `` | two keys share a name with different types | prefix key names with the feature; declare each key once |
 | `A result key needs a name` / `An argument key needs a name` | blank key name | name it |
 | `count must be non-negative` | `popBack(-1)` | — |
@@ -49,7 +52,9 @@
 | iOS app closes at launch before drawing | `Info.plist` lacks `CADisableMinimumFrameDurationOnPhone` = `true` | add it |
 | sessions, results or arguments reset after rotation while the screen stays | the graph is created inside the composition | one graph per process (Application / top-level `lazy`) |
 | a hidden tab lost its scroll or form state | per-tab stacks over one host clear hidden entries' state | keep it in the tab-owning ViewModel |
-| a shared link `myapp://localhost/…` opens nothing | built with `buildDeepLinkUri` on a custom-scheme base | build on an `http(s)` base, or write the literal link |
+| every link, or every link of one scheme/domain, is `NotFound` | that scheme or domain is declared on the platform but not registered as a `DeepLinkBase`, or registered with a different path | register the exact base; keep manifest, `Info.plist` and bases in step |
+| a web link resolves to the page `app` (or another path prefix) | the base registered is the bare origin, not `https://example.com/app` | register the base with its path |
+| a link built in the app does not open | built by string concatenation, or on a base that is not registered | `buildDeepLinkUri(base, page)` on a registered base |
 
 ## 3. Review checklist
 
@@ -92,6 +97,8 @@
 
 - [ ] "Confirm on back" is `NavigationBackHandler`; "never leave" is a transition guard.
 - [ ] Deep links resolve at the root, return whole stacks, do not check access, respect `source`.
+- [ ] Every platform-declared scheme and domain is a registered `DeepLinkBase`; outbound links use
+      `buildDeepLinkUri` on those bases.
 - [ ] Android: `singleTop`, intent filter, publish in `onCreate` (first creation) and `onNewIntent`.
 - [ ] iOS: URL type, `onOpenURL` → ingress, `CADisableMinimumFrameDurationOnPhone`.
 

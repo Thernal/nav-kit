@@ -246,13 +246,32 @@ class ProfileDeepLinkHandler : TypedDeepLinkHandler<ProfileDeepLinkPage>(Profile
 publishes a runtime link from cold start, a new intent, a notification tap or a `UIApplicationDelegate`
 URL callback. `buildDeepLinkUri`/`DeepLinkPage.buildUri` build the outbound form of the same link.
 
-**One rule decides what the page is.** On a custom scheme the host *is* the first page
-(`navkit://booking/42` → `booking`, `42`), because there is no domain there to be a host; on
-`http(s)` the host is a domain and only the path counts
-(`https://example.com/booking/42` → the same). Both forms of a link therefore reach the same
-handler, so a feature declares its page once and gets the app-scheme and web forms for free. The
-rule is derived from the scheme rather than from a configured list of app schemes — a list is one
-more thing to keep in sync with `AndroidManifest.xml` and `Info.plist`, and buys nothing.
+**One rule decides what the page is: the registered base a link starts with is removed, and what
+follows is the page.** The application contributes a `DeepLinkBase` for every scheme and web origin it
+answers to — `navkit://`, `https://example.com`, or a web origin with a path such as
+`https://example.com/app` — and the most specific one a link starts with is stripped.
+`navkit://booking/42` and `https://example.com/booking/42` both yield `booking`, `42`, so a feature
+declares its page once and every registered form of the link reaches it. On an app scheme that leaves
+the host in the page's position, because there is no domain there to be a host. A link that starts
+with no registered base resolves to `NotFound`, and handlers with no base registered fail when the
+dispatcher is built.
+
+The rule used to be derived from the scheme instead — the host as the first page on a custom scheme,
+ignored on `http(s)` — precisely so there was no list to keep in sync with `AndroidManifest.xml` and
+`Info.plist`. It cost more than the list does:
+
+- **The builder could not produce what the parser reads.** `buildDeepLinkUri("navkit://", "profile")`
+  gave `navkit://localhost/profile`, read back as the page `localhost`: every app-scheme link the app
+  built for itself resolved to nothing, silently.
+- **Any domain reached a handler.** With the web host ignored, `https://elsewhere.example/orders/77`
+  opened orders. An intent filter limits what the platform delivers, but a link published from a
+  notification payload goes straight to the ingress.
+- **A web link could not live under a path.** `https://example.com/app/orders` had the page `app`.
+
+With registered bases, building is appending to a base and parsing is removing it, so the two agree by
+construction; an unregistered domain is refused; and a base may carry a path. The list still has to
+agree with the platform declarations — a scheme the manifest delivers but nothing registers resolves to
+`NotFound` — but that is one list, in one place, and it fails visibly.
 
 Resolving and applying a link is the single root state holder's job, not `NavigationHost`'s — a
 host can be mounted anywhere a feature needs its own local back stack, but there is only one
@@ -394,7 +413,7 @@ of those two facts, not a change of design.
 | Navigation logs | emitted to a global debug-console object | `NavigationEvent` + injected `NavigationEventSink` | the library cannot depend on one app's console; an injected sink is also what lets a test assert on what the navigator emitted. |
 | Back handling | an injected `BackDispatcher` **and** a private global `ComposeBackDispatcher` the host actually consulted | one `BackDispatcher`, provided at the host as `LocalBackDispatcher` | with two mechanisms a caller could register with the one nothing dispatches through, and silently never fire. |
 | Deep-link bridge | `object RuntimeDeepLinkBridge` | a class, bound as a singleton | two tests in one process no longer share a channel. |
-| Deep-link parsing | `java.net.URI`, app scheme hardcoded | `io.ktor.http.Url`, scheme rule derived | multiplatform, and one less thing to keep in sync with the platform manifests. |
+| Deep-link parsing | `java.net.URI`, app scheme hardcoded | registered `DeepLinkBase`s, stripped from the start of a link | multiplatform; the builder and the parser agree by construction, and a link on a domain the app does not own is refused. |
 | Callback list | `CopyOnWriteArrayList` | `MutableStateFlow<List<…>>` + `update` | a compare-and-set loop is available on every platform; `dispatch` still walks a snapshot. |
 | Sheet back | `androidx.activity.compose.BackHandler` | `androidx.navigationevent.compose.NavigationBackHandler` | the Compose `BackHandler` is deprecated in favour of the navigation-event API Navigation3 itself is built on. |
 | Dependency scopes | `implementation` throughout | `api` for types in a module's own signatures | these are consumed as libraries, so a consumer must be able to compile against `Route : NavKey` and `ImmutableList`. |

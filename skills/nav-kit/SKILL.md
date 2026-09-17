@@ -26,7 +26,7 @@ grep -rn --include=*.kt "NavigationHostParams(" .                            # e
 grep -rn --include=*.kt -e "NavigationGraphProvider" -e "navEntry<" -e "bottomSheetEntry<" .  # where screens are registered
 grep -rn --include=*.kt -e "RouteGuard<" -e ": NavigationGuard" -e "TransientRoute" .        # guards and their markers
 grep -rn --include=*.kt -e "resultKey<" -e "argumentKey<" .                  # data keys (names already taken)
-grep -rn --include=*.kt -e "DeepLinkHandler" -e "DeepLinkPage" .             # pages already claimed
+grep -rn --include=*.kt -e "DeepLinkHandler" -e "DeepLinkPage" -e "DeepLinkBase(" .  # pages claimed, schemes and domains registered
 ```
 
 If nothing is installed, read [references/setup.md](references/setup.md) before anything else.
@@ -54,8 +54,10 @@ These hold everywhere; each reference builds on them.
 6. **Results travel backwards, arguments forwards.** `resultKey` + `post` + `ResultEffect` for a value
    handed to a screen already on the stack; `argumentKey` + `put(…, whileInStack { … })` for a value read
    by screens about to open. Both are in memory only.
-7. **Deep links are resolved once, at the root**, by the state holder that owns the root stack; a
-   handler returns a whole stack and does not check access — the host guards what it is handed.
+7. **Deep links are resolved once, at the root**, by the state holder that owns the root stack. The
+   application registers a `DeepLinkBase` per scheme and domain; the parser strips the matching base, a
+   link matching none is `NotFound`. A handler returns a whole stack and does not check access — the
+   host guards what it is handed.
 8. **Application services arrive as composition locals** installed once at the root from the graph:
    `LocalNavigationHostRenderer`, `LocalNavigationResults`, `LocalNavigationArguments`. Without the
    renderer a host draws nothing.
@@ -87,6 +89,8 @@ Before calling the work done, walk this:
       guard substitutes (sign-in) or a deferral pushes (a placeholder), and including nested hosts.
 - [ ] New guards, deep-link handlers and event sinks are contributed `@IntoSet` (or passed to
       `NavigationGuardRunnerImpl` / `DeepLinkDispatcherImpl` / the sink fan-out when wired by hand).
+- [ ] Every scheme and domain the platform delivers (intent filters, `CFBundleURLTypes`, verified
+      domains) is registered as a `DeepLinkBase`, and outbound links are built on those bases.
 - [ ] New result and argument keys are declared once, next to the producing feature's routes, with a
       feature-prefixed name.
 - [ ] No host can be handed an empty stack.
@@ -106,5 +110,7 @@ Before calling the work done, walk this:
 | an argument scoped to one screen | dies when that route leaves the stack (a `replace`, a guard rewrite) while other steps still read it | scope to the flow's sealed type |
 | `NavigationBackHandler` to "block leaving" | only sees `popBack` while composed | a transition guard |
 | a deep-link handler checking the session | duplicated rule; the host guards the stack anyway | return the stack; let guards act |
+| a new scheme or domain added only to the manifest / `Info.plist` | its links start with no registered base: `NotFound` | also contribute a `DeepLinkBase` |
+| a link string concatenated by hand | drifts from what the parser reads | `buildDeepLinkUri(base, page, query)` on a registered base |
 | a guard with side effects or I/O in `evaluate` | runs many times per navigation | pure `evaluate`; async work via `Deferred` |
 | creating the DI graph inside a composable | rebuilt on activity recreation; stores reset while the stack survives | one graph per process |
