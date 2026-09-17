@@ -6,9 +6,8 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * What actually happened to a command that adds routes: guards can refuse it, rewrite it, or need
- * time to decide, so a call site can tell "we moved" from "we were sent somewhere else" from
- * "nothing happened".
+ * What actually happened to a command that adds routes — guards can refuse it, rewrite it, or need
+ * time — so a call site can tell the three apart.
  */
 @Immutable
 sealed interface NavigationOutcome {

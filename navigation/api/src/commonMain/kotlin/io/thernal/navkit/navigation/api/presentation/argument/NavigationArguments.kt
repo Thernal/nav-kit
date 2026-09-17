@@ -1,17 +1,10 @@
 package io.thernal.navkit.navigation.api.presentation.argument
 
 /**
- * Values travelling **forwards**: set by a screen that is opening others, read by screens that do
- * not exist yet, without being threaded through every route in between. A value handed back by a
- * closing screen travels the other way and belongs in
- * [io.thernal.navkit.navigation.api.presentation.result.NavigationResults].
- *
- * Lifetime is derived from the back stack, never counted — see [ArgumentScope]. **In memory only**:
- * an argument is lost on process death while the routes that need it are restored, so a consumer
- * that finds nothing restarts its flow rather than failing.
- *
- * Put an argument in the same action that pushes the routes which read it. See
- * `navigation/README.md`, "Arguments — forwards".
+ * Values travelling **forwards**, to screens that do not exist yet. Backwards is
+ * [NavigationResults][io.thernal.navkit.navigation.api.presentation.result.NavigationResults].
+ * Lifetime comes from the back stack — see [ArgumentScope] — and is **in memory only**, so a
+ * consumer that finds nothing restarts its flow.
  */
 interface NavigationArguments {
     /** Stores [value] for as long as [scope] says it is alive. A second put replaces the first. */

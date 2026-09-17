@@ -30,9 +30,8 @@ internal class NavDisplayConfig<R : Route>(
 )
 
 /**
- * Memoizes the configuration so a recomposition that only moved the stack does not rebuild it.
- * `entryProvider` is the one that matters: Navigation3's is an inline function that allocates a scope
- * and two maps and runs the whole builder on every call.
+ * Memoizes the configuration so a recomposition that only moved the stack does not rebuild it —
+ * Navigation3's `entryProvider` runs the whole builder on every call.
  */
 @Composable
 internal fun <R : Route> rememberNavDisplayConfig(

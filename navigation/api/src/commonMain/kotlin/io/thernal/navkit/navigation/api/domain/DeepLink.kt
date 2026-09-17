@@ -1,10 +1,8 @@
 package io.thernal.navkit.navigation.api.domain
 
 /**
- * A parsed inbound link, independent of how it reached the app.
- *
- * [pathSegments] is what follows the registered [base] the link started with, so [page] is the same
- * for every registered form of one link. [host] is the host as written — on an app scheme, the page.
+ * A parsed inbound link. [pathSegments] is what follows the registered [base], so [page] is the same
+ * for every registered form of one link; [host] is the host as written.
  */
 data class DeepLink(
     val raw: String,

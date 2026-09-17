@@ -13,12 +13,9 @@ import kotlinx.coroutines.flow.merge
 private const val MAX_ROUNDS = 8
 
 /**
- * Folds every guard over the proposed stack, then repeats the fold until the stack stops changing —
- * a rewritten stack is simply the next proposal, so a route a guard introduced is guarded like any
- * other.
- *
- * Each guard's output is checked before it is adopted, and a malformed one fails loudly rather than
- * being silently repaired: it would corrupt navigation for every other feature.
+ * Folds every guard over the proposed stack and repeats until it stops changing, so a route a guard
+ * introduced is guarded like any other. A malformed verdict fails loudly rather than being silently
+ * repaired: it would corrupt navigation for every other feature.
  */
 class NavigationGuardRunnerImpl(private val guards: List<NavigationGuard>) : NavigationGuardRunner {
 

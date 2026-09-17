@@ -10,10 +10,9 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 /**
- * Controlled like a `TextField`: the caller owns [backStack] and is notified of every navigation
- * command through [onBackStackChange], which must be a plain setter — the host writes its own guard
- * corrections back through it. `NavigationHost` builds a
- * [io.thernal.navkit.navigation.api.presentation.navigator.Navigator] over the pair.
+ * Controlled like a `TextField`: the caller owns [backStack] and hears every command through
+ * [onBackStackChange], which must be a **plain setter** — the host writes its guard corrections back
+ * through it. The host builds its `Navigator` over the pair.
  */
 @Immutable
 data class NavigationHostParams<R : Route>(

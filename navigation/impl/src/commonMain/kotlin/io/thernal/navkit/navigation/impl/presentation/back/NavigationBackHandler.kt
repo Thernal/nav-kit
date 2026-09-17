@@ -8,9 +8,9 @@ import io.thernal.navkit.navigation.api.presentation.back.BackCallback
 import io.thernal.navkit.navigation.api.presentation.back.LocalBackDispatcher
 
 /**
- * Intercepts back ahead of the host's own pop, for as long as this composable is in the composition.
- * It registers against the dispatcher the mounted host provides — the same object back is dispatched
- * through, whether it came from the gesture or from a screen calling `popBack()`.
+ * Intercepts back ahead of the host's own pop, while this composable is composed. It registers
+ * against the dispatcher the host provides — the same object back is dispatched through, however it
+ * was triggered.
  */
 @Composable
 fun NavigationBackHandler(

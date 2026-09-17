@@ -21,17 +21,10 @@ private class LinkParts(
 )
 
 /**
- * Reads a raw link into a [DeepLink], against the bases the application registered.
- *
- * **The most specific registered base the link starts with is removed, and what follows is the
- * page.** `navkit://booking/42` against `navkit://` and `https://example.com/booking/42` against
- * `https://example.com` both yield `["booking", "42"]`, so a feature declares its page once and every
- * registered form of the link reaches it. On an app scheme that leaves the host in the page's
- * position — there is no domain there to be a host.
- *
- * `null` when the link is malformed, starts with no registered base, or names no page after it. The
- * registered list has to agree with `AndroidManifest.xml` and `Info.plist`; why it is registered
- * rather than derived from the scheme is in `navigation/README.md`, "Deep links".
+ * Reads a raw link into a [DeepLink] by removing the most specific registered [DeepLinkBase] it
+ * starts with; what follows is the page, so every registered form of a link reaches one handler.
+ * `null` when it is malformed, starts with no registered base, or names no page. The registered list
+ * has to agree with `AndroidManifest.xml` and `Info.plist`.
  */
 fun parseDeepLink(
     raw: String,

@@ -4,17 +4,11 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * Every stack this host writes, kept until the owner hands it back.
+ * Every stack this host writes, kept until the owner hands it back — the owner answers a frame late,
+ * so a command builds on [newestOr] rather than on what is on screen, or it undoes the command
+ * before it (`popBack(2)` popped once). The same record tells an own write from an external one.
  *
- * The owner answers late — a `StateFlow` reaches the host a frame after `onBackStackChange` returned
- * — so for that frame the stack on screen is not the one last written, and a command built on the
- * screen would undo the command before it (`popBack(2)` popped once). Commands build on [newestOr].
- *
- * The same record tells a stack this host wrote apart from one that arrived from elsewhere, which is
- * what a waiting deferral needs in order to be walked away from. See [acknowledge].
- *
- * Plain fields, not snapshot state: nothing here decides what composes, and a snapshot write from
- * inside a command would invalidate the composition reading it.
+ * Plain fields, not snapshot state: a write from inside a command would invalidate its reader.
  */
 internal class HostStackWriter<R : Route>(private val deliver: (ImmutableList<R>) -> Unit) {
     private var handed: ImmutableList<R>? = null
@@ -33,9 +27,9 @@ internal class HostStackWriter<R : Route>(private val deliver: (ImmutableList<R>
     }
 
     /**
-     * Records the stack the owner handed in, and answers whether it was changed by a hand other than
-     * this host's. The first stack is nobody's change; a handed-back write confirms itself and every
-     * write before it; anything else is external, and the waiting writes are dropped.
+     * Records the stack the owner handed in, and answers whether a hand other than this host's
+     * changed it. The first stack is nobody's change; a handed-back write confirms itself and every
+     * write before it.
      */
     fun acknowledge(stack: ImmutableList<R>): Boolean {
         val previous = handed

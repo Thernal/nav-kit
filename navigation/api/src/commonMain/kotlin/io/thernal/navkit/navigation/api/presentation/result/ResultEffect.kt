@@ -7,11 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 
 /**
- * Delivers the result posted under [key] to [onResult], once.
- *
- * A covered screen is not composed, so this runs when the user comes back to it — exactly when a
- * returning result is wanted. [onResult] belongs to the screen's state holder; the composable
- * forwards, it does not decide.
+ * Delivers the result posted under [key] to [onResult], once — when the user comes back to this
+ * screen, since a covered one is not composed. [onResult] belongs to the state holder.
  */
 @Composable
 fun <T : Any> ResultEffect(

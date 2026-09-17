@@ -34,13 +34,9 @@ import io.thernal.navkit.navigation.impl.domain.result.NavigationResultsImpl
 import io.thernal.navkit.navigation.impl.presentation.host.NavigationHostRendererImpl
 
 /**
- * Binds the navigation capability into an application graph.
- *
- * A worked example rather than a fixed part of the kit: `api` and `impl` name no injection framework,
- * so an app on a different container writes its own equivalent of this file and changes nothing else.
- *
- * `Navigator` is deliberately **not** bound here. It holds no state — `NavigationHost` builds one per
- * host — so an application-graph binding would be a second, unscoped navigator pointing at nothing.
+ * Binds the navigation capability into an application graph — a worked example rather than a fixed
+ * part of the kit, since `api` and `impl` name no injection framework. `Navigator` is deliberately
+ * **not** bound: the host builds one per host, so a graph binding would point at nothing.
  */
 @BindingContainer
 @ContributesTo(AppScope::class)
@@ -50,9 +46,8 @@ interface NavigationWiring {
     val deepLinkHandlers: Set<DeepLinkHandler>
 
     /**
-     * The app schemes and web origins the application's links start with, contributed `@IntoSet` by
-     * the application. A link that starts with none of them resolves to `NotFound`, and handlers with
-     * none registered fail when the dispatcher is built.
+     * The app schemes and web origins the application's links start with. A link matching none
+     * resolves to `NotFound`; handlers with no base at all fail when the dispatcher is built.
      */
     @Multibinds(allowEmpty = true)
     val deepLinkBases: Set<DeepLinkBase>
@@ -83,10 +78,9 @@ interface NavigationWiring {
 
         /**
          * One instance behind two interfaces — [NavigationArguments] for the application,
-         * [ArgumentPruner] for the mounted host — which is what keeps `pruneFor` off the composition
-         * local every screen can reach. The scope sits on the instance and the two below alias it:
-         * scoping them separately would build two stores, and the host would prune the one nothing
-         * writes to.
+         * [ArgumentPruner] for the host — so `pruneFor` stays off the composition local. The scope
+         * sits on the instance and the two below alias it; scoping them separately would build two
+         * stores, and the host would prune the one nothing writes to.
          */
         @Provides
         @SingleIn(AppScope::class)

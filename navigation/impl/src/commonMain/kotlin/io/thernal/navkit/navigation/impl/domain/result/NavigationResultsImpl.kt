@@ -48,9 +48,8 @@ class NavigationResultsImpl : NavigationResults {
     }
 
     /**
-     * Republishes the names until they match the map they were read from: [posted] is the source of
-     * truth and [pendingNames] only mirrors it, so a writer that observed an older map loops rather
-     * than leaving a stale set behind.
+     * Republishes the names until they match the map they were read from: [pendingNames] only mirrors
+     * [posted], so a writer that observed an older map loops rather than leaving a stale set.
      */
     private fun publish() {
         var snapshot = posted.value

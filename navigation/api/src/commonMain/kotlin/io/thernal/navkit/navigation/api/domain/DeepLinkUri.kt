@@ -3,11 +3,8 @@ package io.thernal.navkit.navigation.api.domain
 import io.ktor.http.encodeURLParameter
 
 /**
- * Builds the link that `DeepLinkParser` reads back, against the same registered [base], as [page]
- * with [query]: `navkit://profile?id=42`, `https://example.com/profile?id=42`.
- *
- * On a base with a host the page follows the base's path; on an app-scheme base it takes the host's
- * position, which is where the parser looks for it.
+ * Builds the link `DeepLinkParser` reads back, against the same registered [base]:
+ * `navkit://profile?id=42`, `https://example.com/profile?id=42`.
  */
 fun buildDeepLinkUri(
     base: DeepLinkBase,

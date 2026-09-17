@@ -3,13 +3,10 @@ package io.thernal.navkit.navigation.api.presentation.result
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * A keyed mailbox for values travelling **backwards**: a closing screen leaves one for a screen that
- * is already in the stack and is about to be uncovered. A value meant for screens that do not exist
- * yet travels forwards and belongs in
- * [io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments].
- *
- * **In memory only**: a posted result is lost on process death while the routes that would have
- * consumed it are restored, so a consumer treats a missing result as a first visit, never an error.
+ * A keyed mailbox for values travelling **backwards**, from a closing screen to one already in the
+ * stack. Forwards is
+ * [NavigationArguments][io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments].
+ * **In memory only**, so a missing result is a first visit, never an error.
  */
 interface NavigationResults {
     /** The names with a value waiting — names, so one feature's results are not readable by every screen. */

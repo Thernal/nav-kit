@@ -14,9 +14,9 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * The two navigators a host builds over one stack. [screens] goes to the host's content: it abandons
- * a waiting deferral when it moves the stack, and submits the deferrals it meets. [deferral] is what
- * a running deferral is given and does neither — its placeholder push is part of the wait.
+ * The two navigators a host builds over one stack. [screens] goes to the content: it abandons a
+ * waiting deferral when it moves the stack, and submits the ones it meets. [deferral] does neither —
+ * a running deferral's own push is part of the wait.
  */
 internal class HostNavigators(
     val screens: Navigator,
@@ -24,9 +24,9 @@ internal class HostNavigators(
 )
 
 /**
- * Built once so their identity is stable across recompositions: every read goes through the
- * [rememberUpdatedState] boxes below and every write through [writer]. A navigator that captured the
- * first composition's stack would keep writing over it forever.
+ * Built once, so every read goes through the [rememberUpdatedState] boxes below and every write
+ * through [writer]: a navigator that captured the first composition's stack would write over it
+ * forever.
  */
 @Composable
 internal fun <R : Route> rememberHostNavigators(

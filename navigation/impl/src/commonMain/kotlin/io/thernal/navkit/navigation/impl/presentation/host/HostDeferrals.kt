@@ -19,12 +19,9 @@ internal class PendingDeferral(
 )
 
 /**
- * The deferral a host is awaiting — at most one at a time. The navigator feeds it, and so does the
- * host when a stack it was handed defers; the host's effect drains it, keyed on [pending].
- *
- * **Keyed on the run, never on the verdict.** The verdict is derived from the stack, and a
- * deferral's own placeholder push changes the stack — a run keyed on the verdict cancels itself the
- * moment it shows its prompt.
+ * The deferral a host is awaiting — at most one at a time. **Keyed on the run, never on the
+ * verdict**: a deferral's own placeholder push changes the stack, so a run keyed on the verdict
+ * cancels itself the moment it shows its prompt.
  */
 @Stable
 internal class HostDeferrals {
@@ -50,12 +47,8 @@ internal class HostDeferrals {
     }
 
     /**
-     * Awaits [run] through [navigator] and applies what it settled on. [navigator] must be one that
-     * neither abandons nor submits — see [HostNavigators].
-     *
-     * Both identity checks are load-bearing: cancelling the effect waits for the next composition,
-     * so a run can be abandoned in the same frame it was launched, and an answer can arrive before
-     * the cancellation does.
+     * Awaits [run] through [navigator], which must neither abandon nor submit. Both identity checks
+     * are load-bearing: cancellation waits for the next composition, so an answer can beat it.
      */
     suspend fun drive(
         run: PendingDeferral,

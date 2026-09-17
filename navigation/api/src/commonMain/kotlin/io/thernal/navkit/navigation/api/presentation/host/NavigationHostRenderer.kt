@@ -36,9 +36,9 @@ private object PreviewNavigationHostRenderer : NavigationHostRenderer {
 }
 
 /**
- * Mounts a back stack. A host can sit anywhere a feature needs its own local stack — a wizard, a
- * sheet's internal steps — not just at the app root, which is why it carries no deep-link concept:
- * there is one link stream for the whole app, so resolving one stays the root's job.
+ * Mounts a back stack. A host can sit anywhere a feature needs its own — a wizard, a sheet's steps —
+ * which is why it carries no deep-link concept: there is one link stream per app, so resolving one
+ * stays the root's job.
  */
 @Composable
 fun <R : Route> NavigationHost(

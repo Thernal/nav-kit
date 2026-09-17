@@ -16,9 +16,9 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * The stack this host last rendered. A plain holder, not snapshot state: it is read while composing,
- * and a snapshot read here would subscribe the host to its own write and recompose forever. `null`
- * until the first render, which is not the same as an empty stack.
+ * The stack this host last rendered. A plain holder, not snapshot state: a snapshot read here would
+ * subscribe the host to its own write and recompose forever. `null` until the first render, which is
+ * not an empty stack.
  */
 private class RenderedBackStack {
     var value: ImmutableList<Route>? = null
@@ -26,8 +26,8 @@ private class RenderedBackStack {
 
 /**
  * What the guards made of the stack the caller handed in. [resolved] is what may be rendered and is
- * not necessarily [NavigationHostParams.backStack]; [verdict] and [proposed] travel with it because
- * a deferral is awaited by whoever also holds the navigator, which is not this function.
+ * not necessarily [NavigationHostParams.backStack]; [verdict] and [proposed] travel with it for
+ * whoever awaits the deferral.
  */
 internal class GuardedBackStack<R : Route>(
     val proposed: ImmutableList<R>,
@@ -38,11 +38,8 @@ internal class GuardedBackStack<R : Route>(
 
 /**
  * Resolves the caller's back stack against the guards, once per stack, and reports a rewrite back
- * through [writer] so the host recognises the correction when it comes back.
- *
- * The navigator resolves everything it writes, but it is not the only way a stack reaches a host: a
- * deep link the root applied and a stack restored after process death both land here. A pure
- * derivation, so `NavDisplay` is never handed the unresolved stack and a refused route never renders.
+ * through [writer] — a deep link and a restored stack reach the host without the navigator. A pure
+ * derivation, so `NavDisplay` never sees the unresolved stack.
  */
 @Composable
 internal fun <R : Route> rememberGuardedBackStack(
@@ -81,11 +78,9 @@ internal fun <R : Route> rememberGuardedBackStack(
         }
     }
 
-    // First composition: nothing is in effect, so the stack handed in is also the stack in effect —
-    // "may this stand", not a transition. An empty `old` would claim a transition that never
-    // happened, and a guard refusing by handing it back would return an empty stack, on the very
-    // path a cold-start deep link takes. `generation` is a key because revalidation asks the same
-    // question of an unmoved stack.
+    // First composition: the stack handed in is also the stack in effect — "may this stand", not a
+    // transition. An empty `old` would make a guard refusing by handing it back return an empty
+    // stack, on the very path a cold-start deep link takes.
     val verdict = remember(key1 = hostRunner, key2 = proposedBackStack, key3 = generation) {
         hostRunner.resolveDeferrable(
             old = inEffect ?: proposedBackStack,

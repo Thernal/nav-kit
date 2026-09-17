@@ -5,10 +5,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Folds every contributed [NavigationGuard] into one decision about a whole back stack.
- *
- * To revalidate a stack that has not moved but whose guards may now answer differently, pass it as
- * both arguments: `resolve(old = current, new = current)`.
+ * Folds every contributed [NavigationGuard] into one decision about a whole back stack. To
+ * revalidate a stack that has not moved, pass it as both arguments.
  */
 interface NavigationGuardRunner {
     /** Every guard's [NavigationGuard.invalidations], merged. A host collects it while mounted. */

@@ -22,14 +22,10 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 
 /**
- * Assembles one mounted host out of three parts, each owning one question:
- * [rememberGuardedBackStack] what may be rendered, [rememberHostNavigators] how it is commanded,
- * [rememberNavDisplayConfig] how it is drawn. What is left here is the wiring between them — and the
- * only place that holds a verdict, a navigator and a scope together, so the only place a deferral
+ * Assembles one mounted host out of three parts — [rememberGuardedBackStack] what may be rendered,
+ * [rememberHostNavigators] how it is commanded, [rememberNavDisplayConfig] how it is drawn — and is
+ * the only place holding a verdict, a navigator and a scope together, so the only place a deferral
  * can be awaited.
- *
- * `api`'s `NavigationHost` reads `LocalNavigationHostRenderer` and lands here; calling that one from
- * here would loop back through the renderer forever, which is what the `Impl` suffix guards against.
  */
 @Composable
 internal fun <R : Route> NavigationHostImpl(
@@ -76,9 +72,8 @@ internal fun <R : Route> NavigationHostImpl(
         }
     }
 
-    // The one place a deferral is awaited: the host's scope is tied to its composition, so an
-    // unmounted host cancels what it started. Keyed on the run, not the verdict — the run's own
-    // placeholder push changes the verdict and must not cancel the run that made it.
+    // The one place a deferral is awaited: the scope is tied to this composition, so an unmounted
+    // host cancels what it started.
     val pending = deferrals.pending
     LaunchedEffect(pending) {
         if (pending != null) {

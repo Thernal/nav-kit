@@ -9,9 +9,8 @@ import kotlinx.collections.immutable.ImmutableList
 @Immutable
 sealed interface GuardVerdict {
     /**
-     * The stack that is allowed to exist: the proposal unchanged allows, the previous stack refuses,
-     * anything else rewrites. [reason] is carried only so a refusal can be reported — whether the
-     * stack was refused is derived by comparing it with the proposal.
+     * The stack that is allowed to exist. [reason] is carried only so a refusal can be reported;
+     * whether it was a refusal is derived by comparing this stack with the proposal.
      */
     data class Resolved(
         val stack: ImmutableList<Route>,
@@ -19,17 +18,9 @@ sealed interface GuardVerdict {
     ) : GuardVerdict
 
     /**
-     * The guard cannot answer yet — a token to refresh, a confirmation to collect, a server to ask.
-     * [meanwhile] is what exists until it can (`old` shows nothing new, `old + Loading` shows a
-     * placeholder), and whatever [resolve] returns is applied — so `Resolved(new)` continues to the
-     * route the user originally asked for, which a redirect cannot express.
-     *
-     * **A guard that defers must answer synchronously the second time**, from a cached result: it is
-     * asked again as soon as the settled stack is applied, and deferring again never converges.
-     *
-     * Only the mounted host awaits a deferral, one at a time, and abandons it when the stack moves
-     * without it — though not when the [Navigator] it hands [resolve] is what moved it. See
-     * `navigation/README.md`, "Deciding later".
+     * The guard cannot answer yet: [meanwhile] exists until it can, and whatever [resolve] returns is
+     * applied. **It must answer synchronously the second time**, from a cached result — deferring
+     * again for the same stack never converges. See `navigation/README.md`, "Deciding later".
      */
     data class Deferred(
         val meanwhile: ImmutableList<Route>,

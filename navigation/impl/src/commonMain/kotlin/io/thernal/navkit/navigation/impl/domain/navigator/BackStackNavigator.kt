@@ -13,8 +13,7 @@ import kotlinx.collections.immutable.toImmutableList
 
 /**
  * What one call to [BackStackNavigator.mutate] did. [didMove] compares against [old] rather than
- * trusting the command's own bookkeeping: a command knows only what it *asked* for, and a guard can
- * hand the previous stack back afterwards.
+ * trusting the command: a command knows only what it *asked* for, and a guard can refuse it.
  */
 private class Mutation(
     val old: ImmutableList<Route>,
@@ -29,19 +28,11 @@ private class Mutation(
 }
 
 /**
- * Adapts a caller-owned back stack into the [Navigator] command surface. Holds no state of its own:
- * `NavigationHost` builds one per host, over whatever backs `NavigationHostParams.backStack`.
- *
- * **Every command goes through [mutate], and [mutate] is the only place a stack is written**, so
- * every one of them is guarded by construction — pops included, which is how a screen with unsaved
- * work refuses to be left.
- *
- * The constructor takes suppliers, not values: a runner or a stack captured at construction would
- * outlive the host's own. `buildBackStack`/`resolveCanPop` are named apart from the
- * [buildStack]/[canPop] members they back because a same-named property and override recurse.
- *
- * The navigator has no scope, so it hands every deferral it meets to [onDeferred] and the host
- * awaits it; [onMoved] tells the host a waiting deferral has been walked away from.
+ * Adapts a caller-owned back stack into the [Navigator] command surface. **Every command goes
+ * through [mutate], and [mutate] is the only place a stack is written**, so all of them are guarded
+ * by construction, pops included; deferrals go to [onDeferred], a navigator having no scope to await
+ * one in. It holds no state and takes suppliers, named apart from the members they back because a
+ * same-named property and override recurse.
  */
 class BackStackNavigator(
     private val buildBackStack: (MutableList<Route>.() -> Unit) -> Unit,
@@ -197,12 +188,9 @@ class BackStackNavigator(
     }
 
     /**
-     * Runs [builder] against the current stack, resolves it through the host's guard runner, and
-     * writes back what the guards allowed. [event] is emitted only when they left the proposal
-     * intact, so the event stream never claims a push that did not happen.
-     *
-     * [onMoved] runs before [onDeferred]: a command that moves the stack walks away from the waiting
-     * deferral before the one it may have started replaces it.
+     * Runs [builder], resolves what it produced through the guards, and writes back what they
+     * allowed. [event] is emitted only when they left the proposal intact, so the stream never
+     * claims a push that did not happen. [onMoved] runs before [onDeferred].
      */
     private fun mutate(
         builder: MutableList<Route>.() -> Unit,

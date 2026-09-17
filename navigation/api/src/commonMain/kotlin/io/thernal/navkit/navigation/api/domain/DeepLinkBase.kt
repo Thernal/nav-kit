@@ -14,24 +14,10 @@ private const val PATH_GROUP = 3
 private val WEB_SCHEMES = setOf("http", "https")
 
 /**
- * A prefix the application's links start with: an app scheme such as `navkit://`, or a web origin
- * with an optional path such as `https://example.com` or `https://example.com/app`.
- *
- * The application registers every base it answers to — the schemes it declares in
- * `AndroidManifest.xml` and `Info.plist`, the domains it owns — and a link is read by removing the
- * most specific base it starts with. What is left is the page and its segments:
- *
- * ```
- * navkit://orders/77              base navkit://                -> orders, 77
- * https://example.com/orders/77   base https://example.com      -> orders, 77
- * https://example.com/app/orders  base https://example.com/app  -> orders
- * ```
- *
- * A link that starts with no registered base is not the application's, and resolves to nothing.
- *
- * The scheme and the host compare case-insensitively; the path compares segment by segment, exactly.
- * A web base (`http`, `https`) must name a host, and a base without a host has no path: on an app
- * scheme the host position is where the page goes.
+ * A prefix the application's links start with — `navkit://`, `https://example.com/app`. A link is
+ * read by removing the most specific registered base it starts with; one matching none is not the
+ * application's. Scheme and host compare case-insensitively, the path segment by segment; a web base
+ * must name a host, and a base without one has no path.
  */
 class DeepLinkBase(uri: String) {
     /** Lower-cased. */

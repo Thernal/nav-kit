@@ -4,9 +4,8 @@ import kotlin.reflect.KClass
 
 /**
  * Names one result and fixes its type: `val SelectedPhoto = resultKey<String>("selected_photo")`.
- *
- * Declared once, next to the routes of the feature that produces the result, and used by both sides
- * — which makes a producer and a consumer disagreeing about the type a compile error.
+ * Declared once, beside the producing feature's routes, and used by both sides — so a disagreement
+ * about the type is a compile error.
  */
 data class ResultKey<T : Any>(
     val name: String,
