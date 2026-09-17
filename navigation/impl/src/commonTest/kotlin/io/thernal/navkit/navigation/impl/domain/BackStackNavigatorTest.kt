@@ -29,6 +29,14 @@ class BackStackNavigatorTest {
 
     private data class Denied(override val message: String) : BlockReason
 
+    private val deferringOnDetails = NavigationGuard { old, new ->
+        if (new.contains(Details)) {
+            GuardVerdict.Deferred(meanwhile = old) { GuardVerdict.Resolved(new) }
+        } else {
+            GuardVerdict.Resolved(new)
+        }
+    }
+
     /** Refuses any proposal containing [route] by handing the previous stack back. */
     private fun rejecting(route: Route): NavigationGuard {
         return NavigationGuard { old, new ->
@@ -66,6 +74,12 @@ class BackStackNavigatorTest {
 
         val events = mutableListOf<NavigationEvent>()
 
+        /** Every deferral the navigator handed on, with the stack its command attempted. */
+        val deferrals = mutableListOf<List<Route>>()
+
+        var moves = 0
+            private set
+
         val backDispatcher: BackDispatcher = BackDispatcherImpl()
 
         val navigator: Navigator = BackStackNavigator(
@@ -74,6 +88,8 @@ class BackStackNavigatorTest {
             resolveGuardRunner = { guardRunner },
             backDispatcher = backDispatcher,
             events = NavigationEventSink { event -> events += event },
+            onDeferred = { attempted, _ -> deferrals += attempted },
+            onMoved = { moves++ },
         )
     }
 
@@ -303,14 +319,7 @@ class BackStackNavigatorTest {
 
     @Test
     fun aDeferredCommandSaysSoAndShowsWhatExistsMeanwhile() {
-        val guard = NavigationGuard { old, new ->
-            if (new.contains(Details)) {
-                GuardVerdict.Deferred(meanwhile = old) { GuardVerdict.Resolved(new) }
-            } else {
-                GuardVerdict.Resolved(new)
-            }
-        }
-        val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(guard)))
+        val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(deferringOnDetails)))
 
         val outcome = harness.navigator.push(Details)
 
@@ -350,6 +359,30 @@ class BackStackNavigatorTest {
         val harness = Harness(listOf(Root, Edit), NavigationGuardRunnerImpl(listOf(keepingEdit())))
 
         assertFalse(harness.navigator.pop())
+    }
+
+    @Test
+    fun aDeferralIsHandedOnWithTheStackItsCommandAttempted() {
+        // The navigator cannot await it; dropping it here meant the host never saw it at all,
+        // because the stack it was handed was only the `meanwhile`.
+        val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(deferringOnDetails)))
+
+        harness.navigator.push(Details)
+
+        assertEquals(listOf(listOf<Route>(Root, Details)), harness.deferrals)
+    }
+
+    @Test
+    fun onlyACommandThatChangesTheStackIsReportedAsMovement() {
+        val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Edit))))
+
+        harness.navigator.push(Edit)
+        harness.navigator.pop()
+        assertEquals(0, harness.moves)
+
+        harness.navigator.push(Details)
+        harness.navigator.pop()
+        assertEquals(2, harness.moves)
     }
 
     /** Refuses any transition that would take [Edit] off the stack. */

@@ -38,8 +38,14 @@ sealed interface GuardVerdict {
      *
      * Only the mounted host awaits a deferral: it owns a scope tied to composition, so an unmounted
      * host cancels what it started, and there is exactly one driver no matter how many ways the
-     * stack can change. A deferral in flight is keyed on the stack that produced it, so the same
-     * one is never launched twice.
+     * stack can change. A navigator command that is deferred hands its deferral to that host. The
+     * host waits on one deferral at a time, keyed on the stack that was attempted, so the same one is
+     * never launched twice — and not on the verdict, which the placeholder push itself changes.
+     *
+     * A deferral is abandoned when the stack moves without it: a command that changes the stack
+     * (backing out of the placeholder, say), or a stack the host did not write (a deep link, a
+     * different list handed in). The [Navigator] passed to [resolve] does neither, so its own pushes
+     * are part of the wait, and a deferral it meets is left alone rather than started.
      */
     data class Deferred(
         val meanwhile: ImmutableList<Route>,

@@ -23,10 +23,10 @@ import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 
 /**
  * Assembles one mounted host out of three parts, each of which owns one question:
- * [rememberGuardedBackStack] what may be rendered, [rememberHostNavigator] how it is commanded,
+ * [rememberGuardedBackStack] what may be rendered, [rememberHostNavigators] how it is commanded,
  * and [rememberNavDisplayConfig] how it is drawn. What is left here is the wiring between them —
- * which is also the only place that holds both a verdict and a navigator, and therefore the only
- * place a deferral can be awaited.
+ * which is also the only place that holds a verdict, a navigator and a scope together, and
+ * therefore the only place a deferral can be awaited.
  *
  * The `Impl` suffix is the module's rule for a declaration that would otherwise collide with an
  * `api` name: `api`'s `NavigationHost` only reads
@@ -50,37 +50,46 @@ internal fun <R : Route> NavigationHostImpl(
 
     val currentOnBackStackChange by rememberUpdatedState(params.onBackStackChange)
     val writer = remember { HostStackWriter<R> { stack -> currentOnBackStackChange(stack) } }
+    val deferrals = remember { HostDeferrals() }
 
     val guarded = rememberGuardedBackStack(params = params, guardRunner = guardRunner, writer = writer)
-    val navigator = rememberHostNavigator(
+    val navigators = rememberHostNavigators(
         backStack = guarded.resolved,
         writer = writer,
+        deferrals = deferrals,
         guardRunner = guarded.runner,
         backDispatcher = backDispatcher,
         events = events,
     )
 
-    // The owner hands a write back a frame or more after it was made. Acknowledging what it handed
-    // in is what lets the next command stop building on that write and build on the rendered stack.
+    // A stack this host did not write — a deep link the root applied, a tab bar handing over a
+    // different list — is a way out of whatever deferral was waiting, exactly like a command that
+    // moved the stack. After composition, so it runs before any effect of this frame submits one.
     SideEffect {
-        writer.acknowledge(params.backStack)
+        if (writer.acknowledge(params.backStack)) {
+            deferrals.abandon()
+        }
     }
 
-    // The one place a deferral is awaited. The host owns a scope tied to its own composition, so an
-    // unmounted host cancels what it started, and keying the effect on the verdict itself means the
-    // same deferral is never launched twice however many times this recomposes. A settled verdict
-    // is applied through the navigator, which resolves it again like any other stack change; a
-    // guard that defers a second time for the same stack is left alone rather than spun on.
+    // A deferral this host found itself, on a stack it was handed or revalidated. The navigator
+    // submits its own; both land in the same slot, which ignores a second submission for the same
+    // attempted stack.
     LaunchedEffect(guarded.verdict) {
         val verdict = guarded.verdict
         if (verdict is GuardVerdict.Deferred) {
-            val settled = verdict.resolve(navigator)
-            if (settled is GuardVerdict.Resolved) {
-                navigator.buildStack {
-                    clear()
-                    addAll(settled.stack)
-                }
-            }
+            deferrals.submit(attempted = guarded.proposed, deferral = verdict)
+        }
+    }
+
+    // The one place a deferral is awaited. The host owns a scope tied to its own composition, so an
+    // unmounted host cancels what it started. Keyed on the pending run rather than on the verdict:
+    // the run's own placeholder push changes the verdict, and must not cancel the run that made it.
+    // A settled verdict is applied through the navigator, which resolves it again like any other
+    // stack change; a guard that defers a second time for the same stack is left alone.
+    val pending = deferrals.pending
+    LaunchedEffect(pending) {
+        if (pending != null) {
+            deferrals.drive(run = pending, navigator = navigators.deferral)
         }
     }
 
@@ -98,7 +107,7 @@ internal fun <R : Route> NavigationHostImpl(
     val config = rememberNavDisplayConfig(params = params, entries = entries)
 
     CompositionLocalProvider(
-        LocalNavigator provides navigator,
+        LocalNavigator provides navigators.screens,
         LocalBackDispatcher provides backDispatcher,
         LocalNavigationHostDepth provides hostDepth + 1,
     ) {
@@ -107,7 +116,7 @@ internal fun <R : Route> NavigationHostImpl(
             backStack = guarded.resolved,
             // The navigator consults the same dispatcher, so back has one path whether it came from
             // here or from a button in a screen calling `popBack()` itself.
-            onBack = { navigator.popBack() },
+            onBack = { navigators.screens.popBack() },
             sceneStrategies = config.sceneStrategies,
             transitionSpec = config.transitionSpec,
             popTransitionSpec = config.popTransitionSpec,

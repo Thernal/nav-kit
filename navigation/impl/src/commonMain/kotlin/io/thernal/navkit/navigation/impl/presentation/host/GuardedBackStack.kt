@@ -29,10 +29,12 @@ private class RenderedBackStack {
  * What the guards made of the stack the caller handed in, and the runner that decided it.
  *
  * [resolved] is what may be rendered; it is not necessarily [NavigationHostParams.backStack], and
- * the difference is the whole reason this type exists. [verdict] is kept alongside it because a
- * deferral has to be awaited by whoever also holds the navigator, which is not this function.
+ * the difference is the whole reason this type exists. [verdict] and [proposed] — the stack the
+ * verdict was asked about — are kept alongside it because a deferral has to be awaited by whoever
+ * also holds the navigator, which is not this function.
  */
 internal class GuardedBackStack<R : Route>(
+    val proposed: ImmutableList<R>,
     val resolved: ImmutableList<R>,
     val verdict: GuardVerdict,
     val runner: NavigationGuardRunner,
@@ -116,8 +118,9 @@ internal fun <R : Route> rememberGuardedBackStack(
         }
     }
 
-    return remember(key1 = resolvedBackStack, key2 = verdict, key3 = hostRunner) {
+    return remember(proposedBackStack, resolvedBackStack, verdict, hostRunner) {
         GuardedBackStack(
+            proposed = proposedBackStack,
             resolved = resolvedBackStack,
             verdict = verdict,
             runner = hostRunner,

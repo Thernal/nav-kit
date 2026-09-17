@@ -12,15 +12,17 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * What one call to [BackStackNavigator.mutate] did: the stack it started from, and what the guards
- * made of the command.
+ * What one call to [BackStackNavigator.mutate] did: the stack it started from, the stack the command
+ * asked for, and what the guards made of it.
  *
  * [didMove] compares against [old] rather than trusting the command's own bookkeeping, because a
  * command only knows what it *asked* for — a guard can hand the previous stack back afterwards.
  */
 private class Mutation(
     val old: ImmutableList<Route>,
+    val attempted: ImmutableList<Route>,
     val outcome: NavigationOutcome,
+    val deferral: GuardVerdict.Deferred?,
 ) {
     val didMove: Boolean
         get() {
@@ -47,6 +49,13 @@ private class Mutation(
  *
  * Pops are guarded too: a guard sees the transition, so refusing one is how a screen with unsaved
  * work says so.
+ *
+ * The navigator cannot await a deferral — it has no scope, and a command returns synchronously — so
+ * it hands every one it meets to [onDeferred], together with the stack the command attempted, and the
+ * host that owns a scope awaits it. [onMoved] reports a command that actually changed the stack,
+ * which is how the host knows a deferral still waiting has been walked away from. A navigator given
+ * to a deferral itself leaves both empty: its placeholder push is not the user leaving, and a
+ * deferral that defers again is left alone rather than spun on.
  */
 class BackStackNavigator(
     private val buildBackStack: (MutableList<Route>.() -> Unit) -> Unit,
@@ -54,6 +63,8 @@ class BackStackNavigator(
     private val resolveGuardRunner: () -> NavigationGuardRunner,
     private val backDispatcher: BackDispatcher,
     private val events: NavigationEventSink = NavigationEventSink.NoOp,
+    private val onDeferred: (attempted: ImmutableList<Route>, deferral: GuardVerdict.Deferred) -> Unit = { _, _ -> },
+    private val onMoved: () -> Unit = {},
 ) : Navigator {
 
     override fun buildStack(builder: MutableList<Route>.() -> Unit): NavigationOutcome {
@@ -208,6 +219,9 @@ class BackStackNavigator(
      * terms and is emitted only when the guards left the proposal intact; otherwise the refusal or
      * the deferral is what gets reported, so the event stream never claims a push that did not
      * happen.
+     *
+     * [onMoved] and [onDeferred] run after the write, in that order: a command that moves the stack
+     * walks away from whatever deferral was waiting before the one it may have started replaces it.
      */
     private fun mutate(
         builder: MutableList<Route>.() -> Unit,
@@ -250,8 +264,18 @@ class BackStackNavigator(
                     NavigationOutcome.Rewritten(stack = applied, reason = reason)
                 }
             }
-            mutation = Mutation(old = old, outcome = outcome)
+            mutation = Mutation(
+                old = old,
+                attempted = intended,
+                outcome = outcome,
+                deferral = verdict as? GuardVerdict.Deferred,
+            )
         }
-        return checkNotNull(mutation) { "buildBackStack did not run its builder" }
+        val result = checkNotNull(mutation) { "buildBackStack did not run its builder" }
+        if (result.didMove) {
+            onMoved()
+        }
+        result.deferral?.let { deferral -> onDeferred(result.attempted, deferral) }
+        return result
     }
 }

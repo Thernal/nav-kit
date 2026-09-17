@@ -190,14 +190,20 @@ new, `old + Loading` shows a placeholder. Returning `Resolved(new)` at the end c
 route the user originally asked for — which is the point of deferring rather than redirecting, and
 the thing a redirect cannot express because it loses the original intent.
 
-Two rules follow, and both are load-bearing:
+Three rules follow, and all three are load-bearing:
 
 - **Only the mounted host awaits a deferral.** It owns a scope tied to its own composition, so an
   unmounted host cancels what it started, and there is one driver however many ways the stack can
-  change. Everything else — the navigator, composition, revalidation — calls the synchronous
-  `resolve`, which takes a deferral at its `meanwhile` and never starts work. That is what makes a
-  revalidation storm impossible rather than merely unlikely, and the deferral in flight is keyed on
-  the verdict that produced it, so the same one is never launched twice.
+  change. The navigator and composition never start work: a deferred command writes `meanwhile`
+  and hands the deferral to its host, and the host waits on one deferral at a time, keyed on the
+  stack that was attempted. So a revalidation storm or a double tap cannot launch the same one
+  twice. The key is deliberately not the verdict: the placeholder push changes the verdict, and a
+  wait keyed on it cancelled itself the moment it showed its prompt.
+- **A deferral is abandoned when the stack moves without it.** A command that changes the stack —
+  backing out of the placeholder — or a stack the host did not write — a deep link, a tab bar
+  handing over another list — ends the wait, and its answer is never applied. The `Navigator`
+  passed to `resolve` is exempt: its pushes are part of the wait, and a deferral it meets is left
+  alone rather than started.
 - **A guard that defers must answer synchronously once its deferral has settled**, from a cached
   result. It is asked again as soon as the settled stack is applied; a guard that defers a second
   time for the same stack never converges, and the host leaves it alone rather than spinning.
