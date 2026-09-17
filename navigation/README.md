@@ -4,6 +4,10 @@ Public Navigation3 contracts: routes, the navigator command surface, the `Naviga
 contract, guards, deep links, back handling, and the two mechanisms for passing data between
 screens. `impl` owns every concrete behavior; `api` never depends on it.
 
+**Using the kit?** [`api/README.md`](api/README.md) is the task-oriented guide to every public
+contract, and [`../sample/README.md`](../sample/README.md) runs each one. This file records the
+design — why each contract has the shape it has.
+
 ## Module layout
 
 - `api` — Navigation3 routes, the navigator command surface, deep-link/guard/back contracts,
