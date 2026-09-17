@@ -31,6 +31,7 @@ has a remote, so those three are the cheapest rows to change if the intent diffe
 |---|---|---|---|
 | Workspace configuration | `.agents/workspace.md` | shared | own |
 | Installed skill | `.claude/skills/<name>/` | shared | foreign — `Thernal/knowledge`, pinned in `.origin` |
+| Published usage skill for nav-kit consumers | `skills/<name>/` | shared | own |
 | Task workspace | `<scratch>/tasks/` | local | own |
 | Build output | `build/`, `.gradle/`, `.kotlin/` | local | own |
 | Local SDK configuration | `local.properties` | local | own |
