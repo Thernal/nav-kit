@@ -179,9 +179,9 @@ token to refresh, a confirmation to collect, a server to ask:
 
 ```kotlin
 GuardVerdict.Deferred(meanwhile = old) { navigator ->
-    navigator.push(SignIn)
-    val signedIn = results.await<Boolean>(SIGN_IN_RESULT)
-    if (signedIn) GuardVerdict.Resolved(new) else GuardVerdict.Resolved(old, SignInCancelled)
+    navigator.push(PinEntry)
+    val unlocked = session.awaitUnlock()
+    if (unlocked) GuardVerdict.Resolved(new) else GuardVerdict.Resolved(old, PinRequired)
 }
 ```
 
@@ -364,8 +364,8 @@ nested dispatch consumes nothing.
 
 ## Navigation events
 
-`BackStackNavigator` emits a `NavigationEvent` (`Push`/`Pop`/`Replace`/`ReplaceAll`/`Blocked`) on
-every command, into an injected `NavigationEventSink`. The event type is public rather than
+`BackStackNavigator` emits a `NavigationEvent` (`Push`/`Pop`/`Replace`/`ReplaceAll`/`Blocked`/`Deferred`)
+on every command, into an injected `NavigationEventSink`. The event type is public rather than
 internal to `impl` precisely so an app can render the stream in whatever debug console it already
 has. `wiring` collects `Set<NavigationEventSink>` — a debug console, an analytics tracker and a
 test recorder all want the same stream, and none should have to displace the others to get it —
