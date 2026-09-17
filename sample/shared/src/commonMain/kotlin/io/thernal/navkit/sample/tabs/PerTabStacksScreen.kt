@@ -55,10 +55,10 @@ fun PerTabStacksScreen(session: SessionStore) {
                 ),
             ) {
                 navEntry<FeedList> { ListBody(title = "Feed", open = { id -> FeedItem(id) }) }
-                navEntry<FeedItem> { route -> DetailBody(title = "Feed item ${route.id}") }
+                navEntry<FeedItem> { route -> DetailBody(title = "Feed item ${route.id}", note = ITEM_NOTE) }
                 navEntry<SavedList> { ListBody(title = "Saved", open = { id -> SavedItem(id) }) }
-                navEntry<SavedItem> { route -> DetailBody(title = "Saved item ${route.id}") }
-                navEntry<AdminDashboard> { DetailBody(title = "Admin dashboard") }
+                navEntry<SavedItem> { route -> DetailBody(title = "Saved item ${route.id}", note = ITEM_NOTE) }
+                navEntry<AdminDashboard> { DetailBody(title = "Admin dashboard", note = ADMIN_NOTE) }
 
                 // The application-wide guard applies to this host's stack too, and when it refuses
                 // the admin tab it *substitutes* a sign-in route. A nested host that did not
@@ -72,6 +72,13 @@ fun PerTabStacksScreen(session: SessionStore) {
 }
 
 private val ITEM_IDS = listOf(1, 2, 3)
+
+private const val ITEM_NOTE = "Pushed onto this tab's own stack. Switch to another tab and back: " +
+    "this item is still on top, because the tab's list was kept while another one was showing."
+
+private const val ADMIN_NOTE = "The Admin tab is a protected graph: its routes carry the same " +
+    "marker the application's sign-in guard narrows to, so selecting it signed out puts a sign-in " +
+    "screen there instead — inside this host, not the application's."
 
 @Composable
 private fun ListBody(
@@ -96,7 +103,10 @@ private fun ListBody(
 }
 
 @Composable
-private fun DetailBody(title: String) {
+private fun DetailBody(
+    title: String,
+    note: String,
+) {
     val navigator = LocalNavigator.current
     Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         Text(text = title, style = MaterialTheme.typography.headlineSmall)
@@ -105,10 +115,6 @@ private fun DetailBody(title: String) {
             onClick = { navigator.popBack() },
             enabled = navigator.canPop(),
         )
-        ExampleNote(
-            text = "The Admin tab is a protected graph: its routes carry the same marker the " +
-                "application's sign-in guard narrows to, so selecting it signed out puts a " +
-                "sign-in screen there instead — inside this host, not the application's.",
-        )
+        ExampleNote(text = note)
     }
 }
