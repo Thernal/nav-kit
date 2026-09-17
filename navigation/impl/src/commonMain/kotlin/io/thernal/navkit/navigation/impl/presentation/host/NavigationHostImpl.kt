@@ -3,6 +3,10 @@ package io.thernal.navkit.navigation.impl.presentation.host
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.navigation3.runtime.EntryProviderScope
@@ -44,14 +48,23 @@ internal fun <R : Route> NavigationHostImpl(
         return
     }
 
-    val guarded = rememberGuardedBackStack(params = params, guardRunner = guardRunner)
+    val currentOnBackStackChange by rememberUpdatedState(params.onBackStackChange)
+    val writer = remember { HostStackWriter<R> { stack -> currentOnBackStackChange(stack) } }
+
+    val guarded = rememberGuardedBackStack(params = params, guardRunner = guardRunner, writer = writer)
     val navigator = rememberHostNavigator(
         backStack = guarded.resolved,
-        onBackStackChange = params.onBackStackChange,
+        writer = writer,
         guardRunner = guarded.runner,
         backDispatcher = backDispatcher,
         events = events,
     )
+
+    // The owner hands a write back a frame or more after it was made. Acknowledging what it handed
+    // in is what lets the next command stop building on that write and build on the rendered stack.
+    SideEffect {
+        writer.acknowledge(params.backStack)
+    }
 
     // The one place a deferral is awaited. The host owns a scope tied to its own composition, so an
     // unmounted host cancels what it started, and keying the effect on the verdict itself means the

@@ -6,7 +6,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import io.thernal.navkit.navigation.api.presentation.guard.GuardVerdict
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuardRunner
@@ -48,12 +47,14 @@ internal class GuardedBackStack<R : Route>(
  * [NavigationHostParams.onBackStackChange], and process death restores one from saved state. Both
  * land here, so the host resolves what it was handed before rendering it. A pure derivation, which
  * is what keeps a refused route off the screen entirely — `NavDisplay` is never given the
- * unresolved stack, and the correction is written back to the caller one frame later.
+ * unresolved stack, and the correction is written back to the caller one frame later — through
+ * [writer], so the host recognises it when it comes back.
  */
 @Composable
 internal fun <R : Route> rememberGuardedBackStack(
     params: NavigationHostParams<R>,
     guardRunner: NavigationGuardRunner,
+    writer: HostStackWriter<R>,
 ): GuardedBackStack<R> {
     val renderedBackStack = remember { RenderedBackStack() }
     val inEffect = renderedBackStack.value
@@ -109,10 +110,9 @@ internal fun <R : Route> rememberGuardedBackStack(
         renderedBackStack.value = resolvedBackStack
     }
 
-    val currentOnBackStackChange by rememberUpdatedState(params.onBackStackChange)
     LaunchedEffect(resolvedBackStack) {
         if (resolvedBackStack != params.backStack) {
-            currentOnBackStackChange(resolvedBackStack)
+            writer.write(resolvedBackStack)
         }
     }
 

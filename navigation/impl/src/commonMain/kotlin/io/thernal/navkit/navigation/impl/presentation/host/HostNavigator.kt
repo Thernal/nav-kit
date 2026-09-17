@@ -15,33 +15,32 @@ import kotlinx.collections.immutable.toImmutableList
 
 /**
  * One navigator per host, built once so its identity stays stable across recompositions — every
- * read and write goes through the [rememberUpdatedState] boxes below rather than through anything
- * captured at construction. A navigator that captured the first composition's stack would keep
- * writing over it forever.
+ * read goes through the [rememberUpdatedState] boxes below and every write through [writer], rather
+ * than through anything captured at construction. A navigator that captured the first composition's
+ * stack would keep writing over it forever.
  */
 @Composable
 internal fun <R : Route> rememberHostNavigator(
     backStack: ImmutableList<R>,
-    onBackStackChange: (ImmutableList<R>) -> Unit,
+    writer: HostStackWriter<R>,
     guardRunner: NavigationGuardRunner,
     backDispatcher: BackDispatcher,
     events: NavigationEventSink,
 ): Navigator {
     val currentBackStack by rememberUpdatedState(backStack)
-    val currentOnBackStackChange by rememberUpdatedState(onBackStackChange)
     val currentGuardRunner by rememberUpdatedState(guardRunner)
 
-    return remember {
+    return remember(writer) {
         BackStackNavigator(
             buildBackStack = { builder ->
                 // A fresh `MutableList<Route>` rather than a cast of the host's own list: the
                 // builder may add any `Route`, and handing it a list typed `R` would be a lie that
                 // outlives this call. `ImmutableList` is covariant, so the copy needs no cast.
-                val mutable: MutableList<Route> = currentBackStack.toMutableList()
+                val mutable: MutableList<Route> = writer.newestOr(currentBackStack).toMutableList()
                 mutable.builder()
-                currentOnBackStackChange(mutable.toImmutableList().asHostStack())
+                writer.write(mutable.toImmutableList().asHostStack())
             },
-            resolveCanPop = { currentBackStack.size > 1 },
+            resolveCanPop = { writer.newestOr(currentBackStack).size > 1 },
             resolveGuardRunner = { currentGuardRunner },
             backDispatcher = backDispatcher,
             events = events,
