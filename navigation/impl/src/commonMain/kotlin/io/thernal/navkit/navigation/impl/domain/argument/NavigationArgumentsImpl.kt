@@ -7,6 +7,7 @@ import io.thernal.navkit.navigation.api.presentation.argument.NavigationArgument
 import io.thernal.navkit.navigation.api.presentation.model.Route
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.reflect.safeCast
 
 /**
  * One stored argument. [wasAlive] is the latch that makes ordering forgiving: an argument put just
@@ -57,8 +58,8 @@ class NavigationArgumentsImpl : NavigationArguments, ArgumentPruner {
             "Argument `${key.name}` was put as ${argument.key.type} and read as ${key.type}. " +
                 "Two features have declared the same argument name."
         }
-        @Suppress("UNCHECKED_CAST")
-        return argument.value as? T
+        // Checked against the key's class rather than an erased `as? T`, which checks nothing.
+        return key.type.safeCast(argument.value)
     }
 
     override fun remove(key: ArgumentKey<*>) {
