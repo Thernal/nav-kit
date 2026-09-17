@@ -9,8 +9,24 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationOutcome
 import io.thernal.navkit.navigation.api.presentation.navigator.Navigator
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+
+/**
+ * What one call to [BackStackNavigator.mutate] did: the stack it started from, and what the guards
+ * made of the command.
+ *
+ * [didMove] compares against [old] rather than trusting the command's own bookkeeping, because a
+ * command only knows what it *asked* for — a guard can hand the previous stack back afterwards.
+ */
+private class Mutation(
+    val old: ImmutableList<Route>,
+    val outcome: NavigationOutcome,
+) {
+    val didMove: Boolean
+        get() {
+            return outcome.stack != old
+        }
+}
 
 /**
  * Adapts a caller-owned back stack into the [Navigator] command surface. Holds no state of its own:
@@ -50,7 +66,7 @@ class BackStackNavigator(
                     NavigationEvent.ReplaceAll(applied)
                 }
             },
-        )
+        ).outcome
     }
 
     override fun canPop(): Boolean {
@@ -61,7 +77,7 @@ class BackStackNavigator(
         return mutate(
             builder = { add(route) },
             event = { old, _ -> NavigationEvent.Push(previous = old.lastOrNull(), pushed = route) },
-        )
+        ).outcome
     }
 
     /**
@@ -95,7 +111,7 @@ class BackStackNavigator(
                     else -> NavigationEvent.ReplaceAll(applied)
                 }
             },
-        )
+        ).outcome
     }
 
     override fun replace(route: Route): NavigationOutcome {
@@ -107,7 +123,7 @@ class BackStackNavigator(
                 add(route)
             },
             event = { old, _ -> NavigationEvent.Replace(old = old.lastOrNull(), new = route) },
-        )
+        ).outcome
     }
 
     override fun replaceAll(routes: List<Route>): NavigationOutcome {
@@ -118,7 +134,7 @@ class BackStackNavigator(
                 addAll(routes)
             },
             event = { _, applied -> NavigationEvent.ReplaceAll(applied) },
-        )
+        ).outcome
     }
 
     override fun popBack(force: Boolean): Boolean {
@@ -128,11 +144,9 @@ class BackStackNavigator(
         if (backDispatcher.dispatch()) {
             return true
         }
-        var before: ImmutableList<Route> = persistentListOf()
         var popped: Route? = null
-        val outcome = mutate(
+        return mutate(
             builder = {
-                before = toImmutableList()
                 if (size >= 2 || force) {
                     popped = lastOrNull()
                     removeLastOrNull()
@@ -143,8 +157,7 @@ class BackStackNavigator(
                     NavigationEvent.Pop(popped = route, backTo = applied.lastOrNull())
                 }
             },
-        )
-        return outcome.stack != before
+        ).didMove
     }
 
     override fun popBack(count: Int): Boolean {
@@ -154,12 +167,16 @@ class BackStackNavigator(
         return didChange
     }
 
+    /**
+     * Answers whether the stack moved, not whether a match was found: a guard refusing the jump, or
+     * a predicate matching the top route, leaves the stack where it was, and a caller reporting
+     * "left the screen" off a found match would be reporting something that did not happen.
+     */
     override fun popBackTo(
         inclusive: Boolean,
         predicate: (Route) -> Boolean,
     ): Boolean {
-        var didPop = false
-        mutate(
+        return mutate(
             builder = {
                 val index = indexOfLast(predicate)
                 if (index != -1) {
@@ -170,7 +187,6 @@ class BackStackNavigator(
                     }
                     val next = take(endExclusive)
                     if (next.isNotEmpty()) {
-                        didPop = true
                         clear()
                         addAll(next)
                     }
@@ -183,8 +199,7 @@ class BackStackNavigator(
                     NavigationEvent.ReplaceAll(applied)
                 }
             },
-        )
-        return didPop
+        ).didMove
     }
 
     /**
@@ -197,8 +212,8 @@ class BackStackNavigator(
     private fun mutate(
         builder: MutableList<Route>.() -> Unit,
         event: (old: ImmutableList<Route>, applied: ImmutableList<Route>) -> NavigationEvent?,
-    ): NavigationOutcome {
-        var outcome: NavigationOutcome? = null
+    ): Mutation {
+        var mutation: Mutation? = null
         buildBackStack {
             val old = toImmutableList()
             builder()
@@ -212,7 +227,7 @@ class BackStackNavigator(
                 clear()
                 addAll(applied)
             }
-            outcome = when {
+            val outcome = when {
                 verdict is GuardVerdict.Deferred -> {
                     events.emit(NavigationEvent.Deferred(attempted = intended, meanwhile = applied))
                     NavigationOutcome.Deferred(applied)
@@ -235,7 +250,8 @@ class BackStackNavigator(
                     NavigationOutcome.Rewritten(stack = applied, reason = reason)
                 }
             }
+            mutation = Mutation(old = old, outcome = outcome)
         }
-        return checkNotNull(outcome) { "buildBackStack did not run its builder" }
+        return checkNotNull(mutation) { "buildBackStack did not run its builder" }
     }
 }

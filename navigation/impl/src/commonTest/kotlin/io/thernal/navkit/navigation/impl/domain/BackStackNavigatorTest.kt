@@ -326,4 +326,40 @@ class BackStackNavigatorTest {
 
         assertEquals<List<NavigationEvent>>(listOf(NavigationEvent.Push(Root, Details)), harness.events)
     }
+
+    @Test
+    fun popBackToReportsARefusedJumpAsNoMovement() {
+        // It used to answer "a match was found", so a screen reported leaving while it stayed.
+        val harness = Harness(listOf(Root, Details, Edit), NavigationGuardRunnerImpl(listOf(keepingEdit())))
+
+        assertFalse(harness.navigator.popBackTo { route -> route == Root })
+
+        assertEquals(listOf(Root, Details, Edit), harness.backStack)
+    }
+
+    @Test
+    fun popBackToTheRouteAlreadyOnTopIsNoMovement() {
+        val harness = Harness(listOf(Root, Details))
+
+        assertFalse(harness.navigator.popBackTo { route -> route == Details })
+        assertFalse(harness.navigator.popBackTo { route -> route == Edit })
+    }
+
+    @Test
+    fun aRefusedPopIsReportedAsNoMovement() {
+        val harness = Harness(listOf(Root, Edit), NavigationGuardRunnerImpl(listOf(keepingEdit())))
+
+        assertFalse(harness.navigator.pop())
+    }
+
+    /** Refuses any transition that would take [Edit] off the stack. */
+    private fun keepingEdit(): NavigationGuard {
+        return NavigationGuard { old, new ->
+            if (old.contains(Edit) && !new.contains(Edit)) {
+                GuardVerdict.Resolved(old, Denied("unsaved changes"))
+            } else {
+                GuardVerdict.Resolved(new)
+            }
+        }
+    }
 }

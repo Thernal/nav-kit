@@ -41,6 +41,10 @@ interface Navigator {
 
     fun popBack(count: Int): Boolean
 
+    /**
+     * Returns whether the stack actually moved — `false` when nothing matches, when the match is
+     * already on top, and when a guard refuses the jump.
+     */
     fun popBackTo(
         inclusive: Boolean = false,
         predicate: (Route) -> Boolean,
