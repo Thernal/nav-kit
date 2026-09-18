@@ -1,9 +1,8 @@
 package io.thernal.navkit.navigation.api.presentation.back
 
 /**
- * Lets a composable (a bottom sheet, an in-screen editor) intercept back ahead of the
- * `NavigationHost`'s own handling. [register] returns an [AutoCloseable]; close it when the
- * callback should stop intercepting.
+ * Lets a composable intercept back ahead of the `NavigationHost`'s own handling. [register] returns
+ * an [AutoCloseable]; close it to stop intercepting.
  */
 interface BackDispatcher {
     fun register(callback: BackCallback): AutoCloseable

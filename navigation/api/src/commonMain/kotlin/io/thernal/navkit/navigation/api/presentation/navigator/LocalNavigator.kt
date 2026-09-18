@@ -2,36 +2,42 @@ package io.thernal.navkit.navigation.api.presentation.navigator
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.thernal.navkit.navigation.api.presentation.model.Route
+import kotlinx.collections.immutable.persistentListOf
 
 val LocalNavigator = staticCompositionLocalOf<Navigator> { NoOpNavigator }
 
 /**
- * Discards every command. A composable resolved above the `NavigationHost` that installs the real
- * [Navigator] (an app root, an isolated preview) reads [LocalNavigator] safely instead of crashing.
+ * Discards every command, so a composable above any `NavigationHost` reads [LocalNavigator] safely.
+ * It answers [NavigationOutcome.Rewritten], not `Applied`: nothing happened.
  */
 private object NoOpNavigator : Navigator {
-    override fun buildStack(builder: MutableList<Route>.() -> Unit) {
-        // Intentionally empty: there is no stack above a host to build.
+    private val nothing = NavigationOutcome.Rewritten(stack = persistentListOf(), reason = null)
+
+    override fun buildStack(builder: MutableList<Route>.() -> Unit): NavigationOutcome {
+        return nothing
     }
 
     override fun canPop(): Boolean {
         return false
     }
 
-    override fun push(route: Route) {
-        // Intentionally empty: every command below is discarded for the same reason.
+    override fun push(route: Route): NavigationOutcome {
+        return nothing
     }
 
     override fun navigate(
         route: Route,
         predicate: ((Route) -> Boolean)?,
-    ) {
+    ): NavigationOutcome {
+        return nothing
     }
 
-    override fun replace(route: Route) {
+    override fun replace(route: Route): NavigationOutcome {
+        return nothing
     }
 
-    override fun replaceAll(routes: List<Route>) {
+    override fun replaceAll(routes: List<Route>): NavigationOutcome {
+        return nothing
     }
 
     override fun popBack(force: Boolean): Boolean {

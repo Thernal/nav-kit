@@ -1,5 +1,6 @@
 package io.thernal.navkit.navigation.impl.domain
 
+import io.thernal.navkit.navigation.api.domain.DeepLinkBase
 import io.thernal.navkit.navigation.api.domain.DeepLinkRequest
 import io.thernal.navkit.navigation.api.domain.DeepLinkSource
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkHandler
@@ -14,6 +15,8 @@ import kotlin.test.assertFailsWith
 
 class DeepLinkDispatcherImplTest {
     private data class BookingRoute(val id: String) : Route
+
+    private val bases = setOf(DeepLinkBase("navkit://"), DeepLinkBase("https://example.com"))
 
     private class BookingHandler : DeepLinkHandler {
         override val pages = setOf("booking")
@@ -38,7 +41,7 @@ class DeepLinkDispatcherImplTest {
     @Test
     fun dispatchesCustomSchemeAndQueryToOwningHandler(): TestResult {
         return runTest {
-            val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()))
+            val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
 
             val result = dispatcher.dispatch("navkit://booking?id=42", DeepLinkSource.EXTERNAL_LINK)
 
@@ -49,7 +52,7 @@ class DeepLinkDispatcherImplTest {
     @Test
     fun dispatchesTheWebFormOfTheSameLinkToTheSameHandler(): TestResult {
         return runTest {
-            val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()))
+            val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
 
             val result = dispatcher.dispatch(
                 "https://example.com/booking?id=42",
@@ -63,7 +66,7 @@ class DeepLinkDispatcherImplTest {
     @Test
     fun anUnclaimedPageIsNotFound(): TestResult {
         return runTest {
-            val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()))
+            val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
 
             val result = dispatcher.dispatch("navkit://profile", DeepLinkSource.EXTERNAL_LINK)
 
@@ -72,9 +75,30 @@ class DeepLinkDispatcherImplTest {
     }
 
     @Test
+    fun aLinkOnADomainTheAppDoesNotOwnIsNotFound(): TestResult {
+        return runTest {
+            val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
+
+            val result = dispatcher.dispatch(
+                "https://elsewhere.example/booking?id=42",
+                DeepLinkSource.EXTERNAL_LINK,
+            )
+
+            assertEquals(DeepLinkOutcome.NotFound, result)
+        }
+    }
+
+    @Test
+    fun handlersWithNoBaseFailAtConstruction() {
+        assertFailsWith<IllegalArgumentException> {
+            DeepLinkDispatcherImpl(setOf(BookingHandler()), emptySet())
+        }
+    }
+
+    @Test
     fun twoHandlersClaimingOnePageFailAtConstruction() {
         assertFailsWith<IllegalStateException> {
-            DeepLinkDispatcherImpl(setOf(BookingHandler(), RivalBookingHandler()))
+            DeepLinkDispatcherImpl(setOf(BookingHandler(), RivalBookingHandler()), bases)
         }
     }
 }

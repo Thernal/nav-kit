@@ -1,12 +1,10 @@
 package io.thernal.navkit.navigation.api.presentation.log
 
+import io.thernal.navkit.navigation.api.presentation.guard.BlockReason
 import io.thernal.navkit.navigation.api.presentation.model.Route
+import kotlinx.collections.immutable.ImmutableList
 
-/**
- * Everything a navigator did, as data. Public rather than internal to `impl`: an app renders these
- * in whatever debug console it already has, and there is no way to do that from outside if the
- * type is hidden.
- */
+/** Everything a navigator did, as data, for whatever debug console an app already has. */
 sealed interface NavigationEvent {
     /** One line, for a list. */
     val message: String
@@ -43,15 +41,44 @@ sealed interface NavigationEvent {
         override val detail = routes.joinToString(separator = "\n") { route -> "- $route" }
     }
 
-    data class Blocked(
-        val route: Route,
-        val reason: String,
+    /** A guard needs time to decide; [meanwhile] is what exists until it does. */
+    data class Deferred(
+        val attempted: ImmutableList<Route>,
+        val meanwhile: ImmutableList<Route>,
     ) : NavigationEvent {
-        override val message = "🧭 Blocked · ${route.routeName()} ($reason)"
-        override val detail = "$route blocked: $reason"
+        override val message = "🧭 Deferred · ${attempted.routeNames()} (showing ${meanwhile.routeNames()})"
+        override val detail = "attempted:\n${attempted.detailLines()}\n\nmeanwhile:\n${meanwhile.detailLines()}"
+    }
+
+    /**
+     * A guard refused the proposed stack — at stack level, because what it refused may be a push, a
+     * pop, or a deep link's whole multi-route stack.
+     */
+    data class Blocked(
+        val attempted: ImmutableList<Route>,
+        val applied: ImmutableList<Route>,
+        val reason: BlockReason?,
+    ) : NavigationEvent {
+        override val message = "🧭 Blocked · ${attempted.routeNames()} -> ${applied.routeNames()}" +
+            reason?.let { blocked -> " (${blocked.message})" }.orEmpty()
+        override val detail = "attempted:\n${attempted.detailLines()}\n\napplied:\n${applied.detailLines()}"
     }
 }
 
 private fun Route?.routeName(): String {
     return this?.let { route -> route::class.simpleName ?: route.toString() } ?: "empty"
+}
+
+private fun List<Route>.routeNames(): String {
+    if (isEmpty()) {
+        return "empty"
+    }
+    return joinToString { route -> route.routeName() }
+}
+
+private fun List<Route>.detailLines(): String {
+    if (isEmpty()) {
+        return "- empty"
+    }
+    return joinToString(separator = "\n") { route -> "- $route" }
 }

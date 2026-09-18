@@ -4,10 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.navigation3.runtime.NavKey
 
 /**
- * Marker for routes exposed across module boundaries.
- *
- * Keep payloads small identifiers, not repositories, large models, or platform objects — routes
- * cross module boundaries and often survive process death.
+ * Marker for routes exposed across module boundaries; it extends `NavKey` so a feature never has to.
+ * Keep payloads small identifiers — routes cross modules and often survive process death.
  */
 @Immutable
 interface Route : NavKey

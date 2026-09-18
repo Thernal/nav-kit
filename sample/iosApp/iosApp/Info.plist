@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyLists-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Only what build settings cannot generate; Xcode merges this with the generated keys. -->
+	<!-- Compose Multiplatform refuses to start without it: its first frame checks this key and
+	     throws when it is missing, so the app closed at launch before anything was drawn. -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<!-- `xcrun simctl openurl booted navkit://orders/77` reaches the app. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.thernal.navkit.sample</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>navkit</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

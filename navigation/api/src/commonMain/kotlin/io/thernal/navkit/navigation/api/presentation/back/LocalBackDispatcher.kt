@@ -3,9 +3,8 @@ package io.thernal.navkit.navigation.api.presentation.back
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * The dispatcher the mounted `NavigationHost` consults before popping. `impl` provides the injected
- * instance here so a composable registers against the same object the host dispatches through —
- * one back mechanism, not two.
+ * The dispatcher the mounted `NavigationHost` consults before popping. Provided by the host, so a
+ * composable registers against the same object back is dispatched through — one mechanism, not two.
  */
 val LocalBackDispatcher = staticCompositionLocalOf<BackDispatcher> { NoOpBackDispatcher }
 

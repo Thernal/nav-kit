@@ -6,20 +6,35 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * Callbacks are held in a [MutableStateFlow] over an immutable list rather than a synchronized
- * collection: `update` is a compare-and-set loop on every platform, and [dispatch] iterates a
- * snapshot, so a callback that unregisters itself while being dispatched cannot corrupt the walk.
+ * Callbacks live in a [MutableStateFlow] over an immutable list: `update` is a compare-and-set loop
+ * on every platform, and [dispatch] walks a snapshot, so a callback that unregisters itself
+ * mid-dispatch cannot corrupt the walk.
  */
 class BackDispatcherImpl : BackDispatcher {
     private val callbacks = MutableStateFlow<List<BackCallback>>(emptyList())
+
+    // Back is dispatched from the UI thread, so a plain flag is enough.
+    private var isDispatching = false
 
     override fun register(callback: BackCallback): AutoCloseable {
         callbacks.update { current -> current + callback }
         return AutoCloseable { callbacks.update { current -> current - callback } }
     }
 
+    /**
+     * A nested dispatch consumes nothing, so a callback that lets back through by calling `popBack()`
+     * from its own handler falls through to the stack instead of being dispatched to forever.
+     */
     override fun dispatch(): Boolean {
-        return callbacks.value.asReversed().any(BackCallback::handle)
+        if (isDispatching) {
+            return false
+        }
+        isDispatching = true
+        try {
+            return callbacks.value.asReversed().any(BackCallback::handle)
+        } finally {
+            isDispatching = false
+        }
     }
 
     override fun hasCallbacks(): Boolean {

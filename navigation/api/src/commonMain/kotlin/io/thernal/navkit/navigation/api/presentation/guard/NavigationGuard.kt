@@ -1,31 +1,27 @@
 package io.thernal.navkit.navigation.api.presentation.guard
 
-import io.thernal.navkit.navigation.api.presentation.model.GuardResult
 import io.thernal.navkit.navigation.api.presentation.model.Route
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * Evaluated by [io.thernal.navkit.navigation.api.presentation.navigator.Navigator] before a route
- * reaches the back stack — never during composition, so a blocked route never renders.
+ * Decides which back stacks may exist, before one reaches the host. Every decision is the stack it
+ * returns: `Resolved(new)` allows, `Resolved(old, reason)` refuses, anything else rewrites.
  *
- * A guard applies to a subset of routes, not all of them. Mark the routes it applies to with a
- * dedicated marker interface named after the guard with a `-Guarded` suffix (`AuthGuard` guards
- * routes marked `AuthGuarded`), and check that marker first:
- *
- * ```
- * interface AuthGuarded : Route
- *
- * class AuthGuardImpl(private val session: Session) : NavigationGuard {
- *     override fun evaluate(route: Route): GuardResult {
- *         if (route !is AuthGuarded) return GuardResult.Allow
- *         return if (session.isAuthenticated) GuardResult.Allow else GuardResult.Redirect(SignIn)
- *     }
- * }
- * ```
- *
- * This keeps "which routes need this guard" declared on the route itself instead of in a separate
- * registry that has to be kept in sync, and every injected guard can run against every route
- * unconditionally — [NavigationGuardRunner] does not filter by route type itself.
+ * [evaluate] must be **pure and cheap** — guards are folded to a fixpoint — and may not reorder what
+ * it keeps or empty the stack. Most guards extend [RouteGuard]. See `navigation/README.md`.
  */
 fun interface NavigationGuard {
-    fun evaluate(route: Route): GuardResult
+    /**
+     * Emits when this guard's answer may have changed, which is what makes a route that has *become*
+     * invalid leave the stack. **Make it hot**: every mounted host collects it.
+     */
+    val invalidations: Flow<Unit>
+        get() = emptyFlow()
+
+    fun evaluate(
+        old: ImmutableList<Route>,
+        new: ImmutableList<Route>,
+    ): GuardVerdict
 }

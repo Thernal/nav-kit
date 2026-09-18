@@ -8,9 +8,8 @@ import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
 import io.thernal.navkit.navigation.api.presentation.model.Route
 
 /**
- * Renders a feature-owned back stack as the platform navigation surface. `impl` owns the
- * `NavDisplay` hierarchy, the navigator it builds per host, the overlay scene strategies and the
- * animations; `api` only ever exposes the [NavigationHost] composable below.
+ * Renders a feature-owned back stack. `impl` owns the `NavDisplay` hierarchy, the per-host navigator,
+ * the scene strategies and the animations; `api` exposes only the [NavigationHost] composable below.
  */
 interface NavigationHostRenderer {
     @Composable
@@ -37,10 +36,9 @@ private object PreviewNavigationHostRenderer : NavigationHostRenderer {
 }
 
 /**
- * Mounts a back stack. A host can sit anywhere a feature needs its own local stack (a bottom
- * sheet's internal steps, a wizard), not just at the app root — which is why it carries no
- * deep-link concept of its own: there is only one cold-start link stream for the whole app, so
- * resolving one stays the root's job.
+ * Mounts a back stack. A host can sit anywhere a feature needs its own — a wizard, a sheet's steps —
+ * which is why it carries no deep-link concept: there is one link stream per app, so resolving one
+ * stays the root's job.
  */
 @Composable
 fun <R : Route> NavigationHost(

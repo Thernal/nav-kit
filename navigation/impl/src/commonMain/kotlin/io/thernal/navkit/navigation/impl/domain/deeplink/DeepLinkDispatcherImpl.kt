@@ -1,5 +1,6 @@
 package io.thernal.navkit.navigation.impl.domain.deeplink
 
+import io.thernal.navkit.navigation.api.domain.DeepLinkBase
 import io.thernal.navkit.navigation.api.domain.DeepLinkRequest
 import io.thernal.navkit.navigation.api.domain.DeepLinkSource
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkDispatcher
@@ -7,10 +8,14 @@ import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkHandler
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkOutcome
 
 /**
- * The page -> handler table is built once, at construction, and a page claimed twice fails there
- * rather than resolving to whichever handler the set happened to yield last.
+ * The page -> handler table is built at construction, where a page claimed twice fails rather than
+ * resolving to whichever handler the set yielded last — as do handlers with no [bases] to read
+ * links against, which would send every link to `NotFound` without saying why.
  */
-class DeepLinkDispatcherImpl(handlers: Set<DeepLinkHandler>) : DeepLinkDispatcher {
+class DeepLinkDispatcherImpl(
+    handlers: Set<DeepLinkHandler>,
+    private val bases: Set<DeepLinkBase>,
+) : DeepLinkDispatcher {
     private val handlersByPage = buildMap {
         handlers.forEach { handler ->
             handler.pages.forEach { page ->
@@ -26,11 +31,17 @@ class DeepLinkDispatcherImpl(handlers: Set<DeepLinkHandler>) : DeepLinkDispatche
         }
     }
 
+    init {
+        require(handlers.isEmpty() || bases.isNotEmpty()) {
+            "Deep link handlers are registered but no DeepLinkBase is, so every link would be NotFound"
+        }
+    }
+
     override suspend fun dispatch(
         raw: String,
         source: DeepLinkSource,
     ): DeepLinkOutcome {
-        val deepLink = parseDeepLink(raw) ?: return DeepLinkOutcome.NotFound
+        val deepLink = parseDeepLink(raw = raw, bases = bases) ?: return DeepLinkOutcome.NotFound
         val page = deepLink.page ?: return DeepLinkOutcome.NotFound
         val handler = handlersByPage[page] ?: return DeepLinkOutcome.NotFound
         return handler.resolve(DeepLinkRequest(deepLink = deepLink, source = source))
