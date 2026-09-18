@@ -3,6 +3,7 @@ package io.thernal.navkit.navigation.wiring
 import androidx.compose.runtime.ProvidedValue
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Multibinds
@@ -63,6 +64,28 @@ interface NavigationWiring {
     @Multibinds(allowEmpty = true)
     val navigationEventSinks: Set<NavigationEventSink>
 
+    /**
+     * One instance behind two interfaces — [NavigationArguments] for the application,
+     * [ArgumentPruner] for the host — so `pruneFor` stays off the composition local. The scope sits
+     * on the instance these alias; scoping the aliases would build two stores, and the host would
+     * prune the one nothing writes to.
+     */
+    @Binds
+    val NavigationArgumentsImpl.bindNavigationArguments: NavigationArguments
+
+    @Binds
+    val NavigationArgumentsImpl.bindArgumentPruner: ArgumentPruner
+
+    /**
+     * The same aliasing: the publisher an entry point calls and the stream the root collects have
+     * to be one object, or a cold-start link is dropped on the floor.
+     */
+    @Binds
+    val RuntimeDeepLinkBridge.bindDeepLinkIngress: DeepLinkIngress
+
+    @Binds
+    val RuntimeDeepLinkBridge.bindDeepLinkEvents: DeepLinkEvents
+
     companion object {
         @Provides
         @SingleIn(AppScope::class)
@@ -76,26 +99,10 @@ interface NavigationWiring {
             return NavigationResultsImpl()
         }
 
-        /**
-         * One instance behind two interfaces — [NavigationArguments] for the application,
-         * [ArgumentPruner] for the host — so `pruneFor` stays off the composition local. The scope
-         * sits on the instance and the two below alias it; scoping them separately would build two
-         * stores, and the host would prune the one nothing writes to.
-         */
         @Provides
         @SingleIn(AppScope::class)
         fun provideNavigationArgumentsImpl(): NavigationArgumentsImpl {
             return NavigationArgumentsImpl()
-        }
-
-        @Provides
-        fun provideNavigationArguments(arguments: NavigationArgumentsImpl): NavigationArguments {
-            return arguments
-        }
-
-        @Provides
-        fun provideArgumentPruner(arguments: NavigationArgumentsImpl): ArgumentPruner {
-            return arguments
         }
 
         @Provides
@@ -113,24 +120,10 @@ interface NavigationWiring {
             return DeepLinkDispatcherImpl(handlers = handlers, bases = bases)
         }
 
-        /**
-         * The same aliasing: the publisher an entry point calls and the stream the root collects have
-         * to be one object, or a cold-start link is dropped on the floor.
-         */
         @Provides
         @SingleIn(AppScope::class)
         fun provideRuntimeDeepLinkBridge(): RuntimeDeepLinkBridge {
             return RuntimeDeepLinkBridge()
-        }
-
-        @Provides
-        fun provideDeepLinkIngress(bridge: RuntimeDeepLinkBridge): DeepLinkIngress {
-            return bridge
-        }
-
-        @Provides
-        fun provideDeepLinkEvents(bridge: RuntimeDeepLinkBridge): DeepLinkEvents {
-            return bridge
         }
 
         @Provides
