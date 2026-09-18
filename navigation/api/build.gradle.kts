@@ -13,6 +13,7 @@ kotlin {
                 api(libs.navigation3.ui)
                 api(libs.kotlinx.coroutines.core)
                 api(libs.kotlinx.collections.immutable)
+                api(libs.lifecycle.viewmodel)
                 // Only reached from inside `buildDeepLinkUri`; no type of it escapes.
                 implementation(libs.ktor.http)
             }

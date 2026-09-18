@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.ui.NavDisplay
 import io.thernal.navkit.navigation.api.presentation.argument.ArgumentPruner
@@ -16,6 +17,7 @@ import io.thernal.navkit.navigation.api.presentation.back.BackDispatcher
 import io.thernal.navkit.navigation.api.presentation.back.LocalBackDispatcher
 import io.thernal.navkit.navigation.api.presentation.guard.GuardVerdict
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuardRunner
+import io.thernal.navkit.navigation.api.presentation.host.LocalHostViewModelStoreOwner
 import io.thernal.navkit.navigation.api.presentation.log.NavigationEventSink
 import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
 import io.thernal.navkit.navigation.api.presentation.model.Route
@@ -92,10 +94,16 @@ internal fun <R : Route> NavigationHostImpl(
 
     val config = rememberNavDisplayConfig(params = params, entries = entries)
 
+    // Read before `NavDisplay`, because inside it the ViewModelStore decorator replaces this with
+    // the entry's own owner. What is captured here outlives every entry of this host — the scope a
+    // tab's state belongs in, since a tab switch pops the tab that was showing.
+    val mountedIn = LocalViewModelStoreOwner.current
+
     CompositionLocalProvider(
         LocalNavigator provides navigators.screens,
         LocalBackDispatcher provides backDispatcher,
         LocalNavigationHostDepth provides hostDepth + 1,
+        LocalHostViewModelStoreOwner provides mountedIn,
     ) {
         NavDisplay(
             modifier = modifier,
