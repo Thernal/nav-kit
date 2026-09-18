@@ -1105,12 +1105,34 @@ fun CheckoutFlowScreen() {
 | Select a tab | replace the stack with the tab's root | hand the host that tab's list |
 | Depth after switching away and back | gone | kept |
 | Re-selecting the active tab | — | reset it to its root |
-| Sample | [`SingleHostTabsScreen.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/SingleHostTabsScreen.kt) | [`PerTabStacksScreen.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/PerTabStacksScreen.kt) |
+| Sample | [`SingleHostTabsScreen.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/SingleHostTabsScreen.kt) | not in the sample |
 
-With a stack per tab over one host, the **routes** of a hidden tab survive the switch, but its
-entries' `rememberSaveable` state and entry-scoped ViewModels do not: Navigation3 treats entries that
-leave the list it is handed as popped and clears their state. Keep whatever a tab must remember
-across a switch in the ViewModel that owns the tab stacks, or in a repository.
+**Entry state does not survive a tab switch in either shape.** Navigation3 treats an entry that
+leaves the list it is handed as popped, and a pop clears that entry's `rememberSaveable` state and
+its entry-scoped ViewModels. With one host that is obvious — selecting a tab replaces the stack. With
+a stack per tab it is the part that surprises people: the hidden tab's **routes** survive, because
+they live in the owner, but its entries' state does not.
+
+So scope a tab's state to the entry that **mounts** the tabs, not to the tab's own entry. A host
+publishes that owner as `LocalHostViewModelStoreOwner`, resolved like `LocalNavigator` to the nearest
+host — it is read before `NavDisplay`, where `LocalViewModelStoreOwner` is still the mount point
+rather than an entry's own:
+
+```kotlin
+// inside the tab's entry
+val model: SettingsTabViewModel = viewModel(
+    viewModelStoreOwner = checkNotNull(LocalHostViewModelStoreOwner.current),
+    key = "settings",
+) { SettingsTabViewModel() }
+```
+
+That is the lifetime a tab has: alive while the tabs screen is on the stack above, cleared with it.
+Entry scoping is right for a pushed detail, which should die when it is popped — so push details onto
+the host **above** the bar and keep each tab one entry deep.
+
+Keeping a hidden tab's entry state alive means keeping that tab's entries alive, which is
+Navigation3's `rememberDecoratedNavEntries` per tab feeding one `NavDisplay` — a shape this kit does
+not expose today, because `NavigationHost` builds its decorators and its display together.
 
 ## Bottom sheets, scenes and transitions
 

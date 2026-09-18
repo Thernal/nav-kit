@@ -57,7 +57,7 @@ Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 | [Arguments](shared/src/commonMain/kotlin/io/thernal/navkit/sample/arguments/README.md) | One value, two screens | Checkout draft | a value shared forwards across a flow, its lifetime derived from the stack: `argumentKey`, `put`, `whileInStack` |
 | [Back handling](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) | Confirm before leaving | Unsaved work | `NavigationBackHandler` for "confirm on back", a transition guard for "refuse every way out" |
 | [Guards](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) | Members area | 401 and a PIN | `RouteGuard` with a redirect that keeps intent, `invalidations`, `GuardVerdict.Deferred`, `TransientRoute` |
-| [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | A stack per tab | a host inside a host; per-tab stacks; an application-wide guard inside a tab |
+| [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | — | a host inside a host, one entry per tab; an application-wide guard inside a tab; where a tab’s ViewModel has to be scoped |
 | [Deep links](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) | One link, one route | Campaign links | registered link bases, handlers, stacks rather than destinations, the source, a link meeting a guard |
 
 ## Set nav-kit up in your own app

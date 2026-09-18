@@ -14,15 +14,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.thernal.navkit.navigation.api.presentation.host.LocalHostViewModelStoreOwner
 import io.thernal.navkit.navigation.api.presentation.host.NavigationHost
 import io.thernal.navkit.navigation.api.presentation.host.navEntry
 import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
-import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
+import io.thernal.navkit.sample.guards.SessionStore
+import io.thernal.navkit.sample.guards.SignInRoute
+import io.thernal.navkit.sample.guards.SignInScreen
 import io.thernal.navkit.sample.ui.ExampleAction
 import io.thernal.navkit.sample.ui.ExampleNote
+import io.thernal.navkit.sample.ui.ExampleReadout
 
 @Composable
-fun SingleHostTabsScreen() {
+fun SingleHostTabsScreen(session: SessionStore) {
     val model: SingleHostTabsViewModel = viewModel { SingleHostTabsViewModel() }
     val backStack by model.backStack.collectAsState()
     val selected = backStack.first()
@@ -55,7 +59,11 @@ fun SingleHostTabsScreen() {
                 navEntry<HomeTab> { TabBody(title = "Home", body = "Nothing to see, that is the point.") }
                 navEntry<SearchTab> { TabBody(title = "Search", body = "Still one stack, still one host.") }
                 navEntry<SettingsTab> { SettingsTabBody() }
-                navEntry<SettingsDetail> { route -> TabBody(title = route.section, body = "Pushed inside the tab.") }
+
+                // Nothing here pushes SignInRoute — the app-wide guard substitutes it when it
+                // refuses the settings tab. A nested host that did not register it would hand
+                // Navigation3 a key it has no entry for, and the default fallback throws.
+                navEntry<SignInRoute> { route -> SignInScreen(route = route, session = session) }
             }
         }
     }
@@ -74,17 +82,34 @@ private fun TabBody(
 
 @Composable
 private fun SettingsTabBody() {
-    val navigator = LocalNavigator.current
+    // Scoped to the owner the host was mounted in rather than to this entry, so it outlives a tab
+    // switch. `key` keeps each tab's state its own when several of them scope to the same owner.
+    val model: SettingsTabViewModel = viewModel(
+        viewModelStoreOwner = checkNotNull(LocalHostViewModelStoreOwner.current),
+        key = "settings",
+    ) {
+        SettingsTabViewModel()
+    }
+    val edits by model.edits.collectAsState()
+
     Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
+        ExampleReadout(label = "Unsaved edits", value = edits.toString())
         ExampleAction(
-            label = "Open notifications",
-            onClick = { navigator.push(SettingsDetail(section = "Notifications")) },
+            label = "Make an edit",
+            onClick = model::edit,
         )
         ExampleNote(
-            text = "Pushing here goes onto the tab host's stack, not the application's. Switch " +
-                "tabs and come back: the depth is gone, because selecting a tab replaced the " +
-                "stack. Keeping it is the next example.",
+            text = "Make a few edits, switch to Home and come back: the count is still there. A " +
+                "tab switch replaces this host's stack, so this entry was popped and an " +
+                "entry-scoped ViewModel would have been cleared. This one hangs off the screen " +
+                "that mounts the tabs, which is the lifetime a tab actually has — leave the " +
+                "example and the count goes with it.",
+        )
+        ExampleNote(
+            text = "This tab is also protected: its route carries the marker the application's " +
+                "sign-in guard narrows to, so selecting it signed out puts a sign-in screen here " +
+                "instead — inside this host, not the application's.",
         )
     }
 }
