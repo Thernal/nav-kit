@@ -172,8 +172,8 @@ and per-entry ViewModel stores (`androidx/navigation3/ui/NavDisplay.kt`), on top
 - [ ] **App-wide guards run on every host's stack.** A nested host whose stack holds a guarded
       route gets that guard's rewrite (`GuardedBackStack.kt`) — confirmed with a standalone run of the real runner and
       navigator, where a second host received its own sign-in prompt. If the nested host did not
-      register the route the guard inserted, Navigation3's default fallback throws
-      `IllegalStateException("Unknown screen …")`. Decide between applying app-wide guards to the
+      register the route the guard inserted, the host throws
+      `IllegalStateException("No entry is registered for …")` unless it was given a `fallback`. Decide between applying app-wide guards to the
       root host only (`NavigationHostParams.guards`) and giving guards a host scope.
 - [ ] **Every mounted host collects the guard invalidations** (`hostRunner.invalidations` in
       `GuardedBackStack.kt`), so N mounted hosts run N full revalidations per emission.

@@ -77,8 +77,9 @@ data object SettingsTab : SingleHostTab, AuthGuarded
   host `[SettingsTab]`; the host resolves it through the guards before rendering, and a sign-in screen
   appears inside this host, not the application's.
 - **Which is why the nested host registers `SignInRoute`.** A guard can put its substitute into any
-  host's stack. A host with no entry for it hands Navigation3 a key its fallback throws on:
-  `IllegalStateException: Unknown screen …`.
+  host's stack, and a host with no entry for it throws: `No entry is registered for <route> in this
+  NavigationHost …`. A host given a `NavigationHostParams.fallback` renders that instead, which is a
+  safety net for links and notifications, not a substitute for registering what a guard can insert.
 
 ## Where a tab's ViewModel has to live
 
@@ -130,7 +131,7 @@ two. Leave the example and open it again: it is zero.
 
 ## Pitfalls
 
-- **An unregistered guard substitute** in a nested host — `Unknown screen`.
+- **An unregistered guard substitute** in a nested host — `No entry is registered for …`.
 - **Expecting an entry's `rememberSaveable` or ViewModel to survive a tab switch** — the entry was popped
   from the host's point of view. Scope the tab's state above the host instead.
 - **Arguments scoped to routes that live only inside a tab** — only the outermost host prunes, against its

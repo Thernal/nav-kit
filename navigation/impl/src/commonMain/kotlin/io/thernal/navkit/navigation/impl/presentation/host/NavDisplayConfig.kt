@@ -1,7 +1,9 @@
 package io.thernal.navkit.navigation.impl.presentation.host
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavEntry
@@ -38,8 +40,16 @@ internal fun <R : Route> rememberNavDisplayConfig(
     params: NavigationHostParams<R>,
     entries: EntryProviderScope<R>.() -> Unit,
 ): NavDisplayConfig<R> {
+    // Read through a state box, not keyed on: a fallback written inline is a new lambda per frame.
+    val currentFallback by rememberUpdatedState(params.fallback)
     val provider = remember(entries) {
-        entryProvider(builder = entries)
+        entryProvider(
+            fallback = { unknown ->
+                val fallback = currentFallback ?: error(unknownRouteMessage(unknown))
+                fallback(unknown)
+            },
+            builder = entries,
+        )
     }
     val pushSpec = remember(params.transitionSpec) {
         params.transitionSpec ?: NavAnimations.push()
@@ -88,4 +98,10 @@ internal fun <R : Route> rememberNavDisplayConfig(
             sceneStrategies = sceneStrategies,
         )
     }
+}
+
+private fun <R : Route> unknownRouteMessage(route: R): String {
+    return "No entry is registered for $route in this NavigationHost. Every route that can appear " +
+        "in its stack needs one — including a route a guard substitutes and a placeholder a " +
+        "deferral pushes. Register it with `navEntry<…>`, or give the host a `fallback`."
 }

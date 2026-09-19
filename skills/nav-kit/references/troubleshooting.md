@@ -10,7 +10,7 @@
 
 | Message | Cause | Fix |
 |---|---|---|
-| `IllegalStateException: Unknown screen <route>` | a route on a host's stack has no entry in that host. Usual: a guard substituted a sign-in route or pushed a placeholder into a **nested** host; a deep link returned a route the root does not register | register the route in that host (`navEntry<…>`) |
+| `IllegalStateException: No entry is registered for <route> in this NavigationHost` | a route on a host's stack has no entry in that host. Usual: a guard substituted a sign-in route or pushed a placeholder into a **nested** host; a deep link returned a route the root does not register | register the route in that host (`navEntry<…>`); for links and notifications that can name routes a build does not have, also give the root host a `NavigationHostParams.fallback` |
 | `` An `entry` with the same `clazz` has already been added: X `` | one route class registered twice in one host — often two `NavigationGraphProvider`s, or a provider plus an inline entry | keep one registration per host |
 | `NavDisplay backstack cannot be empty` | a host received an empty stack: initial state empty, an owner setting `emptyList()`, `popBack(force = true)` on one route, a deep link applied with no routes | never hand a host an empty list; `replaceAll` requires a non-empty list |
 | `Navigation back stack cannot be empty` | `replaceAll(emptyList())` | pass at least one route |

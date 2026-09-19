@@ -79,7 +79,7 @@ fun provideAuthGuard(session: SessionStore): NavigationGuard {
 ```
 
 7. Register `SignInRoute` in **every host whose stack can hold an `AuthGuarded` route**, nested hosts
-   included — otherwise `Unknown screen`.
+   included — otherwise that host fails on the substituted route (or renders its `fallback`).
 8. The sign-in screen continues: `session.signIn(); if (next == null) navigator.popBack() else navigator.replace(next)`.
 9. Provide `SessionStore` app-scoped (`@SingleIn(AppScope::class)`): guards run outside composition.
 

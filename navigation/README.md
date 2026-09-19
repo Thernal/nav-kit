@@ -61,6 +61,11 @@ holder's job instead of a `NavigationHost` parameter, since a host can be mounte
 feature needs its own local back stack (a bottom sheet's internal steps, a wizard), not just at the
 app root.
 
+`NavigationHostParams.fallback` is the entry a host renders for a route it has no entry for. Left
+`null`, the host throws instead and names the route, which is what a feature being built wants; a
+shipped app passes one at its root, because an unknown route there is normally a deep link or a
+notification from a newer build rather than a bug in this one.
+
 `bottomSheetEntry` (`presentation.host`) registers a route to render in a bottom sheet instead of
 the primary pane — a thin `entry` wrapper that only adds the metadata key the host reads to pick the
 render surface. An app that wants another surface writes its own `SceneStrategy` and hands it over

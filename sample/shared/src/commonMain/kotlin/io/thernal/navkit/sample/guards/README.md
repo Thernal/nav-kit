@@ -224,7 +224,7 @@ Enter `1234` → the vault. Inside the vault, *Simulate a 401* again: the vault 
 ## Pitfalls
 
 - **Access checks at call sites** instead of a guard — a deep link or a `replaceAll` walks past them.
-- **A substitute route not registered in a host** the guard rewrites — `IllegalStateException: Unknown screen`.
+- **A substitute route not registered in a host** the guard rewrites — `IllegalStateException: No entry is registered for …`.
 - **A cold `invalidations` flow doing work per collector** — every mounted host collects it.
 - **Forgetting `drop(1)` on a `StateFlow`** — every host revalidates once on mount for nothing.
 - **A `meanwhile` that drops every route** — the runner rejects a guard that empties the stack.

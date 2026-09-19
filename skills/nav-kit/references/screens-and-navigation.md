@@ -61,7 +61,7 @@ Registration rules (violations crash at runtime, not at compile time):
 
 | Rule | Failure when broken |
 |---|---|
-| every route that can be on a host's stack has an entry in that host — include guard substitutes and deferral placeholders | `IllegalStateException: Unknown screen <route>` |
+| every route that can be on a host's stack has an entry in that host — include guard substitutes and deferral placeholders | `IllegalStateException: No entry is registered for <route> …`, unless the host has a `fallback` |
 | each route class is registered once per host (two providers registering the same class count) | `IllegalArgumentException` "An `entry` with the same `clazz` has already been added" |
 | a host's stack is never empty | `IllegalArgumentException: NavDisplay backstack cannot be empty` |
 

@@ -137,7 +137,11 @@ fun SampleApp(graph: SampleGraph) {
             }
 
             NavigationHost(
-                params = NavigationHostParams(backStack = backStack, onBackStackChange = root::onBackStackChange),
+                params = NavigationHostParams(
+                    backStack = backStack,
+                    onBackStackChange = root::onBackStackChange,
+                    fallback = ::unknownRouteEntry,                                   // 4. a route nothing registers
+                ),
             ) {
                 for (provider in graph.graphProviders) {
                     with(provider) { provide() }
@@ -154,6 +158,8 @@ fun SampleApp(graph: SampleGraph) {
 - **Screens arrive from the graph.** The root registers entries it has never heard of; the catalog
   works the same way over `Set<SampleExample>`.
 - **Links are resolved here, once.** A host can be mounted anywhere; there is one link stream.
+- **An unregistered route is a screen, not a crash.** `fallback` renders `UnknownRouteScreen`; without
+  it the host throws and names the route.
 
 ### 4. Own the root back stack outside the host
 

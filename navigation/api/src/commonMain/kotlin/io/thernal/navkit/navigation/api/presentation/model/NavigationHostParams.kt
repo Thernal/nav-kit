@@ -1,6 +1,7 @@
 package io.thernal.navkit.navigation.api.presentation.model
 
 import androidx.compose.runtime.Immutable
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.scene.SceneStrategy
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuard
@@ -28,4 +29,5 @@ data class NavigationHostParams<R : Route>(
      * internal rules, or a guard whose dependencies live in a scope the app graph cannot reach.
      */
     val guards: ImmutableList<NavigationGuard> = persistentListOf(),
+    val fallback: ((R) -> NavEntry<R>)? = null,
 )

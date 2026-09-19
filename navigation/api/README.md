@@ -64,6 +64,7 @@ Start from what you are trying to do; the section named is where the mechanism i
 | build a link to share | `buildDeepLinkUri(base, page)` / `DeepLinkPage.buildUri(base)` | [Outbound links](#outbound-links) | — |
 | tabs, or a wizard with a back stack of its own | a nested `NavigationHost` | [Nested hosts and tabs](#nested-hosts-and-tabs) | [tabs](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) |
 | show a route as a bottom sheet | `bottomSheetEntry` | [Bottom sheets](#bottom-sheets-scenes-and-transitions) | — |
+| show something instead of crashing on a route a host does not register | `NavigationHostParams.fallback` | [Fallback entries](#fallback-entries) | [sample](../../sample/README.md) |
 | change or turn off the animations | `transitionSpec` and friends on `NavigationHostParams` | [Transitions](#transitions) | — |
 | log, measure or test what navigation did | `NavigationEventSink` | [Navigation events](#navigation-events) | — |
 
@@ -406,6 +407,7 @@ fun <R : Route> NavigationHost(
 | `decorators: ImmutableList<NavEntryDecorator<R>>` | empty | added after the host's own saveable-state and ViewModel-store decorators |
 | `sceneStrategies: ImmutableList<SceneStrategy<R>>` | empty | consulted before the built-in bottom-sheet and single-pane strategies |
 | `guards: ImmutableList<NavigationGuard>` | empty | guards for this host only, applied after the application-wide ones |
+| `fallback: ((R) -> NavEntry<R>)?` | `null` | rendered for a route this host has no entry for; `null` throws instead |
 
 ### Registering screens
 
@@ -422,7 +424,8 @@ scene. Navigation3's own `entry<K>` works as well. Three rules come straight fro
 
 - **Every route that can appear in this host's stack needs an entry**, including routes nobody in
   the host pushes but a guard substitutes (a sign-in screen) or a deferral pushes (a placeholder).
-  A missing one fails with `IllegalStateException: Unknown screen …`.
+  A missing one fails — `No entry is registered for <route> in this NavigationHost …` — unless the
+  host was given a [`fallback`](#fallback-entries).
 - **Register each route class once per host.** A second registration fails with an
   `IllegalArgumentException`, `` An `entry` with the same `clazz` has already been added ``. Two
   graph providers registering the same route into one host is the usual way to hit it.
@@ -459,6 +462,34 @@ interface ProfileBindings {
 The root calls each provider inside its `NavigationHost` (see [the composition root](#the-composition-root)).
 A provider's receiver is `EntryProviderScope<Route>`, so providers plug into a host whose stack is
 typed `Route`; a nested host over a sealed flow type registers its entries inline.
+
+### Fallback entries
+
+`NavigationHostParams.fallback` is what a host renders for a route it has no entry for:
+
+```kotlin
+private fun unknownRouteEntry(route: Route): NavEntry<Route> {
+    return NavEntry(key = route) { unknown -> UnknownRouteScreen(route = unknown) }
+}
+
+NavigationHostParams(
+    backStack = backStack,
+    onBackStackChange = root::onBackStackChange,
+    fallback = ::unknownRouteEntry,
+)
+```
+
+Without one, the host throws and names the route and the two causes nobody registers on purpose — a
+guard's substitute and a deferral's placeholder. That is the right answer while a feature is being
+built, and the wrong one in a shipped app, where the route usually arrives from outside it: a deep
+link to a screen this build does not have, a notification from a newer server, a guard rewriting a
+nested host's stack.
+
+- **The root host is the one that needs it** — that is where an unknown route lands.
+- **A nested host can render nothing**: `fallback = { route -> NavEntry(route) { } }`.
+- **Pass a stable reference**, as above, rather than a lambda written inline — the host reads it
+  through a state box, but a new lambda per frame also makes `NavigationHostParams` unequal per frame.
+- A fallback hides a missing registration, so keep the screen loud enough to notice in a debug build.
 
 ### What the host does for you
 
@@ -722,7 +753,8 @@ refusal reads as a sign-in prompt, a paywall or an error. It is reported on
   flow's internal rules, or a guard whose dependencies live in a scope the application graph cannot
   reach. These run after the application-wide guards.
 - **Register what a guard can put on the stack** — its substitute and its placeholder — in every
-  host whose stack the guard can rewrite, or Navigation3 fails with `Unknown screen`.
+  host whose stack the guard can rewrite, or that host fails on it (or renders its
+  [`fallback`](#fallback-entries)).
 
 ### How the runner resolves a stack
 
@@ -1088,7 +1120,7 @@ fun CheckoutFlowScreen() {
 - **Inside, `LocalNavigator` is the nested host's.** A screen's `push` lands in the innermost stack.
   To command the outer host, read `LocalNavigator.current` before mounting and pass it down.
 - **Application-wide guards apply to nested stacks too.** Register their substitutes in the nested
-  host (a sign-in screen), or Navigation3 fails with `Unknown screen`. Rules for the flow alone go in
+  host (a sign-in screen), or that host fails on them. Rules for the flow alone go in
   `NavigationHostParams.guards`.
 - **Only the outermost host prunes arguments.** Scope a flow's arguments to the route that mounts it.
 - **Results work across hosts** — the mailbox is application-scoped.
