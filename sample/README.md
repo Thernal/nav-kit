@@ -180,7 +180,7 @@ Every example package ends in a `*Bindings.kt` of the same shape — see
 | an access or transition rule | `NavigationGuard` | [`GuardsBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/GuardsBindings.kt), [`BackBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/BackBindings.kt) |
 | the pages it opens from links | `DeepLinkHandler` | [`DeepLinksBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/DeepLinksBindings.kt) |
 | the schemes and domains the app's links start with — once, by the application | `DeepLinkBase` | [`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) |
-| an observer of navigation | `NavigationEventSink` | — not used by the sample |
+| an observer of navigation | `NavigationEventSink` | [`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) — prints every command |
 
 State a guard reads — a session, a draft — is provided `@SingleIn(AppScope::class)`, because a guard
 runs outside composition and cannot see what a screen remembers.

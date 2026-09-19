@@ -8,6 +8,7 @@ import dev.zacsweers.metro.Multibinds
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.thernal.navkit.navigation.api.domain.DeepLinkBase
+import io.thernal.navkit.navigation.api.presentation.log.NavigationEventSink
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
 
 /**
@@ -52,6 +53,13 @@ interface SampleBindings {
         @IntoSet
         fun provideWebOriginBase(): DeepLinkBase {
             return DeepLinkBase("https://example.com")
+        }
+
+        /** Every navigator command, printed to the console. */
+        @Provides
+        @IntoSet
+        fun provideLoggingSink(): NavigationEventSink {
+            return NavigationEventSink { event -> println(event.message) }
         }
     }
 }

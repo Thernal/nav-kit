@@ -66,7 +66,7 @@ Start from what you are trying to do; the section named is where the mechanism i
 | show a route as a bottom sheet | `bottomSheetEntry` | [Bottom sheets](#bottom-sheets-scenes-and-transitions) | — |
 | show something instead of crashing on a route a host does not register | `NavigationHostParams.fallback` | [Fallback entries](#fallback-entries) | [sample](../../sample/README.md) |
 | change or turn off the animations | `transitionSpec` and friends on `NavigationHostParams` | [Transitions](#transitions) | — |
-| log, measure or test what navigation did | `NavigationEventSink` | [Navigation events](#navigation-events) | — |
+| log, measure or test what navigation did | `NavigationEventSink` | [Navigation events](#navigation-events) | [`SampleBindings.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) |
 
 ## The model
 
