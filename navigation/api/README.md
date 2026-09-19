@@ -423,7 +423,7 @@ NavigationHost(params = params) {
 scene. Navigation3's own `entry<K>` works as well. Three rules come straight from Navigation3:
 
 - **Every route that can appear in this host's stack needs an entry**, including routes nobody in
-  the host pushes but a guard substitutes (a sign-in screen) or a deferral pushes (a placeholder).
+  the host pushes but a guard substitutes (a sign-in screen) or a deferral shows (a placeholder).
   A missing one fails — `No entry is registered for <route> in this NavigationHost …` — unless the
   host was given a [`fallback`](#fallback-entries).
 - **Register each route class once per host.** A second registration fails with an
@@ -691,14 +691,21 @@ class PinGuard(private val session: PinSession) : NavigationGuard {
         if (!session.locked.value || new.none { it is PinProtected }) {
             return GuardVerdict.Resolved(new)
         }
-        return GuardVerdict.Deferred(meanwhile = old) { navigator ->
-            navigator.push(PinEntryRoute)          // a TransientRoute, registered in the host
+        return GuardVerdict.Deferred(meanwhile = withPrompt(old)) { _ ->
             if (session.awaitUnlock()) {           // suspends; unlocking flips `locked` to false
                 GuardVerdict.Resolved(new)         // continue where the user was going
             } else {
                 GuardVerdict.Resolved(stack = old, reason = PinRequired)
             }
         }
+    }
+
+    // PinEntryRoute is a TransientRoute, registered in the host — and never added twice
+    private fun withPrompt(stack: ImmutableList<Route>): ImmutableList<Route> {
+        if (PinEntryRoute in stack) {
+            return stack
+        }
+        return (stack + PinEntryRoute).toImmutableList()
     }
 }
 ```
@@ -716,6 +723,7 @@ which is the point of deferring rather than redirecting. The rules:
 - **A wait is abandoned when the stack moves without it** — the user backs out of the placeholder,
   a deep link arrives, the host is handed another list. Its answer is then discarded. The navigator
   given to `resolve` is exempt: its pushes are part of the wait.
+- **Put the placeholder in `meanwhile`.** Pushing it from `resolve` also works — that navigator's pushes are part of the wait — but it is a second stack change, and when `meanwhile` has just removed the screen on top the user sees a pop followed by a push.
 - **Make the placeholder a `TransientRoute`.** A coroutine does not survive process death or a
   recreated composition; a restored stack showing a prompt with nothing left to answer it would be a
   screen nobody can leave. The host drops transient routes from the stack it first composes.

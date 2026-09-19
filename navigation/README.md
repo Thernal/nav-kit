@@ -189,8 +189,7 @@ may not leave the stack"), never about movement in general.
 token to refresh, a confirmation to collect, a server to ask:
 
 ```kotlin
-GuardVerdict.Deferred(meanwhile = old) { navigator ->
-    navigator.push(PinEntry)
+GuardVerdict.Deferred(meanwhile = (old + PinEntry).toImmutableList()) { _ ->
     val unlocked = session.awaitUnlock()
     if (unlocked) GuardVerdict.Resolved(new) else GuardVerdict.Resolved(old, PinRequired)
 }
@@ -201,6 +200,11 @@ new, `old + Loading` shows a placeholder. Returning `Resolved(new)` at the end c
 route the user originally asked for — which is the point of deferring rather than redirecting, and
 the thing a redirect cannot express because it loses the original intent.
 
+The placeholder belongs in `meanwhile` rather than in a push from `resolve`. Both work, but the push is
+a second stack change a few frames after the first, and when `meanwhile` removes the screen on top — a
+protected screen revalidated while it is showing — `NavDisplay` animates the two as a pop and then a
+push, the second interrupting the first.
+
 Three rules follow, and all three are load-bearing:
 
 - **Only the mounted host awaits a deferral.** It owns a scope tied to its own composition, so an
@@ -208,7 +212,7 @@ Three rules follow, and all three are load-bearing:
   change. The navigator and composition never start work: a deferred command writes `meanwhile`
   and hands the deferral to its host, and the host waits on one deferral at a time, keyed on the
   stack that was attempted. So a revalidation storm or a double tap cannot launch the same one
-  twice. The key is deliberately not the verdict: the placeholder push changes the verdict, and a
+  twice. The key is deliberately not the verdict: showing the placeholder changes the verdict, and a
   wait keyed on it cancelled itself the moment it showed its prompt.
 - **A deferral is abandoned when the stack moves without it.** A command that changes the stack —
   backing out of the placeholder — or a stack the host did not write — a deep link, a tab bar

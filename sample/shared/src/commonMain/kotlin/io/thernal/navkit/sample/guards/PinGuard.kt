@@ -40,8 +40,9 @@ class PinGuard(private val session: PinSession) : NavigationGuard {
         if (new.none { route -> route is PinProtected }) {
             return GuardVerdict.Resolved(new)
         }
-        return GuardVerdict.Deferred(meanwhile = lockedStack(old)) { navigator ->
-            navigator.push(PinEntryRoute)
+        // The prompt is part of `meanwhile` rather than pushed from `resolve`, so a protected screen
+        // already on top is replaced in one transition instead of a pop followed by a push.
+        return GuardVerdict.Deferred(meanwhile = withPrompt(lockedStack(old))) { _ ->
             if (session.awaitUnlock()) {
                 // The stack the user originally asked for, which is the whole point of deferring
                 // rather than redirecting: nothing about their intent was lost while we asked.
@@ -64,5 +65,12 @@ class PinGuard(private val session: PinSession) : NavigationGuard {
             return stack
         }
         return visible.toImmutableList()
+    }
+
+    private fun withPrompt(stack: ImmutableList<Route>): ImmutableList<Route> {
+        if (PinEntryRoute in stack) {
+            return stack
+        }
+        return (stack + PinEntryRoute).toImmutableList()
     }
 }

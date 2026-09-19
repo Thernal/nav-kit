@@ -144,8 +144,8 @@ class PinGuard(private val session: PinSession) : NavigationGuard {
         if (!session.locked.value || new.none { it is PinProtected }) {
             return GuardVerdict.Resolved(new)
         }
-        return GuardVerdict.Deferred(meanwhile = lockedStack(old)) { navigator ->
-            navigator.push(PinEntryRoute)
+        // the prompt goes in `meanwhile`, not in a push from the lambda — see the rules below
+        return GuardVerdict.Deferred(meanwhile = withPrompt(lockedStack(old))) { _ ->
             if (session.awaitUnlock()) {                  // suspends; sets locked = false on success
                 GuardVerdict.Resolved(new)                // continue where the user was going
             } else {
@@ -158,6 +158,10 @@ class PinGuard(private val session: PinSession) : NavigationGuard {
         val visible = stack.filterNot { it is PinProtected }
         return if (visible.isEmpty()) stack else visible.toImmutableList()   // never empty
     }
+
+    private fun withPrompt(stack: ImmutableList<Route>): ImmutableList<Route> {
+        return if (PinEntryRoute in stack) stack else (stack + PinEntryRoute).toImmutableList()   // never twice
+    }
 }
 ```
 
@@ -165,6 +169,7 @@ Rules, each load-bearing:
 
 - **Answer synchronously once settled.** The settled stack is applied and guarded again; defer again for
   the same stack and it never converges. Update the cached state before `resolve` returns.
+- **The placeholder goes in `meanwhile`.** Pushing it from `resolve` also works — that navigator's pushes are part of the wait — but it is a second stack change, and when `meanwhile` has just removed the screen on top the user sees a pop followed by a push.
 - **The placeholder is a `TransientRoute`** and has an entry in the host. A restored or recreated host drops
   transient routes, so no prompt comes back without a coroutine to answer it.
 - **`meanwhile` follows the runner's rules** — never empty, no reordering.
@@ -174,7 +179,7 @@ Rules, each load-bearing:
   arrives, the host is handed another list. Its answer is discarded. Pushes by the `navigator` passed to the
   lambda are part of the wait.
 - Deferral also starts from revalidation: locking while on a protected screen defers with `meanwhile`
-  without it, then restores the same stack.
+  without it and with the prompt on top — one transition — then restores the same stack.
 
 ## 6. Guards for one host only
 

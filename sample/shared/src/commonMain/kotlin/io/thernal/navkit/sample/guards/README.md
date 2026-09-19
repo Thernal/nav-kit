@@ -132,8 +132,8 @@ class PinGuard(private val session: PinSession) : NavigationGuard {
         if (new.none { route -> route is PinProtected }) {
             return GuardVerdict.Resolved(new)
         }
-        return GuardVerdict.Deferred(meanwhile = lockedStack(old)) { navigator ->
-            navigator.push(PinEntryRoute)
+        // The prompt is part of `meanwhile`: one transition, even when the vault is on top.
+        return GuardVerdict.Deferred(meanwhile = withPrompt(lockedStack(old))) { _ ->
             if (session.awaitUnlock()) {
                 GuardVerdict.Resolved(new)   // the stack the user asked for
             } else {
@@ -149,6 +149,14 @@ class PinGuard(private val session: PinSession) : NavigationGuard {
             return stack
         }
         return visible.toImmutableList()
+    }
+
+    // Never twice: the runner rejects a guard that introduces a duplicate.
+    private fun withPrompt(stack: ImmutableList<Route>): ImmutableList<Route> {
+        if (PinEntryRoute in stack) {
+            return stack
+        }
+        return (stack + PinEntryRoute).toImmutableList()
     }
 }
 ```
@@ -176,18 +184,17 @@ class PinSession {
 Two paths reach the deferral, and the host drives both the same way:
 
 - **Opening the vault while locked:** `push(VaultRoute)` is deferred. The command answers
-  `NavigationOutcome.Deferred`, the lobby stays on screen, the host awaits the deferral, which pushes the
-  PIN screen; the right PIN continues to the vault.
+  `NavigationOutcome.Deferred` and writes `meanwhile` — the lobby with the PIN screen on top — and the
+  host awaits the deferral; the right PIN continues to the vault.
 - **Locking while inside the vault:** the session emits a change, the host revalidates, the guard defers
-  with `meanwhile` = the stack without the vault. The PIN screen goes on top; the right PIN brings the
-  same stack back — not a rebuilt one.
+  with `meanwhile` = the stack without the vault, PIN screen on top — one transition from the vault to
+  the prompt. The right PIN brings the same stack back — not a rebuilt one.
 
 What to notice — and all of it is the kit's doing rather than the guard's:
 
 - **Only the mounted host awaits a deferral**, one at a time, keyed on the stack that was attempted. A
   double tap or a revalidation storm cannot show the prompt twice; unmounting the host cancels the wait.
-- **The deferral's own navigator is part of the wait.** Its `push(PinEntryRoute)` does not count as the
-  user walking away.
+- **The prompt is part of `meanwhile`.** Pushing it from `resolve` also works — that navigator's pushes are part of the wait — but it is a second stack change, and when `meanwhile` has just removed the screen on top the user sees a pop followed by a push.
 - **Walking away abandons it.** Back out of the PIN screen, or let a deep link arrive, and the wait ends;
   its answer is never applied. Opening the vault again asks again.
 - **After settling, the guard answers synchronously.** `awaitUnlock` flips `locked` before it returns, so

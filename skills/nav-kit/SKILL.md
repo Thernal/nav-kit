@@ -86,7 +86,7 @@ A nav-kit change is usually correct in its own file and broken by a missing regi
 Before calling the work done, walk this:
 
 - [ ] Every route that can appear in a host's stack has **one** entry in **that** host — including routes a
-      guard substitutes (sign-in) or a deferral pushes (a placeholder), and including nested hosts.
+      guard substitutes (sign-in) or a deferral shows (a placeholder), and including nested hosts.
 - [ ] New guards, deep-link handlers and event sinks are contributed `@IntoSet` (or passed to
       `NavigationGuardRunnerImpl` / `DeepLinkDispatcherImpl` / the sink fan-out when wired by hand).
 - [ ] Every scheme and domain the platform delivers (intent filters, `CFBundleURLTypes`, verified
