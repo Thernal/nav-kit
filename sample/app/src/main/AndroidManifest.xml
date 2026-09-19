@@ -5,6 +5,7 @@
         android:name="io.thernal.navkit.sample.android.SampleApplication"
         android:allowBackup="false"
         android:label="nav-kit sample"
+        android:enableOnBackInvokedCallback="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.NavKitSample">
 
