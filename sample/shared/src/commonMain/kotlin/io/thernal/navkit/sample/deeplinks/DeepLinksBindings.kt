@@ -14,6 +14,7 @@ import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphPr
 import io.thernal.navkit.sample.app.DeepLinkLog
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
+import io.thernal.navkit.sample.ui.Topic
 
 private class DeepLinksGraph(
     private val ingress: DeepLinkIngress,
@@ -63,7 +64,7 @@ interface DeepLinksBindings {
         @IntoSet
         fun provideLinkPlaygroundExample(): SampleExample {
             return SampleExample(
-                group = "Deep links",
+                topic = Topic.DEEP_LINKS,
                 kind = ExampleKind.SIMPLE,
                 title = "One link, one route",
                 summary = "Deliver a URI the way the platform would; the app scheme and the web form agree.",
@@ -75,8 +76,8 @@ interface DeepLinksBindings {
         @IntoSet
         fun provideCampaignExample(): SampleExample {
             return SampleExample(
-                group = "Deep links",
-                kind = ExampleKind.REAL_LIFE,
+                topic = Topic.DEEP_LINKS,
+                kind = ExampleKind.ADVANCED,
                 title = "Campaign links",
                 summary = "A link that lands three screens deep, reads its source, and meets a guard.",
                 route = LinkCampaignRoute,

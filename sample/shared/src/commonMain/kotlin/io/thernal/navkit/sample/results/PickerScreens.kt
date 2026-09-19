@@ -1,17 +1,45 @@
 package io.thernal.navkit.sample.results
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.api.presentation.result.LocalNavigationResults
 import io.thernal.navkit.navigation.api.presentation.result.ResultEffect
-import io.thernal.navkit.sample.ui.ExampleAction
-import io.thernal.navkit.sample.ui.ExampleNote
-import io.thernal.navkit.sample.ui.ExampleReadout
-import io.thernal.navkit.sample.ui.ExampleScaffold
+import io.thernal.navkit.sample.ui.Amber
+import io.thernal.navkit.sample.ui.ContentCard
+import io.thernal.navkit.sample.ui.Explanation
+import io.thernal.navkit.sample.ui.HeroCard
+import io.thernal.navkit.sample.ui.Indigo
+import io.thernal.navkit.sample.ui.ListRow
+import io.thernal.navkit.sample.ui.SampleScreen
+import io.thernal.navkit.sample.ui.SectionLabel
+import io.thernal.navkit.sample.ui.Teal
+import io.thernal.navkit.sample.ui.Topic
+
+private val swatches = listOf("Teal" to Teal, "Amber" to Amber, "Indigo" to Indigo)
+
+private fun swatchOf(name: String?): Color {
+    return swatches.firstOrNull { (swatchName, _) -> swatchName == name }?.second ?: Topic.RESULTS.accent
+}
 
 /**
  * A value travelling **backwards**: the screen that produces it is closing, the screen that wants
@@ -29,19 +57,35 @@ fun PickerHomeScreen() {
     // which is exactly when a returning result is wanted.
     ResultEffect(SelectedColour) { picked -> colour = picked }
 
-    ExampleScaffold(
-        title = "Pick a colour",
-        subtitle = "The picker posts; this screen consumes, once.",
+    SampleScreen(
+        title = "Appearance",
+        topic = Topic.RESULTS,
+        howItWorks = {
+            Explanation(
+                "The picker posts the colour under a typed key and pops; this screen consumes it " +
+                    "with `ResultEffect` when it is uncovered — once. The producer never learns " +
+                    "who consumed it.",
+            )
+            Explanation(
+                "`ResultEffect` reaches the mailbox through a composition local, which is what " +
+                    "makes it possible at all: a composable cannot be constructor-injected. Results " +
+                    "are in memory only, so a missing one is a first visit, never an error.",
+            )
+        },
     ) {
-        ExampleReadout(label = "Selected", value = colour ?: "nothing yet")
-        ExampleAction(
-            label = "Open the picker",
-            onClick = { navigator.push(PickerRoute) },
+        HeroCard(
+            title = "Ada Lovelace",
+            emoji = "👩‍💻",
+            accent = swatchOf(colour),
+            subtitle = "Your profile, in your accent colour",
         )
-        ExampleNote(
-            text = "`ResultEffect` reaches the mailbox through a composition local, which is what " +
-                "makes it possible at all: a composable cannot be constructor-injected. Consuming " +
-                "removes the value — one delivery, never two.",
+        SectionLabel(text = "Theme")
+        ListRow(
+            title = "Accent colour",
+            emoji = "🎨",
+            accent = swatchOf(colour),
+            subtitle = colour ?: "Not chosen yet",
+            onClick = { navigator.push(PickerRoute) },
         )
     }
 }
@@ -51,23 +95,57 @@ fun PickerScreen() {
     val navigator = LocalNavigator.current
     val results = LocalNavigationResults.current
 
-    ExampleScaffold(
-        title = "Picker",
-        subtitle = "Post, then pop. The producer never learns who consumed it.",
-    ) {
-        listOf("Teal", "Amber", "Indigo").forEach { colour ->
-            ExampleAction(
-                label = colour,
-                onClick = {
-                    results.post(key = SelectedColour, value = colour)
-                    navigator.popBack()
-                },
+    SampleScreen(
+        title = "Accent colour",
+        topic = Topic.RESULTS,
+        subtitle = "Pick one — it goes back to the screen that asked.",
+        howItWorks = {
+            Explanation(
+                "Post, then pop: `results.post(SelectedColour, name)` followed by " +
+                    "`navigator.popBack()`. The value waits in the mailbox until the screen " +
+                    "underneath composes again.",
             )
+        },
+    ) {
+        ContentCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                swatches.forEach { (name, swatch) ->
+                    Swatch(
+                        name = name,
+                        color = swatch,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            results.post(key = SelectedColour, value = name)
+                            navigator.popBack()
+                        },
+                    )
+                }
+            }
         }
-        ExampleNote(
-            text = "Results are in memory only. A posted value is lost on process death while the " +
-                "routes that would have consumed it are restored, so a consumer treats a missing " +
-                "result as a first visit rather than an error.",
+    }
+}
+
+@Composable
+private fun Swatch(
+    name: String,
+    color: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.clip(MaterialTheme.shapes.medium).clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(color),
         )
+        Text(text = name, style = MaterialTheme.typography.labelLarge)
     }
 }

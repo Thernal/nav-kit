@@ -1,11 +1,12 @@
 package io.thernal.navkit.sample.app
 
 import io.thernal.navkit.navigation.api.presentation.model.Route
+import io.thernal.navkit.sample.ui.Topic
 
 /** Whether an example is the smallest thing that works, or the shape a real screen would have. */
 enum class ExampleKind(val label: String) {
     SIMPLE("simple"),
-    REAL_LIFE("real life"),
+    ADVANCED("advanced"),
 }
 
 /**
@@ -16,7 +17,7 @@ enum class ExampleKind(val label: String) {
  * event sinks.
  */
 data class SampleExample(
-    val group: String,
+    val topic: Topic,
     val kind: ExampleKind,
     val title: String,
     val summary: String,

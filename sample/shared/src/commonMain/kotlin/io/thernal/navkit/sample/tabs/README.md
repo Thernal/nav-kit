@@ -41,9 +41,9 @@ fun SingleHostTabsScreen(session: SessionStore) {
         NavigationHost(
             params = NavigationHostParams(backStack = backStack, onBackStackChange = model::onBackStackChange),
         ) {
-            navEntry<HomeTab> { TabBody(title = "Home", body = "…") }
-            navEntry<SearchTab> { TabBody(title = "Search", body = "…") }
-            navEntry<SettingsTab> { SettingsTabBody(tabsOwner = tabsOwner) }
+            navEntry<HomeTab> { HomeTabBody() }
+            navEntry<SearchTab> { SearchTabBody() }
+            navEntry<SettingsTab> { SettingsTabBody() }
 
             // Nothing here pushes SignInRoute — the app-wide guard substitutes it. It must be registered anyway.
             navEntry<SignInRoute> { route -> SignInScreen(route = route, session = session) }
@@ -64,6 +64,9 @@ What to notice:
   root stack and is cleared when the example is popped.
 - A nested host over its own route type registers its entries inline; `NavigationGraphProvider`s plug
   into hosts typed `Route`.
+- **Switching slides towards the picked tab.** The host's `transitionSpec` is
+  `NavAnimations.slideTo { … }`, which reads the two scenes' keys — each tab route's `toString()` — and
+  slides left for a tab to the right, right for one to the left, and not at all when the tab stays.
 
 ## Protecting a tab is marking its route
 
@@ -113,8 +116,8 @@ genuinely should die with the screen — a pushed detail on the host above, for 
 
 **Try it:** open *One host, tabs as its stack*. Go to Settings signed out — the sample starts signed
 out, and *Members area* toggles it — and the sign-in screen appears inside the tab; sign in and it
-continues to Settings. Press *Make an edit* twice, switch to Home and come back: the count is still
-two. Leave the example and open it again: it is zero.
+continues to Settings. Press *Change a setting* twice, switch to Home and come back: it still says
+2 unsaved. Leave the example and open it again: it is back to zero.
 
 ## Doing this in your app
 

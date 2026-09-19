@@ -1,6 +1,10 @@
 package io.thernal.navkit.sample.arguments
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -9,15 +13,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import io.thernal.navkit.navigation.api.presentation.argument.ArgumentScope
 import io.thernal.navkit.navigation.api.presentation.argument.LocalNavigationArguments
 import io.thernal.navkit.navigation.api.presentation.argument.NavigationArguments
 import io.thernal.navkit.navigation.api.presentation.argument.whileInStack
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
-import io.thernal.navkit.sample.ui.ExampleAction
-import io.thernal.navkit.sample.ui.ExampleNote
-import io.thernal.navkit.sample.ui.ExampleReadout
-import io.thernal.navkit.sample.ui.ExampleScaffold
+import io.thernal.navkit.sample.ui.BottomAction
+import io.thernal.navkit.sample.ui.ContentCard
+import io.thernal.navkit.sample.ui.Explanation
+import io.thernal.navkit.sample.ui.HeroCard
+import io.thernal.navkit.sample.ui.KeyValueRow
+import io.thernal.navkit.sample.ui.LiveValue
+import io.thernal.navkit.sample.ui.SampleScreen
+import io.thernal.navkit.sample.ui.StepHeader
+import io.thernal.navkit.sample.ui.Topic
+
+private const val CHECKOUT_STEPS = 4
+
+private val accent = Topic.ARGUMENTS.accent
 
 /** Alive while any step of the flow is on the stack — the start screen is not a step. */
 private val inCheckout: ArgumentScope = whileInStack { route -> route is CheckoutStepRoute }
@@ -34,29 +48,41 @@ fun CheckoutStartScreen() {
     val arguments = LocalNavigationArguments.current
     val leftOver = arguments.get(CheckoutDraftKey)
 
-    ExampleScaffold(
-        title = "Checkout",
-        subtitle = "Four steps share one draft, scoped to the flow rather than to a screen.",
+    SampleScreen(
+        title = "Gift card",
+        topic = Topic.ARGUMENTS,
+        bottomBar = {
+            BottomAction(
+                label = "Buy a gift card",
+                color = accent,
+                onClick = {
+                    arguments.put(
+                        key = CheckoutDraftKey,
+                        value = CheckoutDraft(),
+                        scope = inCheckout,
+                    )
+                    navigator.push(CheckoutAmountRoute)
+                },
+            )
+        },
+        howItWorks = {
+            LiveValue(
+                label = "Draft outside the flow",
+                value = leftOver?.toString() ?: "null — pruned when the flow left the stack",
+            )
+            Explanation(
+                "Four steps share one `CheckoutDraft`, put as an argument scoped to the flow: " +
+                    "`whileInStack { it is CheckoutStepRoute }`. Walk the flow and come back — the " +
+                    "draft is gone, because the host prunes after every stack change. Nothing had " +
+                    "to remember to clean it up.",
+            )
+        },
     ) {
-        ExampleReadout(
-            label = "Draft outside the flow",
-            value = leftOver?.toString() ?: "null — pruned when the flow left the stack",
-        )
-        ExampleAction(
-            label = "Start checkout",
-            onClick = {
-                arguments.put(
-                    key = CheckoutDraftKey,
-                    value = CheckoutDraft(),
-                    scope = inCheckout,
-                )
-                navigator.push(CheckoutAmountRoute)
-            },
-        )
-        ExampleNote(
-            text = "Walk the flow, then come back here. The draft is gone: its scope says it is " +
-                "alive while any CheckoutStepRoute is in the stack, and the host prunes after " +
-                "every stack change. Nothing had to remember to clean it up.",
+        HeroCard(
+            title = "Send a gift card",
+            emoji = "🎁",
+            accent = accent,
+            subtitle = "Pick an amount, who it's for and how to pay — delivered by email in minutes.",
         )
     }
 }
@@ -64,8 +90,9 @@ fun CheckoutStartScreen() {
 @Composable
 fun CheckoutAmountScreen() {
     CheckoutStep(
+        step = 1,
         title = "Amount",
-        label = "How much",
+        label = "Gift amount (€)",
         read = { draft -> draft.amount },
         write = { draft, entered -> draft.copy(amount = entered) },
         next = CheckoutAddressRoute,
@@ -75,8 +102,9 @@ fun CheckoutAmountScreen() {
 @Composable
 fun CheckoutAddressScreen() {
     CheckoutStep(
-        title = "Address",
-        label = "Ship to",
+        step = 2,
+        title = "Recipient",
+        label = "Recipient's email",
         read = { draft -> draft.address },
         write = { draft, entered -> draft.copy(address = entered) },
         next = CheckoutPaymentRoute,
@@ -86,11 +114,13 @@ fun CheckoutAddressScreen() {
 @Composable
 fun CheckoutPaymentScreen() {
     CheckoutStep(
+        step = 3,
         title = "Payment",
-        label = "Method",
+        label = "Pay with",
         read = { draft -> draft.method },
         write = { draft, entered -> draft.copy(method = entered) },
         next = CheckoutSummaryRoute,
+        choices = listOf("Card", "Apple Pay", "PayPal"),
     )
 }
 
@@ -100,21 +130,32 @@ fun CheckoutSummaryScreen() {
     val arguments = LocalNavigationArguments.current
     val draft = arguments.get(CheckoutDraftKey)
 
-    ExampleScaffold(
+    SampleScreen(
         title = "Summary",
-        subtitle = "The fourth screen reads what the first three wrote.",
+        topic = Topic.ARGUMENTS,
+        bottomBar = {
+            BottomAction(
+                label = "Confirm",
+                color = accent,
+                onClick = { navigator.popBackTo { candidate -> candidate is CheckoutStartRoute } },
+            )
+        },
+        howItWorks = {
+            Explanation(
+                "The fourth screen reads what the first three wrote. Confirming pops every " +
+                    "`CheckoutStepRoute` at once; the next stack change finds none of them alive, " +
+                    "so the draft is dropped — not by this screen, by the scope.",
+            )
+        },
     ) {
-        ExampleReadout(label = "Amount", value = draft?.amount.orPlaceholder())
-        ExampleReadout(label = "Address", value = draft?.address.orPlaceholder())
-        ExampleReadout(label = "Method", value = draft?.method.orPlaceholder())
-        ExampleAction(
-            label = "Leave the flow",
-            onClick = { navigator.popBackTo { candidate -> candidate is CheckoutStartRoute } },
-        )
-        ExampleNote(
-            text = "Leaving pops every CheckoutStepRoute at once. The next stack change finds " +
-                "none of them alive, so the draft is dropped — not by this screen, by the scope.",
-        )
+        StepHeader(current = CHECKOUT_STEPS, total = CHECKOUT_STEPS, label = "Summary", accent = accent)
+        ContentCard {
+            KeyValueRow(key = "Gift card", value = draft?.amount.orPlaceholder { amount -> "€$amount" })
+            KeyValueRow(key = "To", value = draft?.address.orPlaceholder())
+            KeyValueRow(key = "Paid with", value = draft?.method.orPlaceholder())
+            HorizontalDivider()
+            KeyValueRow(key = "Total", value = draft?.amount.orPlaceholder { amount -> "€$amount" })
+        }
     }
 }
 
@@ -129,33 +170,62 @@ fun CheckoutSummaryScreen() {
  */
 @Composable
 private fun CheckoutStep(
+    step: Int,
     title: String,
     label: String,
     read: (CheckoutDraft) -> String,
     write: (CheckoutDraft, String) -> CheckoutDraft,
     next: CheckoutStepRoute,
+    choices: List<String> = emptyList(),
 ) {
     val navigator = LocalNavigator.current
     val arguments = LocalNavigationArguments.current
     var entered by rememberSaveable { mutableStateOf(read(arguments.draft())) }
+    val onEntered: (String) -> Unit = { text ->
+        entered = text
+        arguments.update { draft -> write(draft, text) }
+    }
 
-    ExampleScaffold(
+    SampleScreen(
         title = title,
-        subtitle = "Reads the shared draft, writes one field back into it.",
+        topic = Topic.ARGUMENTS,
+        bottomBar = {
+            BottomAction(
+                label = "Continue",
+                color = accent,
+                enabled = entered.isNotBlank(),
+                onClick = { navigator.push(next) },
+            )
+        },
+        howItWorks = {
+            Explanation(
+                "Reads the shared draft and writes this one field back into it, under the same " +
+                    "key on every step. Go back a step and the value is still there — the draft " +
+                    "lives as long as any step of the flow is on the stack.",
+            )
+        },
     ) {
-        OutlinedTextField(
-            value = entered,
-            onValueChange = { text ->
-                entered = text
-                arguments.update { draft -> write(draft, text) }
-            },
-            label = { Text(text = label) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        ExampleAction(
-            label = "Continue",
-            onClick = { navigator.push(next) },
-        )
+        StepHeader(current = step, total = CHECKOUT_STEPS, label = title, accent = accent)
+        if (choices.isEmpty()) {
+            OutlinedTextField(
+                value = entered,
+                onValueChange = onEntered,
+                label = { Text(text = label) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            Text(text = label)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                choices.forEach { choice ->
+                    FilterChip(
+                        selected = entered == choice,
+                        onClick = { onEntered(choice) },
+                        label = { Text(text = choice) },
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -175,9 +245,9 @@ private fun NavigationArguments.update(change: (CheckoutDraft) -> CheckoutDraft)
     )
 }
 
-private fun String?.orPlaceholder(): String {
+private fun String?.orPlaceholder(format: (String) -> String = { it }): String {
     if (isNullOrBlank()) {
         return "—"
     }
-    return this
+    return format(this)
 }

@@ -11,6 +11,7 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
+import io.thernal.navkit.sample.ui.Topic
 
 private class ArgumentsGraph : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
@@ -38,7 +39,7 @@ interface ArgumentsBindings {
         @IntoSet
         fun provideGreetingExample(): SampleExample {
             return SampleExample(
-                group = "Arguments",
+                topic = Topic.ARGUMENTS,
                 kind = ExampleKind.SIMPLE,
                 title = "One value, two screens",
                 summary = "Set it before the push; read it without threading it through a route.",
@@ -50,8 +51,8 @@ interface ArgumentsBindings {
         @IntoSet
         fun provideCheckoutExample(): SampleExample {
             return SampleExample(
-                group = "Arguments",
-                kind = ExampleKind.REAL_LIFE,
+                topic = Topic.ARGUMENTS,
+                kind = ExampleKind.ADVANCED,
                 title = "Checkout draft",
                 summary = "One draft read and updated on four screens, pruned when the flow ends.",
                 route = CheckoutStartRoute,

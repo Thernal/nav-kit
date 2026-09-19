@@ -13,6 +13,7 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
+import io.thernal.navkit.sample.ui.Topic
 
 private class BackGraph(private val drafts: ArticleDraftStore) : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
@@ -53,7 +54,7 @@ interface BackBindings {
         @IntoSet
         fun provideDraftExample(): SampleExample {
             return SampleExample(
-                group = "Back handling",
+                topic = Topic.BACK_HANDLING,
                 kind = ExampleKind.SIMPLE,
                 title = "Confirm before leaving",
                 summary = "A screen intercepts back, for as long as it is composed.",
@@ -65,8 +66,8 @@ interface BackBindings {
         @IntoSet
         fun provideArticleExample(): SampleExample {
             return SampleExample(
-                group = "Back handling",
-                kind = ExampleKind.REAL_LIFE,
+                topic = Topic.BACK_HANDLING,
+                kind = ExampleKind.ADVANCED,
                 title = "Unsaved work",
                 summary = "A transition guard refuses every way out, gesture or not.",
                 route = ArticleHomeRoute,

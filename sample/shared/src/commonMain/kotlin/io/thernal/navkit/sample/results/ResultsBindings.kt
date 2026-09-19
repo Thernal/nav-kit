@@ -11,6 +11,7 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
+import io.thernal.navkit.sample.ui.Topic
 
 private class ResultsGraph : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
@@ -35,7 +36,7 @@ interface ResultsBindings {
         @IntoSet
         fun providePickerExample(): SampleExample {
             return SampleExample(
-                group = "Results",
+                topic = Topic.RESULTS,
                 kind = ExampleKind.SIMPLE,
                 title = "Pick a colour",
                 summary = "A picker posts a typed result; the screen behind it consumes once.",
@@ -47,8 +48,8 @@ interface ResultsBindings {
         @IntoSet
         fun provideReviewExample(): SampleExample {
             return SampleExample(
-                group = "Results",
-                kind = ExampleKind.REAL_LIFE,
+                topic = Topic.RESULTS,
+                kind = ExampleKind.ADVANCED,
                 title = "Review request",
                 summary = "A three-step flow returns one decision to the screen that launched it.",
                 route = ReviewHomeRoute,

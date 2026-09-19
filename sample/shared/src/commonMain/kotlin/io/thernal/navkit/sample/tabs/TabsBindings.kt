@@ -12,6 +12,7 @@ import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphPr
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
 import io.thernal.navkit.sample.guards.SessionStore
+import io.thernal.navkit.sample.ui.Topic
 
 private class TabsGraph(private val session: SessionStore) : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
@@ -33,7 +34,7 @@ interface TabsBindings {
         @IntoSet
         fun provideSingleHostTabsExample(): SampleExample {
             return SampleExample(
-                group = "Nested navigation",
+                topic = Topic.NESTED_NAVIGATION,
                 kind = ExampleKind.SIMPLE,
                 title = "One host, tabs as its stack",
                 summary = "A bottom bar over a single nested host; one tab is a guarded graph.",

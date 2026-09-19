@@ -1,7 +1,7 @@
 # Deep links — from a URI to a guarded stack
 
 Catalog group **Deep links**: [One link, one route](#simple-one-link-one-route) (simple) and
-[Campaign links](#real-life-campaign-links) (real life). The platform side — an Android intent filter
+[Campaign links](#advanced-campaign-links) (advanced). The platform side — an Android intent filter
 and an iOS URL type — is in [the sample README](../../../../../../../../../README.md#platform-entry-points).
 
 A link travels through four hands, and each does one thing:
@@ -98,13 +98,13 @@ What to notice:
 - **The ingress only answers "queued".** `publish` returns `false` for a blank URI or a full buffer. What
   the handler decided arrives later, at the root.
 
-**Try it:** open *One link, one route*, deliver `navkit://product/42`, go back; then *Try the web form
-instead*, and *Try a domain the app does not own* — the readout says it was not found. Edit the link to
-`navkit://product` — the readout says it was rejected, and why. From a terminal:
+**Try it:** open *One link, one route*, *Deliver this link* (`navkit://product/42`), go back; then the
+*Web* preset, and *Other domain* — the result card says it was not found. Edit the link to
+`navkit://product` — the result card says it was rejected, and why. From a terminal:
 `adb shell am start -a android.intent.action.VIEW -d navkit://product/7` or
 `xcrun simctl openurl booted navkit://product/7`.
 
-## Real life: Campaign links
+## Advanced: Campaign links
 
 ```kotlin
 class OrdersDeepLinkHandler : DeepLinkHandler {
@@ -162,9 +162,9 @@ What to notice:
 - **Outcomes are logged where they are known.** The ingress only knows the link was queued. Without
   [`DeepLinkLog`](../app/DeepLinkLog.kt), a rejected link read as "accepted" and then nothing happened.
 
-**Try it:** open *Campaign links* and try each button: the list, three screens deep (then back through the
-stack), the in-app notification (rejected — the readout says why), and the secret page while signed out
-(sign-in appears; sign in and continue).
+**Try it:** open *Campaign links* and tap each notification: *Your orders*, *Order #77 has shipped* (three
+screens deep — then back through the stack), the in-app banner (rejected — the result card says why), and
+*Members-only offer* while signed out (sign-in appears; sign in and you continue to the lounge).
 
 ## Doing this in your app
 

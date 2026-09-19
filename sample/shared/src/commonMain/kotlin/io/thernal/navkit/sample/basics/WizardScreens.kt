@@ -1,17 +1,30 @@
 package io.thernal.navkit.sample.basics
 
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationOutcome
+import io.thernal.navkit.navigation.api.presentation.navigator.Navigator
 import io.thernal.navkit.sample.catalog.CatalogRoute
-import io.thernal.navkit.sample.ui.ExampleAction
-import io.thernal.navkit.sample.ui.ExampleNote
-import io.thernal.navkit.sample.ui.ExampleReadout
-import io.thernal.navkit.sample.ui.ExampleScaffold
+import io.thernal.navkit.sample.ui.BottomAction
+import io.thernal.navkit.sample.ui.ContentCard
+import io.thernal.navkit.sample.ui.Explanation
+import io.thernal.navkit.sample.ui.Green
+import io.thernal.navkit.sample.ui.HeroCard
+import io.thernal.navkit.sample.ui.KeyValueRow
+import io.thernal.navkit.sample.ui.ListRow
+import io.thernal.navkit.sample.ui.LiveValue
+import io.thernal.navkit.sample.ui.SampleScreen
+import io.thernal.navkit.sample.ui.SecondaryButton
+import io.thernal.navkit.sample.ui.SectionLabel
+import io.thernal.navkit.sample.ui.StepHeader
+import io.thernal.navkit.sample.ui.Topic
 
 private const val LAST_STEP = 3
+
+private val accent = Topic.NAVIGATION.accent
 
 /**
  * The commands a real flow needs beyond push and pop, and the thing that makes them usable: every
@@ -30,25 +43,35 @@ fun WizardScreen(log: OrderFlowLog) {
     val navigator = LocalNavigator.current
     val lastOutcome by log.last.collectAsState()
 
-    ExampleScaffold(
-        title = "Order flow",
-        subtitle = "`navigate` with a predicate, `replaceAll`, `popBackTo`, and reading the outcome.",
+    SampleScreen(
+        title = "Your bag",
+        topic = Topic.NAVIGATION,
+        bottomBar = {
+            BottomAction(
+                label = "Checkout · €42",
+                onClick = {
+                    log.reset()
+                    log.record(
+                        command = "push step 1",
+                        outcome = navigator.push(WizardStepRoute(step = 1)).describe(),
+                    )
+                },
+            )
+        },
+        howItWorks = {
+            LiveValue(label = "Last outcome", value = lastOutcome)
+            Explanation(
+                "Every button in this flow is one navigator command, and the readout is what the " +
+                    "command answered — the difference between a command surface and a setter.",
+            )
+        },
     ) {
-        ExampleReadout(label = "Last outcome", value = lastOutcome)
-        ExampleNote(
-            text = "Start the flow and walk forward. Every button reports what actually happened " +
-                "to the stack, which is the difference between a command surface and a setter.",
-        )
-        ExampleAction(
-            label = "Start at step 1",
-            onClick = {
-                log.reset()
-                log.record(
-                    command = "push step 1",
-                    outcome = navigator.push(WizardStepRoute(step = 1)).describe(),
-                )
-            },
-        )
+        ContentCard {
+            ListRow(title = "Ceramic mug", emoji = "☕", accent = accent, subtitle = "Qty 1", trailing = "€18")
+            ListRow(title = "Linen tote", emoji = "👜", accent = accent, subtitle = "Qty 1", trailing = "€24")
+            HorizontalDivider()
+            KeyValueRow(key = "Total", value = "€42.00")
+        }
     }
 }
 
@@ -59,43 +82,58 @@ fun WizardStepScreen(
 ) {
     val navigator = LocalNavigator.current
     val lastOutcome by log.last.collectAsState()
+    val isLastStep = route.step >= LAST_STEP
 
-    ExampleScaffold(
-        title = "Step ${route.step} of $LAST_STEP",
-        subtitle = "Each button is one navigator command; the readout is its outcome.",
-    ) {
-        ExampleReadout(label = "Last outcome", value = lastOutcome)
-
-        if (route.step < LAST_STEP) {
-            ExampleAction(
-                label = "Next step (push)",
-                onClick = {
-                    val next = route.step + 1
-                    log.record(
-                        command = "push step $next",
-                        outcome = navigator.push(WizardStepRoute(step = next)).describe(),
-                    )
-                },
+    SampleScreen(
+        title = "Checkout",
+        topic = Topic.NAVIGATION,
+        bottomBar = {
+            if (isLastStep) {
+                BottomAction(label = "Place order", onClick = { finish(navigator = navigator, log = log) })
+            } else {
+                BottomAction(
+                    label = "Continue to ${stepLabel(route.step + 1)}",
+                    onClick = {
+                        val next = route.step + 1
+                        log.record(
+                            command = "push step $next",
+                            outcome = navigator.push(WizardStepRoute(step = next)).describe(),
+                        )
+                    },
+                )
+            }
+        },
+        howItWorks = {
+            LiveValue(label = "Last outcome", value = lastOutcome)
+            Explanation(
+                "*Edit delivery* uses `navigate` with a predicate: without it, it would push a " +
+                    "second step 1; with it, the navigator finds the one already in the stack and " +
+                    "pops down to it — one stack write, so guards see the destination actually asked for.",
             )
-        }
+            Explanation(
+                "*Cancel checkout* is `popBackTo`, which answers whether the stack moved and " +
+                    "deliberately skips the back dispatcher — it is a jump, not a back. *Place order* " +
+                    "is `replaceAll`: a whole new stack in one command, guarded on every route it proposes.",
+            )
+        },
+    ) {
+        StepHeader(current = route.step, total = LAST_STEP, label = stepLabel(route.step), accent = accent)
+        StepDetails(step = route.step)
 
-        ExampleAction(
-            label = "Back to step 1 (navigate with a predicate)",
+        SectionLabel(text = "Other ways to move")
+        SecondaryButton(
+            label = "Edit delivery · back to step 1",
+            enabled = route.step > 1,
             onClick = {
-                // Without the predicate this would push a *second* step 1. With it, the navigator
-                // finds the one already in the stack and pops down to it — one stack write, so the
-                // guards see the destination the caller actually asked for.
                 val outcome = navigator.navigate(
                     route = WizardStepRoute(step = 1),
                     predicate = { candidate -> candidate is WizardStepRoute && candidate.step == 1 },
                 )
                 log.record(command = "navigate to step 1", outcome = outcome.describe())
             },
-            enabled = route.step > 1,
         )
-
-        ExampleAction(
-            label = "Back to the flow start (popBackTo)",
+        SecondaryButton(
+            label = "Cancel checkout",
             onClick = {
                 val didMove = navigator.popBackTo { candidate -> candidate is WizardRoute }
                 val outcome = if (didMove) {
@@ -106,24 +144,9 @@ fun WizardStepScreen(
                 log.record(command = "popBackTo the flow start", outcome = outcome)
             },
         )
-
-        ExampleAction(
-            label = "Finish (replaceAll)",
-            onClick = {
-                // A whole new stack in one command. `replaceAll` is guarded over every route it
-                // proposes, not just the last one — the thing the kit fixed when guards moved from
-                // deciding about a route to deciding about a stack.
-                val outcome = navigator.replaceAll(listOf(CatalogRoute, WizardDoneRoute))
-                log.record(command = "replaceAll", outcome = outcome.describe())
-            },
-        )
-
-        ExampleNote(
-            text = "`popBack` consults the host's back dispatcher first, so a screen intercepting " +
-                "back is heard whether it came from the system gesture or from a button. " +
-                "`popBackTo` deliberately does not: that is a jump, not a back. It answers whether " +
-                "the stack moved; pass `inclusive = true` to pop the matched route as well.",
-        )
+        if (!isLastStep) {
+            SecondaryButton(label = "Place order now", onClick = { finish(navigator = navigator, log = log) })
+        }
     }
 }
 
@@ -132,20 +155,76 @@ fun WizardDoneScreen(log: OrderFlowLog) {
     val navigator = LocalNavigator.current
     val lastOutcome by log.last.collectAsState()
 
-    ExampleScaffold(
-        title = "Done",
-        subtitle = "The stack is now catalog → done, built in one `replaceAll`.",
+    SampleScreen(
+        title = "Order placed",
+        topic = Topic.NAVIGATION,
+        howItWorks = {
+            LiveValue(label = "Last outcome", value = lastOutcome)
+            LiveValue(label = "Can pop?", value = navigator.canPop().toString())
+            Explanation(
+                "The stack is now catalog → this screen, built in one `replaceAll`, so back goes " +
+                    "to the catalog rather than into a checkout that no longer exists. `canPop` " +
+                    "answers from the stack the host is rendering — after guards — not the one the " +
+                    "caller last proposed.",
+            )
+        },
     ) {
-        ExampleReadout(label = "Last outcome", value = lastOutcome)
-        ExampleReadout(
-            label = "Can pop?",
-            value = navigator.canPop().toString(),
+        HeroCard(
+            title = "Thank you!",
+            emoji = "✅",
+            accent = Green,
+            subtitle = "Order #1042 is confirmed and arrives on Thursday.",
         )
-        ExampleNote(
-            text = "`canPop` answers from the stack the host is rendering, which is the resolved " +
-                "one — after guards — not the one the caller last proposed.",
-        )
+        ContentCard {
+            KeyValueRow(key = "Items", value = "2")
+            KeyValueRow(key = "Delivery", value = "Standard · free")
+            KeyValueRow(key = "Paid", value = "€42.00")
+        }
     }
+}
+
+@Composable
+private fun StepDetails(step: Int) {
+    ContentCard {
+        when (step) {
+            1 -> {
+                KeyValueRow(key = "Deliver to", value = "221B Baker Street")
+                KeyValueRow(key = "Method", value = "Standard · 3–5 days")
+            }
+
+            2 -> {
+                KeyValueRow(key = "Card", value = "Visa •••• 4242")
+                KeyValueRow(key = "Billing", value = "Same as delivery")
+            }
+
+            else -> {
+                KeyValueRow(key = "Items", value = "2")
+                KeyValueRow(key = "Delivery", value = "Free")
+                KeyValueRow(key = "Total", value = "€42.00")
+            }
+        }
+    }
+}
+
+private fun stepLabel(step: Int): String {
+    return when (step) {
+        1 -> "Delivery"
+        2 -> "Payment"
+        else -> "Review"
+    }
+}
+
+/**
+ * A whole new stack in one command. `replaceAll` is guarded over every route it proposes, not just
+ * the last one — the thing the kit fixed when guards moved from deciding about a route to deciding
+ * about a stack.
+ */
+private fun finish(
+    navigator: Navigator,
+    log: OrderFlowLog,
+) {
+    val outcome = navigator.replaceAll(listOf(CatalogRoute, WizardDoneRoute))
+    log.record(command = "replaceAll", outcome = outcome.describe())
 }
 
 private fun NavigationOutcome.describe(): String {

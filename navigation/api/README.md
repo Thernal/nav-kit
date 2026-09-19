@@ -9,7 +9,7 @@ This module holds contracts only. `navigation/impl` implements them and `navigat
 installs them into an application graph, so a feature module depends on `api` and nothing else.
 
 - **Runnable examples** of every section: [`sample/`](../../sample/README.md) — one simple and one
-  real-life example per capability, on Android and iOS.
+  advanced example per capability, on Android and iOS.
 - **Why** each contract has the shape it has: [`navigation/README.md`](../README.md).
 - **Agents** get the same material as a skill: [`skills/nav-kit`](../../skills/nav-kit/SKILL.md).
 

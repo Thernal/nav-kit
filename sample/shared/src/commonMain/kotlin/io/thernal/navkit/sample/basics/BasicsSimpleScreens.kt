@@ -1,10 +1,51 @@
 package io.thernal.navkit.sample.basics
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
-import io.thernal.navkit.sample.ui.ExampleAction
-import io.thernal.navkit.sample.ui.ExampleNote
-import io.thernal.navkit.sample.ui.ExampleScaffold
+import io.thernal.navkit.sample.ui.ContentCard
+import io.thernal.navkit.sample.ui.Explanation
+import io.thernal.navkit.sample.ui.HeroCard
+import io.thernal.navkit.sample.ui.KeyValueRow
+import io.thernal.navkit.sample.ui.ListRow
+import io.thernal.navkit.sample.ui.SampleScreen
+import io.thernal.navkit.sample.ui.SectionLabel
+import io.thernal.navkit.sample.ui.Topic
+
+/** What the shop shows for a detail id. Presentation only — the route still carries just the id. */
+private data class ShopItem(
+    val id: String,
+    val emoji: String,
+    val name: String,
+    val blurb: String,
+    val price: String,
+    val material: String,
+)
+
+private val shopItems = listOf(
+    ShopItem(
+        id = "A",
+        emoji = "☕",
+        name = "Ceramic mug",
+        blurb = "Hand-glazed stoneware, 350 ml",
+        price = "€18",
+        material = "Stoneware",
+    ),
+    ShopItem(
+        id = "B",
+        emoji = "👜",
+        name = "Linen tote",
+        blurb = "Natural linen, fits a 14\" laptop",
+        price = "€24",
+        material = "Linen",
+    ),
+)
+
+private fun shopItemOf(id: String): ShopItem {
+    return shopItems.firstOrNull { item -> item.id == id }
+        ?: ShopItem(id = id, emoji = "📦", name = "Item $id", blurb = "", price = "—", material = "—")
+}
 
 /**
  * The whole of simple navigation: a screen pushes another and the other pops.
@@ -16,35 +57,62 @@ import io.thernal.navkit.sample.ui.ExampleScaffold
 @Composable
 fun BasicsHomeScreen() {
     val navigator = LocalNavigator.current
-    ExampleScaffold(
-        title = "Push and pop",
-        subtitle = "The two commands every other example is built out of.",
+    SampleScreen(
+        title = "Shop",
+        topic = Topic.NAVIGATION,
+        subtitle = "Tap an item to push its page; back pops it.",
+        howItWorks = {
+            Explanation(
+                "`push` adds a route; `popBack` removes the top one. The host renders the " +
+                    "stack the root ViewModel owns, so both commands are reported back to it rather " +
+                    "than mutating anything the host holds.",
+            )
+        },
     ) {
-        ExampleNote(
-            text = "`push` adds a route; `popBack` removes the top one. The host renders the " +
-                "stack the root ViewModel owns, so both commands are reported back to it rather " +
-                "than mutating anything the host holds.",
-        )
-        ExampleAction(
-            label = "Open detail A",
-            onClick = { navigator.push(BasicsDetailRoute(id = "A")) },
-        )
-        ExampleAction(
-            label = "Open detail B",
-            onClick = { navigator.push(BasicsDetailRoute(id = "B")) },
-        )
+        SectionLabel(text = "Popular this week")
+        shopItems.forEach { item ->
+            ListRow(
+                title = item.name,
+                emoji = item.emoji,
+                accent = Topic.NAVIGATION.accent,
+                subtitle = item.blurb,
+                trailing = item.price,
+                onClick = { navigator.push(BasicsDetailRoute(id = item.id)) },
+            )
+        }
     }
 }
 
 @Composable
 fun BasicsDetailScreen(route: BasicsDetailRoute) {
-    ExampleScaffold(
-        title = "Detail ${route.id}",
-        subtitle = "The route itself carries the id — no shared state, no store.",
+    val item = shopItemOf(route.id)
+    SampleScreen(
+        title = item.name,
+        topic = Topic.NAVIGATION,
+        howItWorks = {
+            Explanation(
+                "The route itself carries the id — `BasicsDetailRoute(id = \"${route.id}\")` — no " +
+                    "shared state, no store. A route is a small immutable value that survives " +
+                    "process death; anything bigger than an identifier belongs in a repository, " +
+                    "with only its id here.",
+            )
+        },
     ) {
-        ExampleNote(
-            text = "A route is a small immutable value that survives process death. Anything " +
-                "bigger than an identifier belongs in a repository, with only its id here.",
+        HeroCard(
+            title = item.name,
+            emoji = item.emoji,
+            accent = Topic.NAVIGATION.accent,
+            subtitle = item.blurb,
         )
+        ContentCard {
+            KeyValueRow(key = "Price", value = item.price)
+            KeyValueRow(key = "Material", value = item.material)
+            KeyValueRow(key = "Ships in", value = "2–3 days")
+            Text(
+                text = "Made in small batches. Every piece is a little different.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }

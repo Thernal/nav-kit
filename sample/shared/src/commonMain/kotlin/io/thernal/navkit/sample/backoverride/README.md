@@ -1,7 +1,7 @@
 # Back handling — two ways to refuse leaving
 
 Catalog group **Back handling**: [Confirm before leaving](#simple-confirm-before-leaving) (simple)
-and [Unsaved work](#real-life-unsaved-work) (real life).
+and [Unsaved work](#advanced-unsaved-work) (advanced).
 
 "Discard your changes?" has two very different shapes, and choosing the wrong one is the usual bug:
 
@@ -65,14 +65,14 @@ What to notice:
 - `NavigationBackHandler` lives in `navigation/impl`. A module that must not see `impl` registers
   through `LocalBackDispatcher.current.register(BackCallback { … })` in a `DisposableEffect` instead.
 
-**Try it:** open *Confirm before leaving*, type something, then press back with the gesture — and then
-with the Back button. Both ask. Clear the text and back leaves without asking.
+**Try it:** open *Confirm before leaving*, type a note, then press back with the gesture — and then
+with the arrow in the top bar. Both ask. Clear the text and back leaves without asking.
 
 **The limit.** A handler fires only while its screen is composed and only through `popBack()`. It
 cannot stop a `popBackTo` or `replaceAll` issued elsewhere, a deep link, or a guard rewrite — a jump
 that skips the screen. That is the next example.
 
-## Real life: Unsaved work
+## Advanced: Unsaved work
 
 "The editor may not be left with unsaved work" is a statement about the difference between the stack
 that was and the stack being proposed — a rule about a **transition**. A destination-only rule cannot
@@ -134,9 +134,9 @@ What to notice:
   guards, so a rule broad enough to reject *any* difference between the stacks would undo every other
   guard's rewrite, and the runner would fail at its round limit instead of settling.
 
-**Try it:** open *Unsaved work*, open the editor, type. Try *jump home (popBackTo)*, *reset the stack
-(replaceAll)*, the Back button and the gesture — all refused, and the readout says why. *Save* or
-*Discard*, and every way out works again.
+**Try it:** open *Unsaved work*, open the draft, type. Try *Jump home · popBackTo*, *Reset the stack ·
+replaceAll*, the back arrow and the gesture — all refused, and the *Last attempt to leave* readout says
+why. *Save* or *Discard*, and every way out works again.
 
 ## Doing this in your app
 

@@ -1,7 +1,7 @@
 # Navigation — commands and what came of them
 
 Catalog group **Navigation**: [Push and pop](#simple-push-and-pop) (simple) and
-[Order flow](#real-life-order-flow) (real life).
+[Order flow](#advanced-order-flow) (advanced).
 
 Moving between screens without any screen owning the back stack, and knowing at the call site
 whether a command actually happened. Every other example in the sample is built from these
@@ -30,7 +30,7 @@ data class BasicsDetailRoute(val id: String) : BasicsRoute
 @Composable
 fun BasicsHomeScreen() {
     val navigator = LocalNavigator.current
-    ExampleAction(label = "Open detail A", onClick = { navigator.push(BasicsDetailRoute(id = "A")) })
+    ListRow(title = "Ceramic mug", onClick = { navigator.push(BasicsDetailRoute(id = "A")) })
 }
 
 @Composable
@@ -39,8 +39,8 @@ fun BasicsDetailScreen(route: BasicsDetailRoute) {
 }
 ```
 
-The Back button in [`ExampleScaffold`](../ui/ExampleUi.kt) calls `navigator.popBack()`, shown only
-while `navigator.canPop()` is true.
+The back arrow in [`SampleScreen`](../ui/SampleScreen.kt)'s top bar calls `navigator.popBack()`, shown
+only while `navigator.canPop()` is true.
 
 What to notice:
 
@@ -53,10 +53,10 @@ What to notice:
 - **The route is the argument.** An id travels in the route; anything larger belongs in a repository,
   with only its id here.
 
-**Try it:** open *Push and pop*, open detail A, go back with the button, then with the system
-gesture. Both pops are the same `popBack()`.
+**Try it:** open *Push and pop*, open the mug, go back with the arrow in the top bar, then with the
+system gesture. Both pops are the same `popBack()`.
 
-## Real life: Order flow
+## Advanced: Order flow
 
 A flow needs more than push and pop, and each command can be refused, redirected or put on hold by
 a guard. So every command that can add routes answers with a `NavigationOutcome`:
@@ -76,14 +76,14 @@ flow reaches for:
 
 | Button | Command | Why this command |
 |---|---|---|
-| Next step | `push(WizardStepRoute(step + 1))` | plain forward move |
-| Back to step 1 | `navigate(WizardStepRoute(1), predicate = { it is WizardStepRoute && it.step == 1 })` | returns to the step already in the stack instead of pushing a second one — one stack write, so guards see the real destination |
-| Back to the flow start | `popBackTo { it is WizardRoute }` | a jump: answers `Boolean` — did the stack move — and skips back interceptors |
-| Finish | `replaceAll(listOf(CatalogRoute, WizardDoneRoute))` | a whole new stack in one command, guarded on every route it proposes |
+| Continue to … | `push(WizardStepRoute(step + 1))` | plain forward move |
+| Edit delivery · back to step 1 | `navigate(WizardStepRoute(1), predicate = { it is WizardStepRoute && it.step == 1 })` | returns to the step already in the stack instead of pushing a second one — one stack write, so guards see the real destination |
+| Cancel checkout | `popBackTo { it is WizardRoute }` | a jump: answers `Boolean` — did the stack move — and skips back interceptors |
+| Place order | `replaceAll(listOf(CatalogRoute, WizardDoneRoute))` | a whole new stack in one command, guarded on every route it proposes |
 
 ```kotlin
-ExampleAction(
-    label = "Back to step 1 (navigate with a predicate)",
+SecondaryButton(
+    label = "Edit delivery · back to step 1",
     onClick = {
         val outcome = navigator.navigate(
             route = WizardStepRoute(step = 1),
@@ -109,9 +109,9 @@ class OrderFlowLog {
 On the done screen, `canPop()` answers from the stack the host is working from — after guards —
 not from what the caller last proposed.
 
-**Try it:** open *Order flow*, start at step 1, walk to step 3, use *Back to step 1* and watch the
-readout; walk forward again and *Finish*: the stack becomes catalog → done, and back goes to the
-catalog.
+**Try it:** open *Order flow*, tap *Checkout*, walk to step 3, use *Edit delivery · back to step 1*
+and watch the *Last outcome* readout; walk forward again and *Place order*: the stack becomes
+catalog → done, and back goes to the catalog.
 
 ## How a feature registers itself
 
@@ -146,7 +146,7 @@ interface BasicsBindings {
         @IntoSet
         fun provideBasicsSimpleExample(): SampleExample {
             return SampleExample(
-                group = "Navigation",
+                topic = Topic.NAVIGATION,
                 kind = ExampleKind.SIMPLE,
                 title = "Push and pop",
                 summary = "One screen opens another and the other comes back.",

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import io.thernal.navkit.navigation.api.presentation.deeplink.publish
 import io.thernal.navkit.sample.app.SampleApp
 import io.thernal.navkit.sample.app.SampleGraph
@@ -24,6 +25,8 @@ class MainActivity : ComponentActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Dark system-bar icons on the light theme, light ones on the dark theme.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // A recreated activity still carries the intent it was started with; publishing it again
         // would apply the same link a second time.

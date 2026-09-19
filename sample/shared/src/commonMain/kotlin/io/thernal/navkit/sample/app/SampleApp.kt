@@ -1,6 +1,5 @@
 package io.thernal.navkit.sample.app
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -12,9 +11,12 @@ import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkOutcome
 import io.thernal.navkit.navigation.api.presentation.host.NavigationHost
 import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
 import io.thernal.navkit.navigation.api.presentation.model.Route
-import io.thernal.navkit.sample.ui.ExampleNote
-import io.thernal.navkit.sample.ui.ExampleReadout
-import io.thernal.navkit.sample.ui.ExampleScaffold
+import io.thernal.navkit.sample.ui.Explanation
+import io.thernal.navkit.sample.ui.HeroCard
+import io.thernal.navkit.sample.ui.LiveValue
+import io.thernal.navkit.sample.ui.SampleScreen
+import io.thernal.navkit.sample.ui.SampleTheme
+import io.thernal.navkit.sample.ui.Topic
 
 /**
  * The composition root.
@@ -36,7 +38,7 @@ fun SampleApp(graph: SampleGraph) {
     CompositionLocalProvider(
         values = graph.providedValues.toTypedArray(),
     ) {
-        MaterialTheme {
+        SampleTheme {
             val root: RootViewModel = viewModel { RootViewModel() }
             val backStack by root.backStack.collectAsState()
 
@@ -78,15 +80,24 @@ private fun unknownRouteEntry(route: Route): NavEntry<Route> {
 
 @Composable
 private fun UnknownRouteScreen(route: Route) {
-    ExampleScaffold(
-        title = "No screen for this route",
-        subtitle = "The route reached the host; the host has no entry for it.",
+    SampleScreen(
+        title = "Not found",
+        topic = Topic.NAVIGATION,
+        howItWorks = {
+            LiveValue(label = "Route", value = route.toString())
+            Explanation(
+                "The route reached the host; the host has no entry for it. Without a `fallback` this " +
+                    "would be an `IllegalStateException` from the entry table. The usual causes are a " +
+                    "guard substituting a route into a host that never registers it, and a deep link " +
+                    "resolving to one the root does not know.",
+            )
+        },
     ) {
-        ExampleReadout(label = "Route", value = route.toString())
-        ExampleNote(
-            text = "Without a `fallback` this would be an `IllegalStateException` from the entry " +
-                "table. The usual causes are a guard substituting a route into a host that never " +
-                "registers it, and a deep link resolving to one the root does not know.",
+        HeroCard(
+            title = "This page doesn't exist",
+            emoji = "🧭",
+            accent = Topic.NAVIGATION.accent,
+            subtitle = "The link or screen you followed isn't part of this version of the app.",
         )
     }
 }

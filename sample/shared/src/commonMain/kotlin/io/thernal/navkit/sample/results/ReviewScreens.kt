@@ -1,21 +1,42 @@
 package io.thernal.navkit.sample.results
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.api.presentation.navigator.Navigator
 import io.thernal.navkit.navigation.api.presentation.result.LocalNavigationResults
 import io.thernal.navkit.navigation.api.presentation.result.NavigationResults
 import io.thernal.navkit.navigation.api.presentation.result.ResultEffect
-import io.thernal.navkit.sample.ui.ExampleAction
-import io.thernal.navkit.sample.ui.ExampleNote
-import io.thernal.navkit.sample.ui.ExampleReadout
-import io.thernal.navkit.sample.ui.ExampleScaffold
+import io.thernal.navkit.sample.ui.BottomAction
+import io.thernal.navkit.sample.ui.ContentCard
+import io.thernal.navkit.sample.ui.Explanation
+import io.thernal.navkit.sample.ui.Green
+import io.thernal.navkit.sample.ui.IconBadge
+import io.thernal.navkit.sample.ui.KeyValueRow
+import io.thernal.navkit.sample.ui.ListRow
+import io.thernal.navkit.sample.ui.LiveValue
+import io.thernal.navkit.sample.ui.PrimaryButton
+import io.thernal.navkit.sample.ui.Rose
+import io.thernal.navkit.sample.ui.SampleScreen
+import io.thernal.navkit.sample.ui.SecondaryButton
+import io.thernal.navkit.sample.ui.StatusChip
+import io.thernal.navkit.sample.ui.StepHeader
+import io.thernal.navkit.sample.ui.Topic
 
 private const val REVIEW_STEPS = 3
+
+private val accent = Topic.RESULTS.accent
 
 /**
  * The shape a result actually takes in an application: a whole flow is launched, walks several
@@ -41,40 +62,54 @@ fun ReviewHomeScreen() {
 
     ResultEffect(key = ReviewOutcome, onResult = model::onDecision)
 
-    ExampleScaffold(
-        title = "Review request",
-        subtitle = "A three-step flow returns one decision to this screen.",
+    SampleScreen(
+        title = "Approvals",
+        topic = Topic.RESULTS,
+        howItWorks = {
+            LiveValue(label = "Pending when this screen came back", value = pendingOnArrival.describe())
+            LiveValue(label = "Pending now", value = pending.describe())
+            Explanation(
+                "The review is three screens deep; its last step posts one `ReviewDecision` and " +
+                    "leaves the whole flow with `popBackTo`, so this screen is uncovered with the " +
+                    "answer already waiting — compare the two readouts.",
+            )
+            Explanation(
+                "`pending` exposes names, never values, so one feature's results are not " +
+                    "readable by every screen in the app.",
+            )
+        },
     ) {
-        ExampleReadout(
-            label = "Decision",
-            value = decision?.let { made ->
-                val verdict = if (made.isApproved) {
-                    "approved"
-                } else {
-                    "rejected"
-                }
-                "$verdict — ${made.note}"
-            } ?: "not reviewed yet",
-        )
-        ExampleReadout(label = "Pending when this screen came back", value = pendingOnArrival.describe())
-        ExampleReadout(label = "Pending now", value = pending.describe())
-        ExampleAction(
-            label = "Start the review",
+        ContentCard {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                IconBadge(emoji = "🧾", color = accent)
+                Text(
+                    text = "Team offsite — Lisbon",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                DecisionChip(decision = decision)
+            }
+            KeyValueRow(key = "Submitted by", value = "Maya Chen")
+            KeyValueRow(key = "Amount", value = "€840.20")
+            if (decision != null) {
+                KeyValueRow(key = "Reviewer note", value = decision?.note.orEmpty())
+            }
+        }
+        PrimaryButton(
+            label = "Review expense report",
             onClick = { navigator.push(ReviewStepRoute(step = 1)) },
+            color = accent,
         )
-        ExampleAction(
-            label = "Clear the decision",
+        SecondaryButton(
+            label = "Reset the decision",
+            enabled = decision != null,
             onClick = {
                 results.clear(ReviewOutcome)
                 model.clear()
             },
-            enabled = decision != null,
-        )
-        ExampleNote(
-            text = "`pending` exposes names, never values, so one feature's results are not " +
-                "readable by every screen in the app. Finish the flow and compare the two " +
-                "readouts: the name was waiting when this screen came back, and was gone once it " +
-                "had consumed it.",
         )
     }
 }
@@ -83,48 +118,83 @@ fun ReviewHomeScreen() {
 fun ReviewStepScreen(route: ReviewStepRoute) {
     val navigator = LocalNavigator.current
     val results = LocalNavigationResults.current
+    val isDecisionStep = route.step >= REVIEW_STEPS
 
-    ExampleScaffold(
-        title = "Review step ${route.step} of $REVIEW_STEPS",
-        subtitle = if (route.step < REVIEW_STEPS) {
-            "Walk forward; the last step decides."
-        } else {
-            "Post the decision and leave the whole flow in one command."
+    SampleScreen(
+        title = "Review",
+        topic = Topic.RESULTS,
+        bottomBar = {
+            if (!isDecisionStep) {
+                BottomAction(
+                    label = "Continue",
+                    color = accent,
+                    onClick = { navigator.push(ReviewStepRoute(step = route.step + 1)) },
+                )
+            }
+        },
+        howItWorks = {
+            Explanation(
+                if (isDecisionStep) {
+                    "Approve or reject posts the decision and leaves the whole flow in one " +
+                        "`popBackTo` — a jump, not a back, so it does not consult the back " +
+                        "dispatcher."
+                } else {
+                    "Each step is an ordinary pushed route. Nothing is threaded forward: the " +
+                        "decision only exists once the last step makes it."
+                },
+            )
         },
     ) {
-        if (route.step < REVIEW_STEPS) {
-            ExampleAction(
-                label = "Continue",
-                onClick = { navigator.push(ReviewStepRoute(step = route.step + 1)) },
-            )
-            return@ExampleScaffold
-        }
+        StepHeader(current = route.step, total = REVIEW_STEPS, label = stepLabel(route.step), accent = accent)
+        when (route.step) {
+            1 -> ContentCard {
+                ListRow(title = "Hotel · 3 nights", emoji = "🏨", accent = accent, trailing = "€520.00")
+                ListRow(title = "Flights", emoji = "✈️", accent = accent, trailing = "€260.20")
+                ListRow(title = "Team dinner", emoji = "🍽️", accent = accent, trailing = "€60.00")
+            }
 
-        ExampleAction(
-            label = "Approve",
-            onClick = {
-                finish(
-                    approved = true,
-                    results = results,
-                    navigator = navigator,
+            2 -> ContentCard {
+                ListRow(title = "Within the offsite budget", emoji = "✅", accent = Green)
+                ListRow(title = "Every receipt attached", emoji = "✅", accent = Green)
+                ListRow(title = "Approver is not the submitter", emoji = "✅", accent = Green)
+            }
+
+            else -> {
+                ContentCard {
+                    KeyValueRow(key = "Receipts", value = "3 of 3")
+                    KeyValueRow(key = "Policy checks", value = "Passed")
+                    HorizontalDivider()
+                    KeyValueRow(key = "Total", value = "€840.20")
+                }
+                PrimaryButton(
+                    label = "Approve",
+                    color = Green,
+                    onClick = { finish(approved = true, results = results, navigator = navigator) },
                 )
-            },
-        )
-        ExampleAction(
-            label = "Reject",
-            onClick = {
-                finish(
-                    approved = false,
-                    results = results,
-                    navigator = navigator,
+                PrimaryButton(
+                    label = "Reject",
+                    color = Rose,
+                    onClick = { finish(approved = false, results = results, navigator = navigator) },
                 )
-            },
-        )
-        ExampleNote(
-            text = "The flow posts and then pops itself with `popBackTo`, so the screen that " +
-                "launched it is uncovered with the answer already waiting. `popBackTo` does not " +
-                "consult the back dispatcher — it is a jump, not a back.",
-        )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DecisionChip(decision: ReviewDecision?) {
+    when {
+        decision == null -> StatusChip(text = "Pending", color = MaterialTheme.colorScheme.tertiary)
+        decision.isApproved -> StatusChip(text = "Approved", color = Green)
+        else -> StatusChip(text = "Rejected", color = Rose)
+    }
+}
+
+private fun stepLabel(step: Int): String {
+    return when (step) {
+        1 -> "Receipts"
+        2 -> "Policy"
+        else -> "Decision"
     }
 }
 

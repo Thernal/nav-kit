@@ -12,6 +12,7 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
+import io.thernal.navkit.sample.ui.Topic
 
 /**
  * What a feature module contributes to the application: its screens, and its place in the index.
@@ -47,7 +48,7 @@ interface BasicsBindings {
         @IntoSet
         fun provideBasicsSimpleExample(): SampleExample {
             return SampleExample(
-                group = "Navigation",
+                topic = Topic.NAVIGATION,
                 kind = ExampleKind.SIMPLE,
                 title = "Push and pop",
                 summary = "One screen opens another and the other comes back.",
@@ -59,8 +60,8 @@ interface BasicsBindings {
         @IntoSet
         fun provideBasicsWizardExample(): SampleExample {
             return SampleExample(
-                group = "Navigation",
-                kind = ExampleKind.REAL_LIFE,
+                topic = Topic.NAVIGATION,
+                kind = ExampleKind.ADVANCED,
                 title = "Order flow",
                 summary = "navigate with a predicate, replaceAll, popBackTo, and reading outcomes.",
                 route = WizardRoute,

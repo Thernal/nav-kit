@@ -1,7 +1,7 @@
 # Guards — deciding which stacks may exist
 
 Catalog group **Guards**: [Members area](#simple-members-area) (simple) and
-[401 and a PIN](#real-life-401-and-a-pin) (real life). The third kind of guard — a rule about
+[401 and a PIN](#advanced-401-and-a-pin) (advanced). The third kind of guard — a rule about
 *leaving* a screen — is in [`backoverride`](../backoverride/README.md).
 
 A guard is where an access rule lives instead of an `if` before every `push`. It sees the stack as
@@ -72,8 +72,8 @@ fun provideAuthGuard(session: SessionStore): NavigationGuard {
 **Continue after signing in.**
 
 ```kotlin
-ExampleAction(
-    label = "Sign in and continue",
+PrimaryButton(
+    label = "Sign in",
     onClick = {
         session.signIn()
         val next = route.next
@@ -103,11 +103,11 @@ class SessionStore {
 }
 ```
 
-**Try it:** open *Members area* signed out and open the secret page — you land on sign-in, which knows
-where you were heading. Sign in and continue. Now sign out from the secret page: it is replaced by the
-sign-in screen without any navigation call.
+**Try it:** open *Members area* signed out and tap *Members lounge* — you land on sign-in, which knows
+where you were heading. *Sign in* and you continue to the lounge. Now tap *Sign out* in the lounge: it
+is replaced by the sign-in screen without any navigation call.
 
-## Real life: 401 and a PIN
+## Advanced: 401 and a PIN
 
 A 401 arrives while the user is somewhere protected. The destination is still right; the session just
 needs re-proving. Redirecting would lose where the user was going, so the guard **defers**: it says what
@@ -204,9 +204,10 @@ What to notice — and all of it is the kit's doing rather than the guard's:
   stack showing a PIN prompt with nothing left to answer it would be a screen nobody can leave. The host
   drops transient routes from the stack it first composes.
 
-**Try it:** open *401 and a PIN*, tap *Simulate a 401*, then *Open the vault*: the PIN screen appears.
-Enter `1234` → the vault. Inside the vault, *Simulate a 401* again: the vault leaves, the prompt appears,
-`1234` brings it back. Enter a wrong PIN instead and the vault stays shut.
+**Try it:** open *401 and a PIN*, tap *Simulate a 401 — session expired*, then *Savings vault*: the PIN
+pad appears. Type `1234` → the vault. Inside the vault, simulate a 401 again: the vault is replaced by
+the PIN pad in one transition, and `1234` brings it back. Type a wrong PIN instead and the vault stays
+shut.
 
 ## Doing this in your app
 

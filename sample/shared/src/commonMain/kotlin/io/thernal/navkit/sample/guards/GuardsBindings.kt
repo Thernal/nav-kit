@@ -13,6 +13,7 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
 import io.thernal.navkit.sample.app.ExampleKind
 import io.thernal.navkit.sample.app.SampleExample
+import io.thernal.navkit.sample.ui.Topic
 
 private class GuardsGraph(
     private val session: SessionStore,
@@ -69,7 +70,7 @@ interface GuardsBindings {
         @IntoSet
         fun provideMembersExample(): SampleExample {
             return SampleExample(
-                group = "Guards",
+                topic = Topic.GUARDS,
                 kind = ExampleKind.SIMPLE,
                 title = "Members area",
                 summary = "A destination rule that also removes the page when the session ends.",
@@ -81,8 +82,8 @@ interface GuardsBindings {
         @IntoSet
         fun provideVaultExample(): SampleExample {
             return SampleExample(
-                group = "Guards",
-                kind = ExampleKind.REAL_LIFE,
+                topic = Topic.GUARDS,
+                kind = ExampleKind.ADVANCED,
                 title = "401 and a PIN",
                 summary = "A guard that defers: it asks for a PIN, then continues where you were going.",
                 route = VaultLobbyRoute,

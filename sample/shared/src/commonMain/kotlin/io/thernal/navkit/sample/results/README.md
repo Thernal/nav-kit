@@ -1,7 +1,7 @@
 # Results — a value travelling backwards
 
 Catalog group **Results**: [Pick a colour](#simple-pick-a-colour) (simple) and
-[Review request](#real-life-review-request) (real life).
+[Review request](#advanced-review-request) (advanced).
 
 A screen closes and leaves a value for a screen that is already on the stack and about to be
 uncovered: a picker, a confirmation, a multi-step flow that ends in a decision. The producer is
@@ -49,8 +49,8 @@ fun PickerScreen() {
     val navigator = LocalNavigator.current
     val results = LocalNavigationResults.current
     listOf("Teal", "Amber", "Indigo").forEach { colour ->
-        ExampleAction(
-            label = colour,
+        Swatch(
+            name = colour,
             onClick = {
                 results.post(key = SelectedColour, value = colour)
                 navigator.popBack()
@@ -70,8 +70,11 @@ fun PickerHomeScreen() {
 
     ResultEffect(SelectedColour) { picked -> colour = picked }
 
-    ExampleReadout(label = "Selected", value = colour ?: "nothing yet")
-    ExampleAction(label = "Open the picker", onClick = { navigator.push(PickerRoute) })
+    ListRow(
+        title = "Accent colour",
+        subtitle = colour ?: "Not chosen yet",
+        onClick = { navigator.push(PickerRoute) },
+    )
 }
 ```
 
@@ -84,10 +87,10 @@ What to notice:
   it. A plain `remember` forgot the last pick each time the picker was opened again.
 - **Consuming removes the value** — one delivery, never two.
 
-**Try it:** open *Pick a colour*, pick Teal, open the picker again and pick Amber. The readout keeps
-the last pick in between.
+**Try it:** open *Pick a colour*, tap *Accent colour*, pick Teal, open it again and pick Amber. The
+profile card takes the colour, and keeps the last pick in between.
 
-## Real life: Review request
+## Advanced: Review request
 
 A whole flow is launched, walks three screens, and hands one value back to the screen that launched
 it — by then several entries down the stack.
@@ -113,8 +116,8 @@ fun ReviewHomeScreen() {
 
     ResultEffect(key = ReviewOutcome, onResult = model::onDecision)
     // …
-    ExampleAction(
-        label = "Clear the decision",
+    SecondaryButton(
+        label = "Reset the decision",
         onClick = {
             results.clear(ReviewOutcome)
             model.clear()
@@ -138,8 +141,9 @@ What to notice:
   and the launcher lives in the outer host. A host-scoped mailbox would break exactly this case.
 - **`clear`** drops a value undelivered — for a flow that is abandoned rather than completed.
 
-**Try it:** open *Review request*, start the review, continue twice, approve. The launcher shows the
-decision, and the "pending when this screen came back" readout shows the name that was waiting.
+**Try it:** open *Review request*, tap *Review expense report*, continue twice, approve. The report
+shows *Approved* with the reviewer's note, and the "pending when this screen came back" readout shows
+the name that was waiting.
 
 ## Doing this in your app
 

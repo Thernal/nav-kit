@@ -2,7 +2,7 @@
 
 A runnable demonstration of everything in `navigation/`, on Android and iOS, from one shared
 composition. Each capability has a **simple** example — the smallest thing that works — and a
-**real-life** one — the shape the problem actually takes in an application. Every example package has
+**advanced** one — the shape the problem actually takes in an application. Every example package has
 a README of its own that walks through the code, says what to notice, and how to try it.
 
 It is also the reference integration: [Set nav-kit up in your own app](#set-nav-kit-up-in-your-own-app)
@@ -45,12 +45,12 @@ Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 |---|---|
 | [`app/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app) | the composition root, the graph, the root back-stack owner, the deep-link log — the integration |
 | [`catalog/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/catalog) | the index screen, built from the examples the graph collected |
-| [`ui/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/ui) | the scaffold, buttons and readouts every example screen uses |
+| [`ui/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/ui) | the theme, each capability's colour, and the screen frame every example uses — a realistic screen on top, a "How it works" panel with the live navigation state below it |
 | `basics/`, `results/`, `arguments/`, `backoverride/`, `guards/`, `tabs/`, `deeplinks/` | one capability each — see below |
 
 ## The examples
 
-| Group | Simple | Real life | Teaches |
+| Group | Simple | Advanced | Teaches |
 |---|---|---|---|
 | [Navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/README.md) | Push and pop | Order flow | the command surface: `push`, `popBack`, `navigate` with a predicate, `popBackTo`, `replaceAll`, and reading `NavigationOutcome`; how a feature registers its screens |
 | [Results](shared/src/commonMain/kotlin/io/thernal/navkit/sample/results/README.md) | Pick a colour | Review request | a typed value handed back to a screen already on the stack: `resultKey`, `post`, `ResultEffect`, `pending`, `clear` |

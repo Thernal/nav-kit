@@ -1,7 +1,7 @@
 # Arguments — a value travelling forwards
 
 Catalog group **Arguments**: [One value, two screens](#simple-one-value-two-screens) (simple) and
-[Checkout draft](#real-life-checkout-draft) (real life).
+[Checkout draft](#advanced-checkout-draft) (advanced).
 
 A screen that opens others sets a value; screens that do not exist yet read it — without it being
 threaded through every route in between — and it disappears once those screens are gone. The store
@@ -41,8 +41,8 @@ val GreetingName = argumentKey<String>("arguments.greeting_name")
 Put and push in the same action:
 
 ```kotlin
-ExampleAction(
-    label = "Open the reader",
+BottomAction(
+    label = "Send the card",
     onClick = {
         arguments.put(
             key = GreetingName,
@@ -60,7 +60,7 @@ Read it anywhere the scope is alive, without it being in the route:
 @Composable
 fun GreetingReaderScreen() {
     val name = LocalNavigationArguments.current.get(GreetingName)
-    ExampleReadout(label = "Name", value = name ?: "nothing — the flow was left")
+    HeroCard(title = if (name == null) "This card is empty" else "Hello, $name!", …)
 }
 ```
 
@@ -72,10 +72,10 @@ What to notice:
 - **Going back drops it.** After the pop no route matching the scope is on the stack, and the host
   prunes the store after every stack change.
 
-**Try it:** open *One value, two screens*, change the name, open the reader. Go back and open it
-again: the setup screen puts the value again before each push.
+**Try it:** open *One value, two screens*, change the name, *Send the card*. Go back and send it
+again: the composer puts the value again before each push.
 
-## Real life: Checkout draft
+## Advanced: Checkout draft
 
 One draft, read and updated on four consecutive screens, gone the moment the flow leaves the stack.
 
@@ -127,7 +127,7 @@ private fun CheckoutStep(
         },
         label = { Text(text = label) },
     )
-    ExampleAction(label = "Continue", onClick = { navigator.push(next) })
+    BottomAction(label = "Continue", onClick = { navigator.push(next) })
 }
 
 private fun NavigationArguments.update(change: (CheckoutDraft) -> CheckoutDraft) {
@@ -149,8 +149,9 @@ What to notice:
 - **Nothing cleans up by hand.** Leaving pops every step at once; the next prune finds none of them
   alive and drops the draft.
 
-**Try it:** open *Checkout draft*, start checkout, fill amount, address and method, and read them on
-the summary. *Leave the flow*: the start screen's readout says the draft is `null`.
+**Try it:** open *Checkout draft*, *Buy a gift card*, fill the amount and the recipient, pick a
+payment method, and read them on the summary. *Confirm*: the start screen's *Draft outside the flow*
+readout says the draft is `null`.
 
 ## Doing this in your app
 

@@ -47,7 +47,7 @@ delivery) — they are not about navigation.
 | `navigation/api` | Routes, the navigator command surface, the `NavigationHost` render contract, guard/deep-link/result/back contracts, the navigation event stream. Depends on no implementation. |
 | `navigation/impl` | The Navigation3 host, the back-stack navigator, overlay scenes, animations, deep-link parsing and dispatch, guards, results. |
 | `navigation/wiring` | The worked example of installing the above into an application graph, with [Metro](https://github.com/ZacSweers/metro). `api` and `impl` name no container, so an app on a different one replaces just this module. |
-| `sample/` | A runnable Android and iOS app with a simple and a real-life example of every capability — see [`sample/README.md`](sample/README.md). |
+| `sample/` | A runnable Android and iOS app with a simple and an advanced example of every capability — see [`sample/README.md`](sample/README.md). |
 | `skills/` | Agent skills for projects that use the kit — see [For AI agents](#for-ai-agents). |
 | `docs/` | Design notes and open work. |
 | `build-logic/convention` | Five convention plugins — `kmp.library`, `compose`, `injection`, `android.application` for the sample app, and a `quality` one with no plugin id that the first and the fourth apply. A module names capabilities, never versions. |

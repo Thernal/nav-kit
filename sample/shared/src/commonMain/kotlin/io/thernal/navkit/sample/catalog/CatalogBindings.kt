@@ -28,7 +28,7 @@ interface CatalogBindings {
         @IntoSet
         fun provideCatalogGraph(examples: Set<SampleExample>): NavigationGraphProvider {
             val ordered = examples
-                .sortedWith(compareBy({ it.group }, { it.kind.sortKey() }, { it.title }))
+                .sortedWith(compareBy({ it.topic.ordinal }, { it.kind.sortKey() }, { it.title }))
                 .toImmutableList()
             return CatalogGraph(ordered)
         }
