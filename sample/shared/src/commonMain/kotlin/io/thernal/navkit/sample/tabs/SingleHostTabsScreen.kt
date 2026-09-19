@@ -1,5 +1,6 @@
 package io.thernal.navkit.sample.tabs
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -92,7 +93,10 @@ private fun SettingsTabBody() {
     }
     val edits by model.edits.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
         ExampleReadout(label = "Unsaved edits", value = edits.toString())
         ExampleAction(
