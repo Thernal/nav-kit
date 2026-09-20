@@ -1,8 +1,15 @@
-# Arguments and results — open work
+# Passing data between screens — the record, and what is still open
 
-Where the design discussion about passing data between screens landed, what was ruled out and why,
-and what is left to build. Evidence is cited to the file it came from: this repository, or the
-sources of Navigation3 1.1.1 and lifecycle 2.11.0 as published to Maven.
+Where the design discussion about passing data between screens landed and what was ruled out. §1
+and §2 are closed; they are kept as the record of decisions the code no longer explains on its own.
+
+**The open work is all in [§3](#3-the-kit-before-nested-hosts-are-the-recommended-pattern), and none
+of it is about passing data** — it is what every mounted host shares with every other one, because a
+host has no scope of its own.
+
+Evidence is cited to the file it came from: this repository, or the published sources of
+Navigation3 1.1.1, AndroidX lifecycle 2.11.0 and the JetBrains lifecycle 2.10.0 line the
+Navigation3 ViewModel decorator ships in — the versions in `gradle/libs.versions.toml`.
 
 ## Vocabulary
 
@@ -18,8 +25,8 @@ mostly about.
 
 ## 1. Results: rename and type the store
 
-**Built.** `NavigationResults` (`navigation/api/.../presentation/result/`) replaces it; the six boxes
-below are ticked and only the move out of `navigation` is left. What follows is the record of why.
+**Built and closed.** `NavigationResults` (`navigation/api/.../presentation/result/`) replaces it and
+every box below is settled. What follows is the record of why.
 
 `NavigationResultStore` was misnamed twice over and unsafe in two ways:
 
@@ -53,7 +60,11 @@ below are ticked and only the move out of `navigation` is left. What follows is 
 - [x] Document that results are in memory only and are lost on process death.
       *A mismatched type now throws instead of reading `null`: with a declared key that can only
       mean two features chose the same name.*
-- [ ] Later: move it out of `navigation` altogether — nothing in it is navigation.
+- **Ruled out** — *move it out of `navigation` altogether.* The prefix is the module's namespace,
+      not a claim about the contents, which is the same argument the rename settled above; moving
+      the declaration would not change what its name says. Coupling was never the obstacle — one
+      KDoc reference in `NavigationArguments.kt`, `NavigationResultsImpl`, and the provider in
+      `NavigationWiring` — so the move is cheap and buys nothing.
 
 Results are for backward data only. Nothing forward-bound goes through this store.
 
@@ -128,8 +139,18 @@ Limits:
   repository, with only its id in the handle.
 - It needs a shared entry. Without nesting there is no common owner — see the fallbacks.
 
-- [ ] Add a worked flow (checkout, say) to `navigation/README.md` showing this pattern end to end.
-- [ ] Consumers treat a missing value as "restart the flow", never as a crash.
+- [x] Consumers treat a missing value as "restart the flow", never as a crash. Written down where
+      the choice is made — `navigation/README.md` → "Passing data between screens" and the
+      [arguments example](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/arguments/README.md)
+      — and followed by the sample: `CheckoutScreens.kt` reads `get(CheckoutDraftKey) ?: CheckoutDraft()`.
+- **Ruled out** — *a worked end-to-end flow for this pattern.* Nothing in it would be kit API. The
+      kit's share is the nested host and the entry-scoped ViewModel store Navigation3 clears on pop,
+      which the [tabs example](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md)
+      already runs and [`api/README.md`](../../navigation/api/README.md#nested-hosts-and-tabs)
+      already documents; the rest is an application writing its own ViewModel against
+      `SavedStateHandle`. The pattern is pointed at from the one place a reader chooses between the
+      three — the "Which mechanism?" table in the arguments example. What is genuinely unverified is
+      the process-death claim, and a sample could not verify it either: see §4.
 
 ### Fallbacks when nesting is not wanted
 
@@ -184,10 +205,16 @@ and per-entry ViewModel stores (`androidx/navigation3/ui/NavDisplay.kt`), on top
       (`impl/.../presentation/host/`), added for argument pruning, is the counter a host scope
       would build on.
 
-Guidance to write down alongside the pattern:
+Guidance alongside the pattern — the first two are written down in
+[`api/README.md`](../../navigation/api/README.md#nested-hosts-and-tabs) and the
+[tabs example](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md);
+the third is recorded only here:
 
 - Keep nesting to depth 1 for a flow.
-- Do not nest for tabs: transitions do not run across a host boundary, and that is where it shows.
+- A transition does not run across a host boundary. That is not an argument against nesting for
+  tabs — the sample's tab bar *is* a nested host, and its slide between tabs is that host's own
+  `transitionSpec`. It is an argument for keeping each tab one entry deep and pushing details onto
+  the host above the bar.
 - Navigation3's own documentation says nothing about nested `NavDisplay`s; it is an open request in
   [android/nav3-recipes#176](https://github.com/android/nav3-recipes/issues/176).
 
@@ -207,3 +234,10 @@ An app-scoped result or argument store survives rotation, so a configuration-cha
 look correct while it is empty after process death and never clears itself. Verify these
 mechanisms against process death, not rotation. iOS has no configuration change at all, so shared
 code cannot lean on that survival either.
+
+**The `SavedStateHandle` row is cited, not measured.** It is read from the lifecycle sources named
+in §2; nothing here exercises it. The sample cannot: its root stack lives in a plain `ViewModel`
+(`sample/.../app/RootViewModel.kt`), so a process death returns to the catalog whatever a nested
+flow managed to restore, and the only test source set is `navigation/impl/src/commonTest`, which
+runs no UI. Making the root stack saveable is the prerequisite for testing any of it, and that is
+the sample's gap rather than this document's.
