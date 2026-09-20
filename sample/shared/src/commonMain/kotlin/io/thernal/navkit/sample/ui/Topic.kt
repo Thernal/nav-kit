@@ -15,4 +15,5 @@ enum class Topic(
     BACK_HANDLING("Back handling", "⏪", Rose),
     DEEP_LINKS("Deep links", "🔗", Sky),
     NESTED_NAVIGATION("Nested navigation", "🗂️", Green),
+    BOTTOM_SHEETS("Bottom sheets", "🧾", Violet),
 }

@@ -19,6 +19,7 @@ internal val Amber = Color(0xFFE5A000)
 internal val Rose = Color(0xFFE5484D)
 internal val Sky = Color(0xFF0090FF)
 internal val Green = Color(0xFF30A46C)
+internal val Violet = Color(0xFF8E4EC6)
 
 private val IndigoDeep = Color(0xFF2F2F8F)
 private val IndigoSoft = Color(0xFFE6E6FB)

@@ -45,8 +45,8 @@ Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 |---|---|
 | [`app/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app) | the composition root, the graph, the root back-stack owner, the deep-link log — the integration |
 | [`catalog/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/catalog) | the index screen, built from the examples the graph collected |
-| [`ui/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/ui) | the theme, each capability's colour, and the screen frame every example uses — a realistic screen on top, a "How it works" panel with the live navigation state below it |
-| `basics/`, `results/`, `arguments/`, `backoverride/`, `guards/`, `tabs/`, `deeplinks/` | one capability each — see below |
+| [`ui/`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/ui) | the theme, each capability's colour, the screen frame every example uses — a realistic screen on top, a "How it works" panel with the live navigation state below it — and the surface every bottom sheet is drawn in |
+| `basics/`, `results/`, `arguments/`, `backoverride/`, `guards/`, `tabs/`, `deeplinks/`, `sheets/` | one capability each — see below |
 
 ## The examples
 
@@ -59,6 +59,7 @@ Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 | [Guards](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) | Members area | 401 and a PIN | `RouteGuard` with a redirect that keeps intent, `invalidations`, `GuardVerdict.Deferred`, `TransientRoute` |
 | [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | — | a host inside a host, one entry per tab; an application-wide guard inside a tab; where a tab’s ViewModel has to be scoped |
 | [Deep links](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) | One link, one route | Campaign links | registered link bases, handlers, stacks rather than destinations, the source, a link meeting a guard |
+| [Bottom sheets](shared/src/commonMain/kotlin/io/thernal/navkit/sample/sheets/README.md) | Share sheet | Payment method | `bottomSheetEntry`, a sheet as one more entry on the same stack, a run of sheets as one panel whose height animates between steps, the surface the app supplies once |
 
 ## Set nav-kit up in your own app
 
@@ -230,7 +231,7 @@ These are part of the API but have no example here; the API guide covers each.
 
 | Capability | Where to read |
 |---|---|
-| bottom sheets — `bottomSheetEntry`, the sheet scene, custom `SceneStrategy`s | [Bottom sheets, scenes and transitions](../navigation/api/README.md#bottom-sheets-scenes-and-transitions) |
+| custom `SceneStrategy`s — a surface the kit does not ship | [Scenes](../navigation/api/README.md#scenes) |
 | custom or disabled transitions — `NavAnimations`, `NavigationDefaults` | [Transitions](../navigation/api/README.md#transitions) |
 | guards for one host only — `NavigationHostParams.guards` | [Registering guards](../navigation/api/README.md#registering-guards) |
 | logging and analytics — `NavigationEventSink` | [Navigation events](../navigation/api/README.md#navigation-events) |

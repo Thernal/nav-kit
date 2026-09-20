@@ -15,6 +15,7 @@ import io.thernal.navkit.sample.ui.Explanation
 import io.thernal.navkit.sample.ui.HeroCard
 import io.thernal.navkit.sample.ui.LiveValue
 import io.thernal.navkit.sample.ui.SampleScreen
+import io.thernal.navkit.sample.ui.SampleSheetContainer
 import io.thernal.navkit.sample.ui.SampleTheme
 import io.thernal.navkit.sample.ui.Topic
 
@@ -62,6 +63,7 @@ fun SampleApp(graph: SampleGraph) {
                 params = NavigationHostParams(
                     backStack = backStack,
                     onBackStackChange = root::onBackStackChange,
+                    bottomSheetContainer = SampleSheetContainer,
                     fallback = ::unknownRouteEntry,
                 ),
             ) {
