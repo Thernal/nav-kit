@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.scene.SceneStrategy
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuard
+import io.thernal.navkit.navigation.api.presentation.host.BottomSheetContainer
 import io.thernal.navkit.navigation.api.presentation.transition.NavTransitionScope
 import io.thernal.navkit.navigation.api.presentation.transition.PredictiveNavTransitionScope
 import kotlinx.collections.immutable.ImmutableList
@@ -24,6 +25,8 @@ data class NavigationHostParams<R : Route>(
     val predictivePopTransitionSpec: PredictiveNavTransitionScope<R>? = null,
     val decorators: ImmutableList<NavEntryDecorator<R>> = persistentListOf(),
     val sceneStrategies: ImmutableList<SceneStrategy<R>> = persistentListOf(),
+    /** Where this host's bottom sheets are drawn — a `val`, since these params are memoized. */
+    val bottomSheetContainer: BottomSheetContainer? = null,
     /**
      * Guards that apply to this host's stack only, on top of the application-wide ones — a wizard's
      * internal rules, or a guard whose dependencies live in a scope the app graph cannot reach.

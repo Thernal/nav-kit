@@ -16,7 +16,7 @@ import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
 import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.transition.NavTransitionScope
 import io.thernal.navkit.navigation.api.presentation.transition.PredictiveNavTransitionScope
-import io.thernal.navkit.navigation.impl.presentation.scene.BottomSheetSceneStrategy
+import io.thernal.navkit.navigation.impl.presentation.scene.bottomsheet.BottomSheetSceneStrategy
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -74,10 +74,10 @@ internal fun <R : Route> rememberNavDisplayConfig(
 
     // Caller strategies come first so an app can claim a route before the built-in overlay sees it;
     // SinglePaneSceneStrategy is last because it claims everything.
-    val sceneStrategies = remember(params.sceneStrategies) {
+    val sceneStrategies = remember(key1 = params.sceneStrategies, key2 = params.bottomSheetContainer) {
         params.sceneStrategies
             .toPersistentList()
-            .adding(BottomSheetSceneStrategy())
+            .adding(BottomSheetSceneStrategy(container = params.bottomSheetContainer))
             .adding(SinglePaneSceneStrategy())
     }
 

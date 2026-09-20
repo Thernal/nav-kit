@@ -63,7 +63,7 @@ Start from what you are trying to do; the section named is where the mechanism i
 | accept links on a scheme or a domain | a `DeepLinkBase` contributed `@IntoSet` | [Link bases](#link-bases) | [deeplinks](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) |
 | build a link to share | `buildDeepLinkUri(base, page)` / `DeepLinkPage.buildUri(base)` | [Outbound links](#outbound-links) | — |
 | tabs, or a wizard with a back stack of its own | a nested `NavigationHost` | [Nested hosts and tabs](#nested-hosts-and-tabs) | [tabs](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) |
-| show a route as a bottom sheet | `bottomSheetEntry` | [Bottom sheets](#bottom-sheets-scenes-and-transitions) | — |
+| show a route as a bottom sheet | `bottomSheetEntry` | [Bottom sheets](#bottom-sheets-scenes-and-transitions) | [sheets](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/sheets/README.md) |
 | show something instead of crashing on a route a host does not register | `NavigationHostParams.fallback` | [Fallback entries](#fallback-entries) | [sample](../../sample/README.md) |
 | change or turn off the animations | `transitionSpec` and friends on `NavigationHostParams` | [Transitions](#transitions) | — |
 | log, measure or test what navigation did | `NavigationEventSink` | [Navigation events](#navigation-events) | [`SampleBindings.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) |
@@ -1185,8 +1185,56 @@ bottomSheetEntry<CouponSheet> { CouponSheetContent() }
 The built-in scene claims the run of consecutive sheet entries at the top of the stack, so a sheet
 that pushes another sheet stays one surface: back steps through the sheet's own entries before it
 closes. The scene is a bare container on purpose — no scrim, drag handle or outside-tap dismiss;
-those belong to your design system. Transitions are not run for overlay scenes by the default
-animations. `bottomSheetEntry` only adds the `BOTTOM_SHEET_METADATA_KEY` metadata.
+those belong to your design system. `bottomSheetEntry` only adds the `BOTTOM_SHEET_METADATA_KEY`
+metadata.
+
+### The surface
+
+Supply the surface once, on the host, instead of letting each step bring its own:
+
+```kotlin
+val AppSheet: BottomSheetContainer = { dismiss, step ->
+    Box(Modifier.fillMaxSize().background(scrim).clickable(onClick = dismiss)) {
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .animateEnterExit(
+                    enter = slideInVertically { height -> height },
+                    exit = slideOutVertically { height -> height },
+                ),
+        ) {
+            Column { DragHandle(); step() }
+        }
+    }
+}
+
+NavigationHostParams(…, bottomSheetContainer = AppSheet)
+```
+
+Hold it in a `val` — these params are memoized by equality, and written inline it is a new lambda
+every frame. Left unset, the host draws the steps bare and each one has to bring its own surface.
+
+The container runs inside the host's `AnimatedVisibility`, which fades the whole sheet — scrim
+included — and is the `AnimatedVisibilityScope` the panel's `animateEnterExit` comes from. So the
+sheet rises from the bottom edge while the backdrop only fades, and the library never has to guess
+which of your layers is the panel. `dismiss` closes every step of the run at once, which a surface
+written against no feature cannot work out for itself.
+
+One surface for every step is also what makes the step-to-step transition possible: the steps swap
+*inside* the panel, and `AnimatedContent`'s size transform makes its **height animate** from one
+step's content to the next instead of snapping.
+
+`NavDisplay`'s own transitions never run for an overlay, so this is where a sheet's own animation
+lives. Closing waits for it before the entry leaves composition — what `OverlayScene.onRemove` is
+for — and input is ignored while it plays, because the routes that would receive it have already
+left the stack.
+
+The overlay is rendered as a sibling of the pane rather than inside it, so the surface you draw has
+to fill the window and place the panel itself — see
+[`SheetSurface`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/ui/SheetSurface.kt)
+for one that does, and the [sheets example](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/sheets/README.md)
+for the rest of it. A pane under an overlay stays composed, capped at `STARTED`: a result posted
+from a sheet reaches the screen behind it while the sheet is still open.
 
 ### Scenes
 

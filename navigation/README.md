@@ -81,6 +81,27 @@ outside-tap dismiss belong to the consuming app's design system, not to a naviga
 the content and the strategy — which claims the whole run of consecutive sheet entries, so a sheet
 that pushes another sheet stays one surface — keeps working unchanged.
 
+Opening and closing is the exception, because an app cannot do it from the outside: an overlay's
+exit has to finish *before* Navigation3 takes it out of composition, and the only place that can be
+awaited is `OverlayScene.onRemove`. So the scene wraps the sheet in an `AnimatedVisibility` that
+fades it, and hands the surface that scope: the part which should also *move* asks for it itself,
+with `animateEnterExit(slideInVertically { it }, slideOutVertically { it })` on the panel. The
+library moves nothing on its own, because a scrim that slid up with the panel would be wrong and
+only the app knows which of the layers it drew is the panel.
+
+That surface is supplied **once**, through `NavigationHostParams.bottomSheetContainer`, rather than
+by each step. Which is what makes one step giving way to the next an animation at all: the steps
+swap *inside* a panel that stays put, so `AnimatedContent`'s own size transform is the sheet's
+height following them instead of snapping. It is also why the container is handed a `dismiss` — a
+surface written against no feature cannot ask whether a route is a step of a sheet, so the scene,
+which knows the run, closes it.
+
+One surface means one scene. Navigation3 builds a scene again whenever its entries change and keys
+the overlay's composition on the instance, so a strategy handing back a new scene per step would
+tear the sheet down and build it again on every push — the open animation with it. This one returns
+the same scene and moves its entries instead, which is the single thing about it that is not
+immutable, and the reason anything inside a sheet can animate from one step to the next.
+
 ## Guards
 
 A `NavigationGuard` decides which back **stacks** may exist, not which routes may be pushed:
