@@ -1,9 +1,10 @@
 # nav-kit
 
 A Compose Multiplatform navigation layer built on **Navigation3** — routes, a stateless navigator
-command surface, a render contract for mounting a back stack, guards, deep links, back handling and
-cross-screen results, split across `api` / `impl` / `wiring` so nothing depends on a concrete
-implementation or on a dependency-injection framework.
+command surface, a render contract for mounting a back stack, guards, deep links, back handling,
+bottom sheets, and both directions of passing data between screens (results backwards, arguments
+forwards), split across `api` / `impl` / `wiring` so nothing depends on a concrete implementation or
+on a dependency-injection framework.
 
 Ported from the `core/navigation` module of an Android-only app; what changed on the way across is
 recorded in [`navigation/README.md`](navigation/README.md) → "What changed in the port".
@@ -15,7 +16,7 @@ recorded in [`navigation/README.md`](navigation/README.md) → "What changed in 
 | use the kit — every public contract, task by task, with the rules that matter | [`navigation/api/README.md`](navigation/api/README.md) |
 | see each capability running, and set the kit up in my own app | [`sample/README.md`](sample/README.md), then the README in each example package |
 | understand why a contract has the shape it has | [`navigation/README.md`](navigation/README.md) |
-| know what is still open in the design | [`docs/todos/arguments.md`](docs/todos/arguments.md) |
+| know what was decided about passing data between screens, and what is still open in the design | [`docs/todos/arguments.md`](docs/todos/arguments.md) |
 | give an AI agent the same knowledge | [`skills/`](skills/README.md) — see below |
 
 ## For AI agents
@@ -45,9 +46,9 @@ delivery) — they are not about navigation.
 | Path | What |
 |---|---|
 | `navigation/api` | Routes, the navigator command surface, the `NavigationHost` render contract, guard/deep-link/result/back contracts, the navigation event stream. Depends on no implementation. |
-| `navigation/impl` | The Navigation3 host, the back-stack navigator, overlay scenes, animations, deep-link parsing and dispatch, guards, results. |
+| `navigation/impl` | The Navigation3 host, the back-stack navigator, the bottom-sheet scene and its animation, transitions, deep-link parsing and dispatch, guards, results, arguments. |
 | `navigation/wiring` | The worked example of installing the above into an application graph, with [Metro](https://github.com/ZacSweers/metro). `api` and `impl` name no container, so an app on a different one replaces just this module. |
-| `sample/` | A runnable Android and iOS app with a simple and an advanced example of every capability — see [`sample/README.md`](sample/README.md). |
+| `sample/` | A runnable Android and iOS app with simple and advanced examples of every capability — see [`sample/README.md`](sample/README.md). |
 | `skills/` | Agent skills for projects that use the kit — see [For AI agents](#for-ai-agents). |
 | `docs/` | Design notes and open work. |
 | `build-logic/convention` | Five convention plugins — `kmp.library`, `compose`, `injection`, `android.application` for the sample app, and a `quality` one with no plugin id that the first and the fourth apply. A module names capabilities, never versions. |
@@ -104,6 +105,10 @@ fun AppRoot(graph: AppGraph) {
     }
 }
 ```
+
+A sheet's scrim and panel are not in the kit: the app supplies them once, as
+`NavigationHostParams.bottomSheetContainer`, and every step of a sheet is drawn in that one surface
+— see [Bottom sheets](navigation/api/README.md#bottom-sheets).
 
 `NavigationHost` resolves its renderer from `LocalNavigationHostRenderer`, which the app installs
 once at its composition root — with the Metro wiring in place, as part of the graph's collected

@@ -320,7 +320,8 @@ class MainActivity : ComponentActivity() {
 
 Declare the activity `android:launchMode="singleTop"` so a link arriving while the app is open
 reaches `onNewIntent` instead of a second activity, and add a `VIEW` intent filter with
-`BROWSABLE` and your scheme.
+`BROWSABLE` and your scheme. Set `android:enableOnBackInvokedCallback="true"` on `<application>`:
+that is what lets the predictive-back gesture reach the host — see [Transitions](#transitions).
 
 **iOS** — [`MainViewController.kt`](../../sample/shared/src/iosMain/kotlin/io/thernal/navkit/sample/app/MainViewController.kt),
 [`iOSApp.swift`](../../sample/iosApp/iosApp/iOSApp.swift), [`Info.plist`](../../sample/iosApp/iosApp/Info.plist):
@@ -1277,6 +1278,13 @@ val none: NavTransitionScope<Route> = { ContentTransform(EnterTransition.None, E
 
 `NavigationDefaults` holds the numbers: `DURATION` 260 ms, `FADE_DURATION` 180 ms,
 `PUSH_OFFSET_DIVIDER` 3, `POP_OFFSET_DIVIDER` 6, `EASING` `FastOutSlowInEasing`.
+
+**`predictivePop` needs the platform's permission.** On Android the gesture only reaches the host
+when the app sets `android:enableOnBackInvokedCallback="true"` on `<application>`
+([`AndroidManifest.xml`](../../sample/app/src/main/AndroidManifest.xml) in the sample). Without it
+back still works and still pops — it simply arrives as a completed event, so the outgoing screen
+jumps rather than following the finger and `predictivePopTransitionSpec` never runs. iOS needs no
+opt-in.
 
 ## Navigation events
 

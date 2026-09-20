@@ -1,8 +1,8 @@
 # sample
 
 A runnable demonstration of everything in `navigation/`, on Android and iOS, from one shared
-composition. Each capability has a **simple** example — the smallest thing that works — and a
-**advanced** one — the shape the problem actually takes in an application. Every example package has
+composition. Each capability has a **simple** example — the smallest thing that works — and
+an **advanced** one — the shape the problem actually takes in an application. Every example package has
 a README of its own that walks through the code, says what to notice, and how to try it.
 
 It is also the reference integration: [Set nav-kit up in your own app](#set-nav-kit-up-in-your-own-app)
@@ -57,7 +57,7 @@ Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 | [Arguments](shared/src/commonMain/kotlin/io/thernal/navkit/sample/arguments/README.md) | One value, two screens | Checkout draft | a value shared forwards across a flow, its lifetime derived from the stack: `argumentKey`, `put`, `whileInStack` |
 | [Back handling](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) | Confirm before leaving | Unsaved work | `NavigationBackHandler` for "confirm on back", a transition guard for "refuse every way out" |
 | [Guards](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) | Members area | 401 and a PIN | `RouteGuard` with a redirect that keeps intent, `invalidations`, `GuardVerdict.Deferred`, `TransientRoute` |
-| [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | — | a host inside a host, one entry per tab; an application-wide guard inside a tab; where a tab’s ViewModel has to be scoped |
+| [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | — | a host inside a host, one entry per tab; an application-wide guard inside a tab; where a tab’s ViewModel has to be scoped; a host's own `transitionSpec` |
 | [Deep links](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) | One link, one route | Campaign links | registered link bases, handlers, stacks rather than destinations, the source, a link meeting a guard |
 | [Bottom sheets](shared/src/commonMain/kotlin/io/thernal/navkit/sample/sheets/README.md) | Share sheet | Payment method | `bottomSheetEntry`, a sheet as one more entry on the same stack, a run of sheets as one panel whose height animates between steps, the surface the app supplies once |
 
@@ -201,7 +201,10 @@ and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
 - a `VIEW` intent filter with `DEFAULT`, `BROWSABLE` and `<data android:scheme="navkit" />`;
 - `onCreate` publishes `intent` only when `savedInstanceState == null` — a recreated activity still
   carries its launch intent, and publishing it again would apply the link twice;
-- `onNewIntent` calls `setIntent(intent)` and publishes it.
+- `onNewIntent` calls `setIntent(intent)` and publishes it;
+- the `<application>` sets `android:enableOnBackInvokedCallback="true"`, which is what lets the
+  predictive-back gesture reach the host — without it back still works, but the outgoing screen jumps
+  instead of following the finger, and `predictivePopTransitionSpec` never runs.
 
 **iOS** — [`iOSApp.swift`](iosApp/iosApp/iOSApp.swift), [`ContentView.swift`](iosApp/iosApp/ContentView.swift),
 [`Info.plist`](iosApp/iosApp/Info.plist) and
@@ -222,7 +225,8 @@ and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
       has exactly one entry in that host.
 - [ ] Guards, deep-link handlers and event sinks are contributed `@IntoSet`.
 - [ ] Every scheme and domain in the manifest and `Info.plist` is registered as a `DeepLinkBase`.
-- [ ] Android: `singleTop`, intent filter, publish in `onCreate` (first creation only) and `onNewIntent`.
+- [ ] Android: `singleTop`, intent filter, publish in `onCreate` (first creation only) and `onNewIntent`,
+      `enableOnBackInvokedCallback` for predictive back.
 - [ ] iOS: URL type, `onOpenURL` → ingress, `CADisableMinimumFrameDurationOnPhone`.
 
 ## What the sample does not show
@@ -232,9 +236,8 @@ These are part of the API but have no example here; the API guide covers each.
 | Capability | Where to read |
 |---|---|
 | custom `SceneStrategy`s — a surface the kit does not ship | [Scenes](../navigation/api/README.md#scenes) |
-| custom or disabled transitions — `NavAnimations`, `NavigationDefaults` | [Transitions](../navigation/api/README.md#transitions) |
+| disabling a transition, and tuning the defaults — `NavigationDefaults` (the tabs example does supply a custom `transitionSpec`) | [Transitions](../navigation/api/README.md#transitions) |
 | guards for one host only — `NavigationHostParams.guards` | [Registering guards](../navigation/api/README.md#registering-guards) |
-| logging and analytics — `NavigationEventSink` | [Navigation events](../navigation/api/README.md#navigation-events) |
 | enum-typed pages — `TypedDeepLinkHandler`, `DeepLinkPage`, `pageOf`, outbound `buildUri` | [Handlers](../navigation/api/README.md#handlers), [Outbound links](../navigation/api/README.md#outbound-links) |
 | navigation decided in a ViewModel and replayed in the composable | [Calling from a ViewModel](../navigation/api/README.md#calling-from-a-viewmodel) |
 | `buildStack`, `whileRouteInStack`, `popBack(count)` | [Commands](../navigation/api/README.md#commands), [Arguments](../navigation/api/README.md#arguments) |
