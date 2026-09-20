@@ -215,8 +215,11 @@ class MainActivity : ComponentActivity() {
 
 `publish(intent)` is `io.thernal.navkit.navigation.api.presentation.deeplink.publish`.
 
+`android:enableOnBackInvokedCallback="true"` on `<application>` is what lets the predictive-back gesture
+reach the host; without it back still works, but `predictivePopTransitionSpec` never runs.
+
 ```xml
-<!-- <application android:name=".MyApplication"> -->
+<!-- <application android:name=".MyApplication" android:enableOnBackInvokedCallback="true"> -->
 <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
     <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -279,3 +282,5 @@ file name decides the Swift name (`MainViewController.kt` → `MainViewControlle
   `xcrun simctl openurl booted myapp://page/1`; cold start and warm (app already open) both work, and
   rotating afterwards does not re-apply it.
 - Rotate on Android and confirm guarded state (a session, results, arguments) is still there.
+- Swipe back from the screen edge on Android 13+: the outgoing screen should follow the finger. If it
+  jumps instead, `android:enableOnBackInvokedCallback` is missing.

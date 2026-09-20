@@ -179,7 +179,19 @@ Tabs, two shapes:
 | Re-select active tab | — | reset to its root |
 
 With a stack per tab over one host, a hidden tab's entries count as popped: their `rememberSaveable` and
-entry ViewModels are cleared. Keep state that must survive a switch in the tab-owning ViewModel.
+entry ViewModels are cleared. Scope a tab's state to the entry that **mounts** the tabs, which every host
+publishes as `LocalHostViewModelStoreOwner` (resolved to the nearest host, like `LocalNavigator`):
+
+```kotlin
+// inside the tab's entry
+val model: SettingsTabViewModel = viewModel(
+    viewModelStoreOwner = checkNotNull(LocalHostViewModelStoreOwner.current),
+    key = "settings",
+) { SettingsTabViewModel() }
+```
+
+Entry scoping is right for a pushed detail, which should die with its pop — so push details onto the host
+**above** the bar and keep each tab one entry deep.
 
 ## 6. Bottom sheets, scenes, decorators, transitions
 
@@ -187,9 +199,37 @@ entry ViewModels are cleared. Keep state that must survive a switch in the tab-o
 bottomSheetEntry<CouponSheet> { CouponSheetContent() }
 ```
 
-Consecutive sheet entries on top form one sheet surface; back walks its steps, then closes it. The scene is
-bare — add scrim, handle and dismiss from the design system, or supply a `SceneStrategy` via
-`NavigationHostParams.sceneStrategies` (consulted before the built-in sheet and single-pane strategies).
+Consecutive sheet entries on top form one sheet surface; back walks its steps, then closes it.
+
+The kit draws no scrim, panel or drag handle. Supply that surface **once, on the host** — never per step:
+
+```kotlin
+// A val: NavigationHostParams is memoized by equality, so written inline this is a new lambda every frame.
+val AppSheet: BottomSheetContainer = { dismiss, step ->
+    Box(Modifier.fillMaxSize().background(scrim).clickable(onClick = dismiss)) {
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .animateEnterExit(
+                    enter = slideInVertically { height -> height },
+                    exit = slideOutVertically { height -> height },
+                ),
+        ) { Column { DragHandle(); step() } }
+    }
+}
+
+NavigationHostParams(…, bottomSheetContainer = AppSheet)
+```
+
+The container runs inside the host's own `AnimatedVisibility` — that is where its `animateEnterExit` scope
+comes from — so the panel rises while the scrim only fades. `dismiss` closes every step of the run at once.
+One surface for every step is what makes a step-to-step transition possible at all: the steps swap *inside*
+the panel, so its height animates rather than snapping. Left unset, the host draws the steps bare and each
+one has to bring its own surface. The overlay is a sibling of the pane, so the surface must fill the window
+and place the panel itself.
+
+For a different surface entirely, supply a `SceneStrategy` via `NavigationHostParams.sceneStrategies`
+(consulted before the built-in sheet and single-pane strategies).
 
 `NavigationHostParams.decorators` are appended after the host's saveable-state and ViewModel-store
 decorators.
@@ -206,4 +246,10 @@ val none: NavTransitionScope<Route> = { ContentTransform(EnterTransition.None, E
 ```
 
 `NavAnimations.push/pop/predictivePop(duration, easing)` are the defaults; `NavigationDefaults` holds the
-numbers (260 ms, fade 180 ms, `FastOutSlowInEasing`). Overlay scenes (sheets) are not animated by the defaults.
+numbers (260 ms, fade 180 ms, `FastOutSlowInEasing`). `NavDisplay`'s transitions never run for an overlay:
+a sheet's animation is the host's fade plus whatever its `bottomSheetContainer` asks for. Closing waits for
+that animation before the entry leaves composition, and input is ignored while it plays.
+
+On Android, the predictive-back gesture only reaches the host when the app opts in with
+`android:enableOnBackInvokedCallback="true"` on `<application>`; without it `predictivePopTransitionSpec`
+never runs.
