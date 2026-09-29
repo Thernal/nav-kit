@@ -1,0 +1,61 @@
+# What an application takes from nav-kit, and how. Read by `skillctl.sh kit …`
+# (the skill-manager skill in github.com/Thernal/knowledge), which parses it with
+# sed and awk — so keep to this shape: `key: value` scalars, `key:` followed by
+# `  - item` lines, `#` comments. No nesting, no quoting, no inline lists.
+#
+# An application does not depend on nav-kit as a library: it copies the `code`
+# parts into its own tree, renamed to its own package and module path, and
+# skill-manager records where the copy came from so every later change here can
+# be offered to it — merged three ways, so edits made in the application survive.
+
+name: nav-kit
+
+# Rename points. An application chooses its own value for each at install; the
+# same substitution is applied to every file taken from here, code and skill
+# alike, and replayed on every update so the merge sees like against like.
+#   package  the Kotlin package prefix, and the source directories it implies
+#   module   the Gradle path prefix of the code parts, and the directory it implies
+#   alias    the version-catalog plugin alias prefix the build files use
+#            (libs.plugins.<alias>.compose)
+package: io.thernal.navkit
+module: :navigation
+alias: navkit
+
+# Copied into the application and merged on update.
+code:
+  - navigation/api
+  - navigation/impl
+  - navigation/wiring
+
+# The public contract — its source, not its README, so a documentation fix does
+# not count. When it moves and `skill` has not moved since, the skill is reported
+# as behind the code it describes.
+surface:
+  - navigation/api/src
+
+# Installed into the application's skills directory, renamed like the code.
+skill:
+  - skills/nav-kit
+
+# Never copied. A change here is announced on update and read in place.
+docs:
+  - README.md
+  - navigation/README.md
+  - navigation/api/README.md
+  - docs
+
+# What the copied modules expect the application to provide. Shown at install and
+# whenever these lines change; never written into the application's build.
+requires:
+  - plugin <alias>.compose — Kotlin Multiplatform library + Compose Multiplatform (build-logic/convention: KmpLibraryConventionPlugin, ComposeConventionPlugin)
+  - plugin <alias>.injection — Metro, for navigation/wiring only (build-logic/convention: InjectionConventionPlugin)
+  - targets android, iosArm64, iosSimulatorArm64 — navigation3-ui has no iosX64 variant
+  - catalog navigation3-runtime, navigation3-ui (navigation3 = 1.1.1)
+  - catalog lifecycle-viewmodel-navigation3 (lifecycle = 2.10.0)
+  - catalog lifecycle-viewmodel, lifecycle-viewmodel-compose (androidx-lifecycle = 2.11.0)
+  - catalog navigationevent-compose (navigationevent = 1.1.0)
+  - catalog kotlinx-coroutines-core (kotlinx-coroutines = 1.11.0)
+  - catalog kotlinx-collections-immutable (kotlinx-collections-immutable = 0.5.0)
+  - catalog ktor-http (ktor = 3.5.0)
+  - catalog metro-runtime, plugin metro (metro = 1.4.2) — navigation/wiring only
+  - settings enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS"), and each code part included as a module
