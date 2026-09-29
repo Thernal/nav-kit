@@ -48,6 +48,10 @@ directory unchanged.
 A skill describes the revision of the kit it was copied from. When the project moves to a newer nav-kit,
 copy the skill again from the same revision.
 
+**With skill-manager** (the author's own projects), the skill is not copied on its own: `skillctl.sh kit
+install nav-kit` takes the code and this skill together, renamed to the project's package, and records the
+revision in `kits.lock` so both are offered every later change — see [`kit.yml`](../kit.yml).
+
 ## Maintaining
 
 The skills restate the public contracts documented in [`navigation/api/README.md`](../navigation/api/README.md)
