@@ -8,6 +8,7 @@ answer, so nothing has to be re-derived or re-asked in a later session.
 | Row | Value |
 |---|---|
 | Commit subject | Conventional Commits — `<type>(<scope>): <subject>`, imperative, lowercase, no trailing period. Scope optional. |
+| Breaking change | `!` after the type/scope, and a `Migration:` paragraph in the body — what to change in code that *uses* the kit, and a grep that finds it. Applications see subjects before they update (`kit.yml`, skill-manager `kit status`); a merge moves the kit's files, never their call sites. |
 | Subject enforcement | None. There is no `commit-msg` hook; the convention is a convention. |
 | Placeholder branch | `draft/<slug>` — local only, never pushed. |
 | Placeholder subject | `chore(draft): <description>` |
