@@ -48,12 +48,20 @@ internal class QualityConventionPlugin : Plugin<Project> {
             // Detekt registers two families of task for a multiplatform module: one per source set
             // (`detektCommonMainSourceSet`), and one per compilation (`detektMainAndroid`). Only the
             // compilation tasks run with type resolution, which `UnsafeCollectionIndexAccess` needs to
-            // tell a List apart from anything else — so `check` runs those, and they already cover
-            // every source, since each common source set is compiled into some compilation.
+            // tell a List apart from anything else — but there are compilation tasks for Android only.
+            // So `check` runs the Android compilations, which cover common and Android code, plus the
+            // source-set tasks for what no Android compilation sees: the iOS source sets.
             val typeResolvedAnalysis = tasks.withType(Detekt::class.java).matching { task ->
-                task.name != "detekt" && !task.name.endsWith("SourceSet")
+                isCountedAnalysis(task.name)
             }
             tasks.named("check") { dependsOn(typeResolvedAnalysis) }
         }
     }
+}
+
+internal fun isCountedAnalysis(name: String): Boolean {
+    if (name == "detekt") return false
+    if (!name.endsWith("SourceSet")) return true
+    val sourceSet = name.removePrefix("detekt").removeSuffix("SourceSet")
+    return !sourceSet.startsWith("Common") && !sourceSet.startsWith("Android")
 }

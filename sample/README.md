@@ -216,7 +216,7 @@ and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
 [`Info.plist`](iosApp/iosApp/Info.plist) and
 [`MainViewController.kt`](shared/src/iosMain/kotlin/io/thernal/navkit/sample/app/MainViewController.kt):
 
-- `ContentView` wraps `MainViewController()` — a `ComposeUIViewController` over the same `SampleApp`;
+- `ContentView` wraps `mainViewController()` — a `ComposeUIViewController` over the same `SampleApp`;
 - `.onOpenURL` calls the Kotlin `handleDeepLink(url:)`, which publishes to the ingress;
 - `Info.plist` declares the `navkit` scheme under `CFBundleURLTypes`, and sets
   `CADisableMinimumFrameDurationOnPhone` to `true` — Compose Multiplatform checks that key on its first
