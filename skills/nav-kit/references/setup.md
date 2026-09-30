@@ -28,6 +28,8 @@ convention plugins behind `libs.plugins.<alias>.compose` and `.injection`, the c
 `TYPESAFE_PROJECT_ACCESSORS`. Nothing in the application's build is written for you; add those, then
 include each copied directory as a module.
 
+Without skill-manager, the kit's `README.md` → Installing → *Without it* does the same by hand (copy, rename, provide).
+
 | Module | Add to | As |
 |---|---|---|
 | `:navigation:api` | every feature module; the app | `implementation` |
