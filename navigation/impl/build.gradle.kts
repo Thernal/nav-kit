@@ -6,7 +6,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(projects.navigation.api)
+                implementation(projects.navigation.api)
                 implementation(libs.navigation3.runtime)
                 implementation(libs.navigation3.ui)
                 implementation(libs.lifecycle.viewmodel.navigation3)

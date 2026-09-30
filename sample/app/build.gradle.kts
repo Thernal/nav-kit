@@ -4,7 +4,9 @@ plugins {
 
 dependencies {
     implementation(projects.sample.shared)
-    // `setContent` is the only thing this module needs that the shared module does not already
-    // expose: everything on screen is Compose Multiplatform, hosted in one activity.
+    // The activity hands incoming links to `DeepLinkIngress`, a kit contract; nothing is re-exported,
+    // so it names the contracts module itself.
+    implementation(projects.navigation.api)
+    // `setContent`: everything on screen is Compose Multiplatform, hosted in one activity.
     implementation(libs.androidx.activity.compose)
 }

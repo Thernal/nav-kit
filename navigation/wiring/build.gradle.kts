@@ -7,9 +7,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                // api: the contracts an app injects are this module's whole point.
-                api(projects.navigation.api)
-                // implementation: which concrete class satisfies a contract is nobody else's business.
+                // The contracts are not re-exported: an app that injects them depends on `api` itself.
+                implementation(projects.navigation.api)
                 implementation(projects.navigation.impl)
             }
         }
