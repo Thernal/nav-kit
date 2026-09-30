@@ -23,14 +23,14 @@ class ComposeConventionPlugin : Plugin<Project> {
 
         extensions.configure<KotlinMultiplatformExtension> {
             sourceSets.named("commonMain") {
-                // api, not implementation: every module here is a published library whose
-                // Compose types (@Composable signatures, CompositionLocals, Modifier) are part of
-                // its own surface, so a consumer cannot compile against it without them.
+                // implementation, not api: nothing is re-exported (D24). A module whose surface has
+                // Compose types still compiles; its consumer applies Compose itself, as every
+                // module using those types does.
                 dependencies {
-                    api(catalog.library("compose-runtime"))
-                    api(catalog.library("compose-foundation"))
-                    api(catalog.library("compose-ui"))
-                    api(catalog.library("compose-animation"))
+                    implementation(catalog.library("compose-runtime"))
+                    implementation(catalog.library("compose-foundation"))
+                    implementation(catalog.library("compose-ui"))
+                    implementation(catalog.library("compose-animation"))
                 }
             }
         }
