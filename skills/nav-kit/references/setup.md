@@ -30,9 +30,17 @@ include each copied directory as a module.
 
 | Module | Add to | As |
 |---|---|---|
-| `:navigation:api` | every feature module; the app | `api` in the app's shared module, `implementation` elsewhere |
+| `:navigation:api` | every feature module; the app | `implementation` |
 | `:navigation:impl` | the module that builds the graph; modules using `NavigationBackHandler` or `NavAnimations` | `implementation` |
 | `:navigation:wiring` | the module declaring the Metro graph — skip when wiring by hand | `implementation` |
+
+Nothing is re-exported (`api(...)` is not used), so every module that uses a type from these
+libraries declares it itself: `navigation3-runtime` (routes, entries — every feature module with
+routes), `navigation3-ui` (scenes, transitions), `kotlinx-coroutines-core`,
+`kotlinx-collections-immutable`, `lifecycle-viewmodel`. The Android app module that calls
+`DeepLinkIngress` also depends on `:navigation:api`. `Cannot access class
+'androidx.navigation3.runtime.NavKey'` means one of them is missing — see
+`navigation/api/README.md` → Dependencies you declare.
 
 The root back stack lives in a ViewModel, so the app module also needs
 `androidx.lifecycle:lifecycle-viewmodel-compose` (for `viewModel { }`) and

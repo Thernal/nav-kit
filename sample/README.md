@@ -68,17 +68,23 @@ wiring without a DI framework, is in [Installing](../navigation/api/README.md#in
 
 ### 1. Depend on the three modules
 
-[`shared/build.gradle.kts`](shared/build.gradle.kts): the contracts (`api`), the implementation that
-backs them (`implementation`), and the Metro bindings that install both (`implementation`). The module
-that declares the graph also applies the Metro plugin. A feature module needs only
-`:navigation:api`.
+[`shared/build.gradle.kts`](shared/build.gradle.kts): the contracts, the implementation that backs
+them, and the Metro bindings that install both — all `implementation`, since no kit module
+re-exports anything. The libraries whose types appear in the kit's signatures are declared beside
+them ([Dependencies you declare](../navigation/api/README.md#dependencies-you-declare)). The module
+that declares the graph also applies the Metro plugin. A feature module needs `:navigation:api` and
+the libraries it uses from that list.
 
 ```kotlin
 commonMain.dependencies {
-    api(projects.navigation.api)
+    implementation(projects.navigation.api)
     implementation(projects.navigation.impl)
     implementation(projects.navigation.wiring)
+    implementation(libs.navigation3.runtime)
+    implementation(libs.navigation3.ui)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.viewmodel.compose)
 }
 ```

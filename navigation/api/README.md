@@ -104,7 +104,7 @@ Five facts carry the rest of this document:
 
 | Module | Who depends on it | What it holds |
 |---|---|---|
-| `:navigation:api` | every feature module, and the app | the contracts in this document; re-exports Navigation3, coroutines and immutable collections |
+| `:navigation:api` | every feature module, and the app | the contracts in this document; re-exports nothing — see [Dependencies you declare](#dependencies-you-declare) |
 | `:navigation:impl` | the module that builds the graph; any module using `NavigationBackHandler` or `NavAnimations` | the Navigation3 host, the navigator, guards runner, stores, deep-link parsing |
 | `:navigation:wiring` | the module that declares the [Metro](https://github.com/ZacSweers/metro) graph | `NavigationWiring`, the bindings below |
 
@@ -115,15 +115,38 @@ The modules are not published to a Maven repository; build against them from sou
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            api(projects.navigation.api)
+            implementation(projects.navigation.api)
             implementation(projects.navigation.impl)
             implementation(projects.navigation.wiring)   // leave out when wiring by hand
+            implementation(libs.navigation3.runtime)
+            implementation(libs.navigation3.ui)
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.collections.immutable)
+            implementation(libs.lifecycle.viewmodel)
             implementation(libs.lifecycle.viewmodel.compose) // the root stack lives in a ViewModel
         }
     }
 }
 ```
+
+The Android application module that hands links to `DeepLinkIngress` depends on `:navigation:api`
+itself too ([`sample/app/build.gradle.kts`](../../sample/app/build.gradle.kts)).
+
+### Dependencies you declare
+
+`api(...)` is not used in this repository: no kit module re-exports anything, so a module that uses a
+type from one of these libraries in its own code declares the library itself, as `implementation`.
+
+| Library (catalog entry) | Declare it where the module uses |
+|---|---|
+| `navigation3-runtime` | `Route` (a `NavKey`), `EntryProviderScope`, `NavEntry` — every feature module with routes or entries |
+| `navigation3-ui` | scenes in `NavigationHostParams` and `NavTransitionScope` |
+| `kotlinx-coroutines-core` | `StateFlow` / `Flow` from the navigator, deep-link and result contracts |
+| `kotlinx-collections-immutable` | `ImmutableList` back stacks |
+| `lifecycle-viewmodel` | `LocalHostViewModelStoreOwner` (a `ViewModelStoreOwner`) |
+
+A module that names none of these types needs none of them. A missing one shows up at compile time as
+`Cannot access class 'androidx.navigation3.runtime.NavKey'` or `Unresolved reference 'navigation3'`.
 
 ### With Metro
 

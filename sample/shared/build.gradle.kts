@@ -20,10 +20,16 @@ kotlin {
                 // The sample is a consumer, so it names the three modules an application names:
                 // the contracts, the implementation that backs them, and the bindings that install
                 // both into a graph.
-                api(projects.navigation.api)
+                implementation(projects.navigation.api)
                 implementation(projects.navigation.impl)
                 implementation(projects.navigation.wiring)
+                // The kit re-exports nothing, so the types in its signatures are declared here, as
+                // an application declares them (navigation/api/README.md → Dependencies you declare).
+                implementation(libs.navigation3.runtime)
+                implementation(libs.navigation3.ui)
+                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.collections.immutable)
+                implementation(libs.lifecycle.viewmodel)
                 // The kit draws nothing and names no design system; the sample needs one to be
                 // worth running, and Material 3 is it.
                 implementation(libs.compose.material3)
