@@ -9,6 +9,7 @@ answer, so nothing has to be re-derived or re-asked in a later session.
 |---|---|
 | Commit subject | Conventional Commits — `<type>(<scope>): <subject>`, imperative, lowercase, no trailing period. Scope optional. |
 | Breaking change | `!` after the type/scope, and a `Migration:` paragraph in the body — what to change in code that *uses* the kit, and a grep that finds it. Applications see subjects before they update (`kit.yml`, skill-manager `kit status`); a merge moves the kit's files, never their call sites. |
+| Verification before delivery | `./gradlew build` — every target compiled, every test on the JVM host **and** the iOS simulator, Detekt — must pass before anything is committed to `main` or pushed. A failing test blocks delivery; it is never skipped, disabled or `@Ignore`d to get through. Applications take this repository by copy and merge every change it publishes, so a version that failed here reaches them all. |
 | Subject enforcement | None. There is no `commit-msg` hook; the convention is a convention. |
 | Placeholder branch | `draft/<slug>` — local only, never pushed. |
 | Placeholder subject | `chore(draft): <description>` |
