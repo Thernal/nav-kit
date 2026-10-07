@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.guards
+package io.thernal.navkit.sample.shared.guards
 
 import io.thernal.navkit.navigation.api.presentation.guard.BlockReason
 import io.thernal.navkit.navigation.api.presentation.guard.RouteGuard

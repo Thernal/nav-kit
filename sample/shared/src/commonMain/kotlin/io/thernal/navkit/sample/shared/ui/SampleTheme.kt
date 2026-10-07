@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.ui
+package io.thernal.navkit.sample.shared.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,15 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-internal val Indigo = Color(0xFF5B5BD6)
-internal val Pink = Color(0xFFD6409F)
-internal val Teal = Color(0xFF12A594)
-internal val Amber = Color(0xFFE5A000)
-internal val Rose = Color(0xFFE5484D)
-internal val Sky = Color(0xFF0090FF)
-internal val Green = Color(0xFF30A46C)
-internal val Violet = Color(0xFF8E4EC6)
 
 private val IndigoDeep = Color(0xFF2F2F8F)
 private val IndigoSoft = Color(0xFFE6E6FB)
@@ -45,19 +36,19 @@ private val DarkOnSurfaceVariant = Color(0xFFA6A6BA)
 private val DarkOutline = Color(0xFF3A3A4A)
 
 private val LightColors = lightColorScheme(
-    primary = Indigo,
+    primary = SamplePalette.Indigo,
     onPrimary = Color.White,
     primaryContainer = IndigoSoft,
     onPrimaryContainer = IndigoDeep,
-    secondary = Teal,
+    secondary = SamplePalette.Teal,
     onSecondary = Color.White,
     secondaryContainer = TealSoft,
     onSecondaryContainer = TealDeep,
-    tertiary = Amber,
+    tertiary = SamplePalette.Amber,
     onTertiary = Color.White,
     tertiaryContainer = AmberSoft,
     onTertiaryContainer = AmberDeep,
-    error = Rose,
+    error = SamplePalette.Rose,
     errorContainer = RoseSoft,
     onErrorContainer = RoseDeep,
     background = LightBackground,
@@ -77,15 +68,15 @@ private val DarkColors = darkColorScheme(
     onPrimary = IndigoDeep,
     primaryContainer = IndigoDeep,
     onPrimaryContainer = IndigoSoft,
-    secondary = Teal,
+    secondary = SamplePalette.Teal,
     onSecondary = Color.White,
     secondaryContainer = TealDeep,
     onSecondaryContainer = TealSoft,
-    tertiary = Amber,
+    tertiary = SamplePalette.Amber,
     onTertiary = AmberDeep,
     tertiaryContainer = AmberDeep,
     onTertiaryContainer = AmberSoft,
-    error = Rose,
+    error = SamplePalette.Rose,
     errorContainer = RoseDeep,
     onErrorContainer = RoseSoft,
     background = DarkBackground,

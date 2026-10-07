@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.app
+package io.thernal.navkit.sample.shared.app
 
 import androidx.compose.runtime.ProvidedValue
 import dev.zacsweers.metro.AppScope

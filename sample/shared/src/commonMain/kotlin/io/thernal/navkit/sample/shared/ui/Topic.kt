@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.ui
+package io.thernal.navkit.sample.shared.ui
 
 import androidx.compose.ui.graphics.Color
 
@@ -8,12 +8,12 @@ enum class Topic(
     val emoji: String,
     val accent: Color,
 ) {
-    NAVIGATION("Navigation", "🧭", Indigo),
-    ARGUMENTS("Arguments", "📦", Teal),
-    RESULTS("Results", "↩️", Pink),
-    GUARDS("Guards", "🛡️", Amber),
-    BACK_HANDLING("Back handling", "⏪", Rose),
-    DEEP_LINKS("Deep links", "🔗", Sky),
-    NESTED_NAVIGATION("Nested navigation", "🗂️", Green),
-    BOTTOM_SHEETS("Bottom sheets", "🧾", Violet),
+    NAVIGATION("Navigation", "🧭", SamplePalette.Indigo),
+    ARGUMENTS("Arguments", "📦", SamplePalette.Teal),
+    RESULTS("Results", "↩️", SamplePalette.Pink),
+    GUARDS("Guards", "🛡️", SamplePalette.Amber),
+    BACK_HANDLING("Back handling", "⏪", SamplePalette.Rose),
+    DEEP_LINKS("Deep links", "🔗", SamplePalette.Sky),
+    NESTED_NAVIGATION("Nested navigation", "🗂️", SamplePalette.Green),
+    BOTTOM_SHEETS("Bottom sheets", "🧾", SamplePalette.Violet),
 }

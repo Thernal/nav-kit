@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.app
+package io.thernal.navkit.sample.shared.app
 
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -13,11 +13,11 @@ import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphPr
 
 /**
  * The two multibindings the sample itself declares. The kit declares its own — guards, deep-link
- * handlers, deep-link bases, event sinks — in `NavigationWiring`; these are the application's.
+ * handlers, deep-link bases, event sinks — in `NavigationProvidersModule`; these are the application's.
  */
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface SampleBindings {
+interface SampleProvidersModule {
     /** Each example contributes its screens here, so the composition root imports none of them. */
     @Multibinds(allowEmpty = true)
     val graphProviders: Set<NavigationGraphProvider>

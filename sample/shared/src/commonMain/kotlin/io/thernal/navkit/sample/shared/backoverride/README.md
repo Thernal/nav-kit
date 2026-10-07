@@ -12,12 +12,12 @@ and [Unsaved work](#advanced-unsaved-work) (advanced).
 
 | File | What is in it |
 |---|---|
-| [`BackRoutes.kt`](BackRoutes.kt) | the routes and `UnsavedWork`, the application's own `BlockReason` |
+| [`BackRoute.kt`](BackRoute.kt), [`UnsavedWork.kt`](UnsavedWork.kt) | the routes and `UnsavedWork`, the application's own `BlockReason` |
 | [`DraftEditorScreen.kt`](DraftEditorScreen.kt) | a screen that intercepts back and asks |
 | [`ArticleDraftStore.kt`](ArticleDraftStore.kt) | editor state held outside composition, where a guard can read it |
 | [`UnsavedWorkGuard.kt`](UnsavedWorkGuard.kt) | a guard about leaving a screen |
-| [`ArticleScreens.kt`](ArticleScreens.kt) | the editor, and commands that try to leave it |
-| [`BackBindings.kt`](BackBindings.kt) | contributes the guard into the kit's guard set |
+| [`ArticleHomeScreen.kt`](ArticleHomeScreen.kt), [`ArticleEditorScreen.kt`](ArticleEditorScreen.kt) | the editor, and commands that try to leave it |
+| [`BackProvidersModule.kt`](BackProvidersModule.kt), [`BackGraphProvider.kt`](BackGraphProvider.kt) | contributes the guard into the kit's guard set |
 
 ## Simple: Confirm before leaving
 

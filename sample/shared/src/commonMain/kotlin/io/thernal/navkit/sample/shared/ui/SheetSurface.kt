@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.ui
+package io.thernal.navkit.sample.shared.ui
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -12,7 +12,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -22,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,17 +30,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import io.thernal.navkit.navigation.api.presentation.host.BottomSheetContainer
 import io.thernal.navkit.navigation.api.presentation.transition.NavigationDefaults
 
 private val SheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 
 private val ScrimColour = Color(0x66000000)
-
-/** The application's sheet surface, installed once on the root host. */
-val SampleSheetContainer: BottomSheetContainer = { dismiss, step ->
-    SheetSurface(dismiss = dismiss, content = step)
-}
 
 /**
  * Everything a sheet looks like — the kit draws none of it, and this is the surface for every step
@@ -94,32 +86,6 @@ fun AnimatedVisibilityScope.SheetSurface(
                 content()
             }
         }
-    }
-}
-
-/** One step inside the surface: its heading travels with its body when the next step arrives. */
-@Composable
-fun SheetStep(
-    title: String,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(text = title, style = MaterialTheme.typography.titleLarge)
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        content()
     }
 }
 

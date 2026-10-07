@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.guards
+package io.thernal.navkit.sample.shared.guards
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

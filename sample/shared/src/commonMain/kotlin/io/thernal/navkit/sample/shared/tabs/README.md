@@ -9,10 +9,10 @@ them with the application's own guard.
 
 | File | What is in it |
 |---|---|
-| [`TabsRoutes.kt`](TabsRoutes.kt) | the outer route, the three tab routes, the guarded `SettingsTab` |
+| [`TabsRoute.kt`](TabsRoute.kt), [`SingleHostTab.kt`](SingleHostTab.kt) | the outer route, the three tab routes, the guarded `SettingsTab` |
 | [`SingleHostTabsViewModel.kt`](SingleHostTabsViewModel.kt) / [`SingleHostTabsScreen.kt`](SingleHostTabsScreen.kt) | tabs as one stack |
 | [`SettingsTabViewModel.kt`](SettingsTabViewModel.kt) | a tab's own state, scoped so a tab switch does not clear it |
-| [`TabsBindings.kt`](TabsBindings.kt) | registers the outer screen in the root host |
+| [`TabsProvidersModule.kt`](TabsProvidersModule.kt), [`TabsGraphProvider.kt`](TabsGraphProvider.kt) | registers the outer screen in the root host |
 
 ## One host, tabs as its stack
 

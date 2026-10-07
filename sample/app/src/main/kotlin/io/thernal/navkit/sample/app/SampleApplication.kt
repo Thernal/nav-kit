@@ -1,8 +1,8 @@
-package io.thernal.navkit.sample.android
+package io.thernal.navkit.sample.app
 
 import android.app.Application
-import io.thernal.navkit.sample.app.SampleGraph
-import io.thernal.navkit.sample.app.createSampleGraph
+import io.thernal.navkit.sample.shared.app.SampleGraph
+import io.thernal.navkit.sample.shared.app.createSampleGraph
 
 /**
  * Owns the application graph for the life of the process.

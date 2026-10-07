@@ -10,10 +10,10 @@ back stack**, not a count of who is using it.
 
 | File | What is in it |
 |---|---|
-| [`ArgumentsRoutes.kt`](ArgumentsRoutes.kt) | the routes, the sealed `CheckoutStepRoute` the draft is scoped to, `CheckoutDraft`, the two keys |
-| [`GreetingScreens.kt`](GreetingScreens.kt) | put, push, read |
-| [`CheckoutScreens.kt`](CheckoutScreens.kt) | one draft read and updated on four screens, dropped when the flow leaves |
-| [`ArgumentsBindings.kt`](ArgumentsBindings.kt) | screens and catalog entries |
+| [`ArgumentsRoute.kt`](ArgumentsRoute.kt), [`CheckoutDraft.kt`](CheckoutDraft.kt), [`GreetingName.kt`](GreetingName.kt), [`CheckoutDraftKey.kt`](CheckoutDraftKey.kt) | the routes, the sealed `CheckoutStepRoute` the draft is scoped to, `CheckoutDraft`, the two keys |
+| [`GreetingSetupScreen.kt`](GreetingSetupScreen.kt), [`GreetingReaderScreen.kt`](GreetingReaderScreen.kt) | put, push, read |
+| [`CheckoutStartScreen.kt`](CheckoutStartScreen.kt), [`CheckoutAmountScreen.kt`](CheckoutAmountScreen.kt), [`CheckoutAddressScreen.kt`](CheckoutAddressScreen.kt), [`CheckoutPaymentScreen.kt`](CheckoutPaymentScreen.kt), [`CheckoutSummaryScreen.kt`](CheckoutSummaryScreen.kt), [`CheckoutStep.kt`](CheckoutStep.kt) | one draft read and updated on four screens, dropped when the flow leaves |
+| [`ArgumentsProvidersModule.kt`](ArgumentsProvidersModule.kt), [`ArgumentsGraphProvider.kt`](ArgumentsGraphProvider.kt) | screens and catalog entries |
 
 ## Which mechanism?
 

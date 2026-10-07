@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.tabs
+package io.thernal.navkit.sample.shared.tabs
 
 import androidx.lifecycle.ViewModel
 import io.thernal.navkit.navigation.api.presentation.model.Route

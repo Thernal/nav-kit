@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.catalog
+package io.thernal.navkit.sample.shared.catalog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,13 +24,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.ui.IconBadge
-import io.thernal.navkit.sample.ui.Indigo
-import io.thernal.navkit.sample.ui.StatusChip
-import io.thernal.navkit.sample.ui.Teal
-import io.thernal.navkit.sample.ui.Topic
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.ui.IconBadge
+import io.thernal.navkit.sample.shared.ui.SamplePalette
+import io.thernal.navkit.sample.shared.ui.StatusChip
+import io.thernal.navkit.sample.shared.ui.Topic
 import kotlinx.collections.immutable.ImmutableList
 
 /**
@@ -79,7 +78,7 @@ private fun CatalogHeader(
             .fillMaxWidth()
             .padding(bottom = 8.dp)
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(Brush.linearGradient(colors = listOf(Indigo, Teal)))
+            .background(Brush.linearGradient(colors = listOf(SamplePalette.Indigo, SamplePalette.Teal)))
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -159,13 +158,5 @@ private fun CatalogRow(
                 color = accent,
             )
         }
-    }
-}
-
-/** Kind ordering puts the simple example of a group before its advanced sibling. */
-internal fun ExampleKind.sortKey(): Int {
-    return when (this) {
-        ExampleKind.SIMPLE -> 0
-        ExampleKind.ADVANCED -> 1
     }
 }

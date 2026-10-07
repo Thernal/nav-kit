@@ -1,10 +1,8 @@
-package io.thernal.navkit.sample.basics
+package io.thernal.navkit.sample.shared.basics
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
-private const val NOTHING_YET = "—"
 
 /**
  * The last command the order flow ran and what came of it, kept outside every step.
@@ -29,3 +27,5 @@ class OrderFlowLog {
         mutableLast.value = NOTHING_YET
     }
 }
+
+private const val NOTHING_YET = "—"

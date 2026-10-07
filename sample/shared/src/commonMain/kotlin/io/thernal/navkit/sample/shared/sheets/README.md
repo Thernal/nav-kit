@@ -9,11 +9,11 @@ metadata key. Everything the other examples teach keeps working inside one.
 
 | File | What is in it |
 |---|---|
-| [`SheetsRoutes.kt`](SheetsRoutes.kt) | the routes, the `SheetStepRoute` marker, and the two result keys |
+| [`SheetsRoute.kt`](SheetsRoute.kt), [`SharedWith.kt`](SharedWith.kt), [`ChosenPaymentMethod.kt`](ChosenPaymentMethod.kt) | the routes, the `SheetStepRoute` marker, and the two result keys |
 | [`CloseSheet.kt`](CloseSheet.kt) | closing a whole run from inside a step |
-| [`ShareSheetScreens.kt`](ShareSheetScreens.kt) | a screen opens one sheet and takes a value back from it |
-| [`PaymentSheetScreens.kt`](PaymentSheetScreens.kt) | a sheet pushes a sheet, twice, and closes all of it at once |
-| [`SheetsBindings.kt`](SheetsBindings.kt) | screens and catalog entries — `navEntry` beside `bottomSheetEntry` |
+| [`PostScreen.kt`](PostScreen.kt), [`ShareSheet.kt`](ShareSheet.kt) | a screen opens one sheet and takes a value back from it |
+| [`BasketScreen.kt`](BasketScreen.kt), [`PaymentMethodSheet.kt`](PaymentMethodSheet.kt), [`AddCardSheet.kt`](AddCardSheet.kt), [`ConfirmCardSheet.kt`](ConfirmCardSheet.kt) | a sheet pushes a sheet, twice, and closes all of it at once |
+| [`SheetsProvidersModule.kt`](SheetsProvidersModule.kt), [`SheetsGraphProvider.kt`](SheetsGraphProvider.kt) | screens and catalog entries — `navEntry` beside `bottomSheetEntry` |
 
 ## The one line that makes a sheet
 

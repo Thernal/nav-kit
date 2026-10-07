@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.backoverride
+package io.thernal.navkit.sample.shared.backoverride
 
 import io.thernal.navkit.navigation.api.presentation.guard.BlockReason
 import io.thernal.navkit.navigation.api.presentation.guard.GuardVerdict

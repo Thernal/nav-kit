@@ -9,11 +9,11 @@ commands.
 
 | File | What is in it |
 |---|---|
-| [`BasicsRoutes.kt`](BasicsRoutes.kt) | the sealed `BasicsRoute` family — five routes, one of them carrying an id |
-| [`BasicsSimpleScreens.kt`](BasicsSimpleScreens.kt) | push and pop |
-| [`WizardScreens.kt`](WizardScreens.kt) | `navigate` with a predicate, `popBackTo`, `replaceAll`, and reading `NavigationOutcome` |
+| [`BasicsRoute.kt`](BasicsRoute.kt) | the sealed `BasicsRoute` family — five routes, one of them carrying an id |
+| [`BasicsHomeScreen.kt`](BasicsHomeScreen.kt), [`BasicsDetailScreen.kt`](BasicsDetailScreen.kt), [`ShopItem.kt`](ShopItem.kt) | push and pop |
+| [`WizardScreen.kt`](WizardScreen.kt), [`WizardStepScreen.kt`](WizardStepScreen.kt), [`WizardDoneScreen.kt`](WizardDoneScreen.kt) | `navigate` with a predicate, `popBackTo`, `replaceAll`, and reading `NavigationOutcome` |
 | [`OrderFlowLog.kt`](OrderFlowLog.kt) | where an outcome is kept once the screen that asked is gone |
-| [`BasicsBindings.kt`](BasicsBindings.kt) | how a feature contributes its screens and its catalog entries — the pattern every example follows |
+| [`BasicsProvidersModule.kt`](BasicsProvidersModule.kt), [`BasicsGraphProvider.kt`](BasicsGraphProvider.kt) | how a feature contributes its screens and its catalog entries — the pattern every example follows |
 
 ## Simple: Push and pop
 
@@ -115,11 +115,11 @@ catalog → done, and back goes to the catalog.
 
 ## How a feature registers itself
 
-[`BasicsBindings.kt`](BasicsBindings.kt) is the template every example in the sample follows. The
+[`BasicsProvidersModule.kt`](BasicsProvidersModule.kt), [`BasicsGraphProvider.kt`](BasicsGraphProvider.kt) is the template every example in the sample follows. The
 composition root imports none of it.
 
 ```kotlin
-private class BasicsGraph(private val log: OrderFlowLog) : NavigationGraphProvider {
+private class BasicsGraphProvider(private val log: OrderFlowLog) : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
         navEntry<BasicsHomeRoute> { BasicsHomeScreen() }
         navEntry<BasicsDetailRoute> { route -> BasicsDetailScreen(route) }
@@ -131,7 +131,7 @@ private class BasicsGraph(private val log: OrderFlowLog) : NavigationGraphProvid
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface BasicsBindings {
+interface BasicsProvidersModule {
     companion object {
         @Provides
         @SingleIn(AppScope::class)
@@ -139,7 +139,7 @@ interface BasicsBindings {
 
         @Provides
         @IntoSet
-        fun provideBasicsGraph(log: OrderFlowLog): NavigationGraphProvider { return BasicsGraph(log) }
+        fun provideBasicsGraphProvider(log: OrderFlowLog): NavigationGraphProvider { return BasicsGraphProvider(log) }
 
         // The catalog card. The index screen imports no example either.
         @Provides

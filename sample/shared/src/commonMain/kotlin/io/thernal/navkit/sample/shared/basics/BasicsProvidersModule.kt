@@ -1,36 +1,19 @@
-package io.thernal.navkit.sample.basics
+package io.thernal.navkit.sample.shared.basics
 
-import androidx.navigation3.runtime.EntryProviderScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
-import io.thernal.navkit.navigation.api.presentation.host.navEntry
-import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.ui.Topic
-
-/**
- * What a feature module contributes to the application: its screens, and its place in the index.
- * The composition root imports neither.
- */
-private class BasicsGraph(private val log: OrderFlowLog) : NavigationGraphProvider {
-    override fun EntryProviderScope<Route>.provide() {
-        navEntry<BasicsHomeRoute> { BasicsHomeScreen() }
-        navEntry<BasicsDetailRoute> { route -> BasicsDetailScreen(route) }
-        navEntry<WizardRoute> { WizardScreen(log) }
-        navEntry<WizardStepRoute> { route -> WizardStepScreen(route = route, log = log) }
-        navEntry<WizardDoneRoute> { WizardDoneScreen(log) }
-    }
-}
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.ui.Topic
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface BasicsBindings {
+interface BasicsProvidersModule {
     companion object {
         @Provides
         @SingleIn(AppScope::class)
@@ -40,8 +23,8 @@ interface BasicsBindings {
 
         @Provides
         @IntoSet
-        fun provideBasicsGraph(log: OrderFlowLog): NavigationGraphProvider {
-            return BasicsGraph(log)
+        fun provideBasicsGraphProvider(log: OrderFlowLog): NavigationGraphProvider {
+            return BasicsGraphProvider(log)
         }
 
         @Provides

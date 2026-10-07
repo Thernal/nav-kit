@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.guards
+package io.thernal.navkit.sample.shared.guards
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-
-private const val CORRECT_PIN = "1234"
 
 /**
  * Stands in for the part of an application a 401 actually lands in: something outside the UI notices
@@ -47,3 +45,5 @@ class PinSession {
         return didUnlock
     }
 }
+
+private const val CORRECT_PIN = "1234"

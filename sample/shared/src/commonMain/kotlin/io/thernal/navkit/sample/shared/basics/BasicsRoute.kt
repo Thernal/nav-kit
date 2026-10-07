@@ -1,6 +1,6 @@
-package io.thernal.navkit.sample.basics
+package io.thernal.navkit.sample.shared.basics
 
-import io.thernal.navkit.sample.app.SampleRoute
+import io.thernal.navkit.sample.shared.app.SampleRoute
 
 /**
  * The routes of both navigation examples.

@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.backoverride
+package io.thernal.navkit.sample.shared.backoverride
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

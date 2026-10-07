@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.results
+package io.thernal.navkit.sample.shared.results
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

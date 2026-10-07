@@ -1,40 +1,23 @@
-package io.thernal.navkit.sample.sheets
+package io.thernal.navkit.sample.shared.sheets
 
-import androidx.navigation3.runtime.EntryProviderScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
-import io.thernal.navkit.navigation.api.presentation.host.bottomSheetEntry
-import io.thernal.navkit.navigation.api.presentation.host.navEntry
-import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.ui.Topic
-
-/** The whole difference between a sheet and a full screen: which builder registers the route. */
-private class SheetsGraph : NavigationGraphProvider {
-    override fun EntryProviderScope<Route>.provide() {
-        navEntry<PostRoute> { PostScreen() }
-        bottomSheetEntry<ShareSheetRoute> { ShareSheet() }
-
-        navEntry<BasketRoute> { BasketScreen() }
-        bottomSheetEntry<PaymentMethodSheetRoute> { PaymentMethodSheet() }
-        bottomSheetEntry<AddCardSheetRoute> { AddCardSheet() }
-        bottomSheetEntry<ConfirmCardSheetRoute> { route -> ConfirmCardSheet(route) }
-    }
-}
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.ui.Topic
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface SheetsBindings {
+interface SheetsProvidersModule {
     companion object {
         @Provides
         @IntoSet
-        fun provideSheetsGraph(): NavigationGraphProvider {
-            return SheetsGraph()
+        fun provideSheetsGraphProvider(): NavigationGraphProvider {
+            return SheetsGraphProvider()
         }
 
         @Provides

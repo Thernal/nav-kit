@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.tabs
+package io.thernal.navkit.sample.shared.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,20 +36,20 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.model.SlideDirection
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.impl.presentation.host.NavAnimations
-import io.thernal.navkit.sample.guards.SessionStore
-import io.thernal.navkit.sample.guards.SignInRoute
-import io.thernal.navkit.sample.guards.SignInScreen
-import io.thernal.navkit.sample.ui.BackArrowButton
-import io.thernal.navkit.sample.ui.ContentCard
-import io.thernal.navkit.sample.ui.Explanation
-import io.thernal.navkit.sample.ui.HeroCard
-import io.thernal.navkit.sample.ui.HowItWorks
-import io.thernal.navkit.sample.ui.ListRow
-import io.thernal.navkit.sample.ui.LiveValue
-import io.thernal.navkit.sample.ui.SecondaryButton
-import io.thernal.navkit.sample.ui.SectionLabel
-import io.thernal.navkit.sample.ui.Topic
-import io.thernal.navkit.sample.ui.TopicChip
+import io.thernal.navkit.sample.shared.guards.SessionStore
+import io.thernal.navkit.sample.shared.guards.SignInRoute
+import io.thernal.navkit.sample.shared.guards.SignInScreen
+import io.thernal.navkit.sample.shared.ui.BackArrowButton
+import io.thernal.navkit.sample.shared.ui.ContentCard
+import io.thernal.navkit.sample.shared.ui.Explanation
+import io.thernal.navkit.sample.shared.ui.HeroCard
+import io.thernal.navkit.sample.shared.ui.HowItWorks
+import io.thernal.navkit.sample.shared.ui.ListRow
+import io.thernal.navkit.sample.shared.ui.LiveValue
+import io.thernal.navkit.sample.shared.ui.SecondaryButton
+import io.thernal.navkit.sample.shared.ui.SectionLabel
+import io.thernal.navkit.sample.shared.ui.Topic
+import io.thernal.navkit.sample.shared.ui.TopicChip
 
 private val topic = Topic.NESTED_NAVIGATION
 

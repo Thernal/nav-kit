@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.ui
+package io.thernal.navkit.sample.shared.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable

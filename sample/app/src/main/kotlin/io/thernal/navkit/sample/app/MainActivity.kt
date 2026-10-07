@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.android
+package io.thernal.navkit.sample.app
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,8 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import io.thernal.navkit.navigation.api.presentation.deeplink.publish
-import io.thernal.navkit.sample.app.SampleApp
-import io.thernal.navkit.sample.app.SampleGraph
+import io.thernal.navkit.sample.shared.app.SampleApp
+import io.thernal.navkit.sample.shared.app.SampleGraph
 
 /**
  * One activity, one composition. The sample has no Android-specific navigation of its own on

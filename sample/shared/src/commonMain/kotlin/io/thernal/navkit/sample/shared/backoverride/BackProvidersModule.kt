@@ -1,6 +1,5 @@
-package io.thernal.navkit.sample.backoverride
+package io.thernal.navkit.sample.shared.backoverride
 
-import androidx.navigation3.runtime.EntryProviderScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -8,24 +7,14 @@ import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuard
-import io.thernal.navkit.navigation.api.presentation.host.navEntry
-import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.ui.Topic
-
-private class BackGraph(private val drafts: ArticleDraftStore) : NavigationGraphProvider {
-    override fun EntryProviderScope<Route>.provide() {
-        navEntry<DraftEditorRoute> { DraftEditorScreen() }
-        navEntry<ArticleHomeRoute> { ArticleHomeScreen(drafts) }
-        navEntry<ArticleEditorRoute> { ArticleEditorScreen(drafts) }
-    }
-}
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.ui.Topic
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface BackBindings {
+interface BackProvidersModule {
     companion object {
         @Provides
         @SingleIn(AppScope::class)
@@ -46,8 +35,8 @@ interface BackBindings {
 
         @Provides
         @IntoSet
-        fun provideBackGraph(drafts: ArticleDraftStore): NavigationGraphProvider {
-            return BackGraph(drafts)
+        fun provideBackGraphProvider(drafts: ArticleDraftStore): NavigationGraphProvider {
+            return BackGraphProvider(drafts)
         }
 
         @Provides

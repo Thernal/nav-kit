@@ -1,13 +1,7 @@
-package io.thernal.navkit.sample.app
+package io.thernal.navkit.sample.shared.app
 
 import io.thernal.navkit.navigation.api.presentation.model.Route
-import io.thernal.navkit.sample.ui.Topic
-
-/** Whether an example is the smallest thing that works, or the shape a real screen would have. */
-enum class ExampleKind(val label: String) {
-    SIMPLE("simple"),
-    ADVANCED("advanced"),
-}
+import io.thernal.navkit.sample.shared.ui.Topic
 
 /**
  * One entry on the catalog screen.

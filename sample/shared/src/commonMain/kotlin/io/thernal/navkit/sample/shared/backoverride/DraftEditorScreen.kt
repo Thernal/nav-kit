@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.backoverride
+package io.thernal.navkit.sample.shared.backoverride
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
@@ -14,11 +14,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.impl.presentation.back.NavigationBackHandler
-import io.thernal.navkit.sample.ui.Explanation
-import io.thernal.navkit.sample.ui.Rose
-import io.thernal.navkit.sample.ui.SampleScreen
-import io.thernal.navkit.sample.ui.StatusChip
-import io.thernal.navkit.sample.ui.Topic
+import io.thernal.navkit.sample.shared.ui.Explanation
+import io.thernal.navkit.sample.shared.ui.SamplePalette
+import io.thernal.navkit.sample.shared.ui.SampleScreen
+import io.thernal.navkit.sample.shared.ui.StatusChip
+import io.thernal.navkit.sample.shared.ui.Topic
 
 /**
  * Intercepting back from inside a screen, for as long as it is composed.
@@ -62,7 +62,7 @@ fun DraftEditorScreen() {
             color = if (text.isBlank()) {
                 MaterialTheme.colorScheme.onSurfaceVariant
             } else {
-                Rose
+                SamplePalette.Rose
             },
         )
         OutlinedTextField(
@@ -88,7 +88,7 @@ fun DraftEditorScreen() {
                     navigator.popBackTo(inclusive = true) { route -> route is DraftEditorRoute }
                 },
             ) {
-                Text(text = "Discard", color = Rose)
+                Text(text = "Discard", color = SamplePalette.Rose)
             }
         },
         dismissButton = {

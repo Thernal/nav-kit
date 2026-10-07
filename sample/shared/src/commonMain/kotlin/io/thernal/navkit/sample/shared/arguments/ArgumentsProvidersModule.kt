@@ -1,38 +1,23 @@
-package io.thernal.navkit.sample.arguments
+package io.thernal.navkit.sample.shared.arguments
 
-import androidx.navigation3.runtime.EntryProviderScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
-import io.thernal.navkit.navigation.api.presentation.host.navEntry
-import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.ui.Topic
-
-private class ArgumentsGraph : NavigationGraphProvider {
-    override fun EntryProviderScope<Route>.provide() {
-        navEntry<GreetingSetupRoute> { GreetingSetupScreen() }
-        navEntry<GreetingReaderRoute> { GreetingReaderScreen() }
-        navEntry<CheckoutStartRoute> { CheckoutStartScreen() }
-        navEntry<CheckoutAmountRoute> { CheckoutAmountScreen() }
-        navEntry<CheckoutAddressRoute> { CheckoutAddressScreen() }
-        navEntry<CheckoutPaymentRoute> { CheckoutPaymentScreen() }
-        navEntry<CheckoutSummaryRoute> { CheckoutSummaryScreen() }
-    }
-}
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.ui.Topic
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface ArgumentsBindings {
+interface ArgumentsProvidersModule {
     companion object {
         @Provides
         @IntoSet
-        fun provideArgumentsGraph(): NavigationGraphProvider {
-            return ArgumentsGraph()
+        fun provideArgumentsGraphProvider(): NavigationGraphProvider {
+            return ArgumentsGraphProvider()
         }
 
         @Provides

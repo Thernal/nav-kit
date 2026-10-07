@@ -1,6 +1,5 @@
-package io.thernal.navkit.sample.deeplinks
+package io.thernal.navkit.sample.shared.deeplinks
 
-import androidx.navigation3.runtime.EntryProviderScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -8,30 +7,15 @@ import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkHandler
 import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkIngress
-import io.thernal.navkit.navigation.api.presentation.host.navEntry
-import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
-import io.thernal.navkit.sample.app.DeepLinkLog
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.ui.Topic
-
-private class DeepLinksGraph(
-    private val ingress: DeepLinkIngress,
-    private val log: DeepLinkLog,
-) : NavigationGraphProvider {
-    override fun EntryProviderScope<Route>.provide() {
-        navEntry<LinkPlaygroundRoute> { LinkPlaygroundScreen(ingress = ingress, log = log) }
-        navEntry<ProductRoute> { route -> ProductScreen(route) }
-        navEntry<LinkCampaignRoute> { LinkCampaignScreen(ingress = ingress, log = log) }
-        navEntry<OrdersRoute> { OrdersScreen() }
-        navEntry<OrderRoute> { route -> OrderScreen(route) }
-    }
-}
+import io.thernal.navkit.sample.shared.app.DeepLinkLog
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.ui.Topic
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface DeepLinksBindings {
+interface DeepLinksProvidersModule {
     companion object {
         @Provides
         @IntoSet
@@ -53,11 +37,11 @@ interface DeepLinksBindings {
 
         @Provides
         @IntoSet
-        fun provideDeepLinksGraph(
+        fun provideDeepLinksGraphProvider(
             ingress: DeepLinkIngress,
             log: DeepLinkLog,
         ): NavigationGraphProvider {
-            return DeepLinksGraph(ingress = ingress, log = log)
+            return DeepLinksGraphProvider(ingress = ingress, log = log)
         }
 
         @Provides

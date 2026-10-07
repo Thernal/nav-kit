@@ -17,13 +17,13 @@ link, a restored stack), and whenever a guard announces its answer may have chan
 
 | File | What is in it |
 |---|---|
-| [`GuardsRoutes.kt`](GuardsRoutes.kt) | the routes, the `AuthGuarded` and `PinProtected` markers, `SignInRoute(next)`, the transient `PinEntryRoute`, the two `BlockReason`s |
+| [`GuardsRoute.kt`](GuardsRoute.kt), [`AuthGuarded.kt`](AuthGuarded.kt), [`PinProtected.kt`](PinProtected.kt), [`SignInRequired.kt`](SignInRequired.kt), [`PinRequired.kt`](PinRequired.kt) | the routes, the `AuthGuarded` and `PinProtected` markers, `SignInRoute(next)`, the transient `PinEntryRoute`, the two `BlockReason`s |
 | [`SessionStore.kt`](SessionStore.kt) | whether there is a session, and a hot stream of changes |
 | [`AuthGuard.kt`](AuthGuard.kt) | a destination rule with invalidations |
 | [`PinSession.kt`](PinSession.kt) | stands in for what a 401 lands in: lock, submit, await unlock |
 | [`PinGuard.kt`](PinGuard.kt) | a guard that defers |
-| [`GuardsScreens.kt`](GuardsScreens.kt) | the members, sign-in, vault and PIN screens |
-| [`GuardsBindings.kt`](GuardsBindings.kt) | contributes both guards into the kit's guard set |
+| [`MembersHomeScreen.kt`](MembersHomeScreen.kt), [`MembersSecretScreen.kt`](MembersSecretScreen.kt), [`SignInScreen.kt`](SignInScreen.kt), [`VaultLobbyScreen.kt`](VaultLobbyScreen.kt), [`VaultScreen.kt`](VaultScreen.kt), [`PinEntryScreen.kt`](PinEntryScreen.kt) | the members, sign-in, vault and PIN screens |
+| [`GuardsProvidersModule.kt`](GuardsProvidersModule.kt), [`GuardsGraphProvider.kt`](GuardsGraphProvider.kt) | contributes both guards into the kit's guard set |
 
 ## Simple: Members area
 

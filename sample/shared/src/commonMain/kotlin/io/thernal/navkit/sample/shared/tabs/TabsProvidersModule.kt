@@ -1,33 +1,24 @@
-package io.thernal.navkit.sample.tabs
+package io.thernal.navkit.sample.shared.tabs
 
-import androidx.navigation3.runtime.EntryProviderScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
-import io.thernal.navkit.navigation.api.presentation.host.navEntry
-import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.guards.SessionStore
-import io.thernal.navkit.sample.ui.Topic
-
-private class TabsGraph(private val session: SessionStore) : NavigationGraphProvider {
-    override fun EntryProviderScope<Route>.provide() {
-        navEntry<SingleHostTabsRoute> { SingleHostTabsScreen(session) }
-    }
-}
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.guards.SessionStore
+import io.thernal.navkit.sample.shared.ui.Topic
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface TabsBindings {
+interface TabsProvidersModule {
     companion object {
         @Provides
         @IntoSet
-        fun provideTabsGraph(session: SessionStore): NavigationGraphProvider {
-            return TabsGraph(session)
+        fun provideTabsGraphProvider(session: SessionStore): NavigationGraphProvider {
+            return TabsGraphProvider(session)
         }
 
         @Provides

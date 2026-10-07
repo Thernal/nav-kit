@@ -1,4 +1,4 @@
-package io.thernal.navkit.sample.app
+package io.thernal.navkit.sample.shared.app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -11,13 +11,13 @@ import io.thernal.navkit.navigation.api.presentation.deeplink.DeepLinkOutcome
 import io.thernal.navkit.navigation.api.presentation.host.NavigationHost
 import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
 import io.thernal.navkit.navigation.api.presentation.model.Route
-import io.thernal.navkit.sample.ui.Explanation
-import io.thernal.navkit.sample.ui.HeroCard
-import io.thernal.navkit.sample.ui.LiveValue
-import io.thernal.navkit.sample.ui.SampleScreen
-import io.thernal.navkit.sample.ui.SampleSheetContainer
-import io.thernal.navkit.sample.ui.SampleTheme
-import io.thernal.navkit.sample.ui.Topic
+import io.thernal.navkit.sample.shared.ui.Explanation
+import io.thernal.navkit.sample.shared.ui.HeroCard
+import io.thernal.navkit.sample.shared.ui.LiveValue
+import io.thernal.navkit.sample.shared.ui.SampleScreen
+import io.thernal.navkit.sample.shared.ui.SampleSheetContainer
+import io.thernal.navkit.sample.shared.ui.SampleTheme
+import io.thernal.navkit.sample.shared.ui.Topic
 
 /**
  * The composition root.

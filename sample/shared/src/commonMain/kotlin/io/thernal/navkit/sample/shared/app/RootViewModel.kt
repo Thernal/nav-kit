@@ -1,8 +1,8 @@
-package io.thernal.navkit.sample.app
+package io.thernal.navkit.sample.shared.app
 
 import androidx.lifecycle.ViewModel
 import io.thernal.navkit.navigation.api.presentation.model.Route
-import io.thernal.navkit.sample.catalog.CatalogRoute
+import io.thernal.navkit.sample.shared.catalog.CatalogRoute
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList

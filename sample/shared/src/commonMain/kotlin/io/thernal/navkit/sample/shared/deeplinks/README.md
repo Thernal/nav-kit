@@ -18,11 +18,11 @@ platform (intent, onOpenURL) ─publish─▶ DeepLinkIngress ═══ DeepLink
 
 | File | What is in it |
 |---|---|
-| [`DeepLinkHandlers.kt`](DeepLinkHandlers.kt) | three handlers: one page to one route, a multi-screen stack that reads its source, a guarded destination |
-| [`DeepLinkScreens.kt`](DeepLinkScreens.kt) | a playground that publishes links by hand, and the screens the links open |
-| [`DeepLinkRoutes.kt`](DeepLinkRoutes.kt) | the routes |
-| [`DeepLinksBindings.kt`](DeepLinksBindings.kt) | contributes the handlers into the kit's handler set |
-| [`../app/SampleBindings.kt`](../app/SampleBindings.kt) | registers the two bases links start with: `navkit://` and `https://example.com` |
+| [`ProductDeepLinkHandler.kt`](ProductDeepLinkHandler.kt), [`OrdersDeepLinkHandler.kt`](OrdersDeepLinkHandler.kt), [`SecretDeepLinkHandler.kt`](SecretDeepLinkHandler.kt) | three handlers: one page to one route, a multi-screen stack that reads its source, a guarded destination |
+| [`LinkPlaygroundScreen.kt`](LinkPlaygroundScreen.kt), [`LinkCampaignScreen.kt`](LinkCampaignScreen.kt), [`ProductScreen.kt`](ProductScreen.kt), [`OrdersScreen.kt`](OrdersScreen.kt), [`OrderScreen.kt`](OrderScreen.kt) | a playground that publishes links by hand, and the screens the links open |
+| [`DeepLinksRoute.kt`](DeepLinksRoute.kt) | the routes |
+| [`DeepLinksProvidersModule.kt`](DeepLinksProvidersModule.kt), [`DeepLinksGraphProvider.kt`](DeepLinksGraphProvider.kt) | contributes the handlers into the kit's handler set |
+| [`../app/SampleProvidersModule.kt`](../app/SampleProvidersModule.kt) | registers the two bases links start with: `navkit://` and `https://example.com` |
 | [`../app/SampleApp.kt`](../app/SampleApp.kt) | where links are resolved and applied |
 | [`../app/DeepLinkLog.kt`](../app/DeepLinkLog.kt) | where what a handler decided is recorded |
 
@@ -32,7 +32,7 @@ The application first says which links are its own. Each `DeepLinkBase` is a pre
 web origin — and the parser removes the one a link starts with before looking for the page:
 
 ```kotlin
-// app/SampleBindings.kt
+// app/SampleProvidersModule.kt
 @Provides
 @IntoSet
 fun provideAppSchemeBase(): DeepLinkBase {

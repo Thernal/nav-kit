@@ -1,6 +1,5 @@
-package io.thernal.navkit.sample.guards
+package io.thernal.navkit.sample.shared.guards
 
-import androidx.navigation3.runtime.EntryProviderScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -8,30 +7,14 @@ import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuard
-import io.thernal.navkit.navigation.api.presentation.host.navEntry
-import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.NavigationGraphProvider
-import io.thernal.navkit.sample.app.ExampleKind
-import io.thernal.navkit.sample.app.SampleExample
-import io.thernal.navkit.sample.ui.Topic
-
-private class GuardsGraph(
-    private val session: SessionStore,
-    private val pin: PinSession,
-) : NavigationGraphProvider {
-    override fun EntryProviderScope<Route>.provide() {
-        navEntry<MembersHomeRoute> { MembersHomeScreen(session) }
-        navEntry<MembersSecretRoute> { MembersSecretScreen(session) }
-        navEntry<SignInRoute> { route -> SignInScreen(route = route, session = session) }
-        navEntry<VaultLobbyRoute> { VaultLobbyScreen(pin) }
-        navEntry<VaultRoute> { VaultScreen(pin) }
-        navEntry<PinEntryRoute> { PinEntryScreen(pin) }
-    }
-}
+import io.thernal.navkit.sample.shared.app.ExampleKind
+import io.thernal.navkit.sample.shared.app.SampleExample
+import io.thernal.navkit.sample.shared.ui.Topic
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface GuardsBindings {
+interface GuardsProvidersModule {
     companion object {
         @Provides
         @SingleIn(AppScope::class)
@@ -59,11 +42,11 @@ interface GuardsBindings {
 
         @Provides
         @IntoSet
-        fun provideGuardsGraph(
+        fun provideGuardsGraphProvider(
             session: SessionStore,
             pin: PinSession,
         ): NavigationGraphProvider {
-            return GuardsGraph(session = session, pin = pin)
+            return GuardsGraphProvider(session = session, pin = pin)
         }
 
         @Provides

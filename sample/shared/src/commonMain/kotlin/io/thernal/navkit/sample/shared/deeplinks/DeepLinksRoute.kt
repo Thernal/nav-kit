@@ -1,6 +1,6 @@
-package io.thernal.navkit.sample.deeplinks
+package io.thernal.navkit.sample.shared.deeplinks
 
-import io.thernal.navkit.sample.app.SampleRoute
+import io.thernal.navkit.sample.shared.app.SampleRoute
 
 sealed interface DeepLinksRoute : SampleRoute
 
