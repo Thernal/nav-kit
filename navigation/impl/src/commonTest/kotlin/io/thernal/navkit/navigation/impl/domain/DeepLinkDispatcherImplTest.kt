@@ -39,7 +39,7 @@ class DeepLinkDispatcherImplTest {
     // The block body returns the TestResult rather than discarding it: on a JS target that value
     // is the only thing that keeps the runner waiting for the coroutine.
     @Test
-    fun dispatchesCustomSchemeAndQueryToOwningHandler(): TestResult {
+    fun `dispatches custom scheme and query to owning handler`(): TestResult {
         return runTest {
             val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
 
@@ -50,7 +50,7 @@ class DeepLinkDispatcherImplTest {
     }
 
     @Test
-    fun dispatchesTheWebFormOfTheSameLinkToTheSameHandler(): TestResult {
+    fun `dispatches the web form of the same link to the same handler`(): TestResult {
         return runTest {
             val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
 
@@ -64,7 +64,7 @@ class DeepLinkDispatcherImplTest {
     }
 
     @Test
-    fun anUnclaimedPageIsNotFound(): TestResult {
+    fun `an unclaimed page is not found`(): TestResult {
         return runTest {
             val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
 
@@ -75,7 +75,7 @@ class DeepLinkDispatcherImplTest {
     }
 
     @Test
-    fun aLinkOnADomainTheAppDoesNotOwnIsNotFound(): TestResult {
+    fun `a link on a domain the app does not own is not found`(): TestResult {
         return runTest {
             val dispatcher = DeepLinkDispatcherImpl(setOf(BookingHandler()), bases)
 
@@ -89,14 +89,14 @@ class DeepLinkDispatcherImplTest {
     }
 
     @Test
-    fun handlersWithNoBaseFailAtConstruction() {
+    fun `handlers with no base fail at construction`() {
         assertFailsWith<IllegalArgumentException> {
             DeepLinkDispatcherImpl(setOf(BookingHandler()), emptySet())
         }
     }
 
     @Test
-    fun twoHandlersClaimingOnePageFailAtConstruction() {
+    fun `two handlers claiming one page fail at construction`() {
         assertFailsWith<IllegalStateException> {
             DeepLinkDispatcherImpl(setOf(BookingHandler(), RivalBookingHandler()), bases)
         }

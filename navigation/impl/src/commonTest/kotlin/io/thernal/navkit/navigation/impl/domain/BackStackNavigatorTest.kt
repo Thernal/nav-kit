@@ -94,7 +94,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun rootCannotBePopped() {
+    fun `root cannot be popped`() {
         val harness = Harness(listOf(Root))
 
         assertFalse(harness.navigator.pop())
@@ -102,7 +102,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun pushAndPopUpdateStack() {
+    fun `push and pop update stack`() {
         val harness = Harness(listOf(Root))
 
         harness.navigator.push(Details)
@@ -113,7 +113,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun navigateReusesMatchingDestinationAndReplaceAllIsAtomic() {
+    fun `navigate reuses matching destination and replace all is atomic`() {
         val harness = Harness(listOf(Root))
         harness.navigator.push(Details)
         harness.navigator.push(Edit)
@@ -126,7 +126,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun pushDoesNotTouchStackWhenGuardRefuses() {
+    fun `push does not touch stack when guard refuses`() {
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Details))))
 
         harness.navigator.push(Details)
@@ -135,7 +135,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun navigateDoesNotTouchStackWhenGuardRefuses() {
+    fun `navigate does not touch stack when guard refuses`() {
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Details))))
 
         harness.navigator.navigate(Details)
@@ -144,7 +144,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun replaceDoesNotTouchStackWhenGuardRefuses() {
+    fun `replace does not touch stack when guard refuses`() {
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Details))))
 
         harness.navigator.replace(Details)
@@ -153,7 +153,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun replaceAllIsGuardedOnEveryRouteNotOnlyItsLast() {
+    fun `replace all is guarded on every route not only its last`() {
         // The per-command runner resolved `routes.last()` alone, so a deep link's intermediate
         // routes reached the stack unguarded.
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Details))))
@@ -164,7 +164,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun buildStackIsGuardedLikeEveryOtherCommand() {
+    fun `build stack is guarded like every other command`() {
         // Previously the one public way into the stack that never consulted a guard.
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Details))))
 
@@ -174,7 +174,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aPopCanBeRefusedByAGuard() {
+    fun `a pop can be refused by a guard`() {
         val guard = NavigationGuard { old, new ->
             if (old.contains(Edit) && !new.contains(Edit)) {
                 GuardVerdict.Resolved(old, Denied("unsaved changes"))
@@ -190,7 +190,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun pushSubstitutesTheRedirectTarget() {
+    fun `push substitutes the redirect target`() {
         val harness = Harness(
             listOf(Root),
             NavigationGuardRunnerImpl(listOf(redirecting(from = Details, to = SignIn))),
@@ -202,7 +202,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun replaceAllSubstitutesARedirectTargetWhereverItSits() {
+    fun `replace all substitutes a redirect target wherever it sits`() {
         val harness = Harness(
             listOf(Root),
             NavigationGuardRunnerImpl(listOf(redirecting(from = Details, to = SignIn))),
@@ -214,7 +214,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aRefusedStackIsReportedToTheEventSink() {
+    fun `a refused stack is reported to the event sink`() {
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Details))))
 
         harness.navigator.push(Details)
@@ -232,7 +232,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aRewrittenStackIsNotReportedAsThePushThatWasAskedFor() {
+    fun `a rewritten stack is not reported as the push that was asked for`() {
         val harness = Harness(
             listOf(Root),
             NavigationGuardRunnerImpl(listOf(redirecting(from = Details, to = SignIn))),
@@ -253,7 +253,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aProgrammaticPopGoesThroughTheSameBackDispatcherAsTheGesture() {
+    fun `a programmatic pop goes through the same back dispatcher as the gesture`() {
         // Previously only the host's gesture consulted the dispatcher, so an in-app back button
         // calling pop() bypassed every screen that had registered an interceptor.
         val harness = Harness(listOf(Root, Edit))
@@ -272,7 +272,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun popBackToIsAJumpAndDoesNotConsultInterceptors() {
+    fun `pop back to is a jump and does not consult interceptors`() {
         val harness = Harness(listOf(Root, Details, Edit))
         harness.backDispatcher.register(BackCallback { true })
 
@@ -282,7 +282,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun anInterceptorThatPopsFromInsideItsOwnHandlerIsNotDispatchedToAgain() {
+    fun `an interceptor that pops from inside its own handler is not dispatched to again`() {
         val harness = Harness(listOf(Root, Edit))
         harness.backDispatcher.register(
             BackCallback {
@@ -297,7 +297,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aCommandReportsWhatActuallyHappenedToItsCaller() {
+    fun `a command reports what actually happened to its caller`() {
         val applied = Harness(listOf(Root)).navigator.push(Details)
         val rewritten = Harness(
             listOf(Root),
@@ -318,7 +318,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aDeferredCommandSaysSoAndShowsWhatExistsMeanwhile() {
+    fun `a deferred command says so and shows what exists meanwhile`() {
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(deferringOnDetails)))
 
         val outcome = harness.navigator.push(Details)
@@ -328,7 +328,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aPushIsReportedToTheEventSink() {
+    fun `a push is reported to the event sink`() {
         val harness = Harness(listOf(Root))
 
         harness.navigator.push(Details)
@@ -337,7 +337,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun popBackToReportsARefusedJumpAsNoMovement() {
+    fun `pop back to reports a refused jump as no movement`() {
         // It used to answer "a match was found", so a screen reported leaving while it stayed.
         val harness = Harness(listOf(Root, Details, Edit), NavigationGuardRunnerImpl(listOf(keepingEdit())))
 
@@ -347,7 +347,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun popBackToTheRouteAlreadyOnTopIsNoMovement() {
+    fun `pop back to the route already on top is no movement`() {
         val harness = Harness(listOf(Root, Details))
 
         assertFalse(harness.navigator.popBackTo { route -> route == Details })
@@ -355,14 +355,14 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun aRefusedPopIsReportedAsNoMovement() {
+    fun `a refused pop is reported as no movement`() {
         val harness = Harness(listOf(Root, Edit), NavigationGuardRunnerImpl(listOf(keepingEdit())))
 
         assertFalse(harness.navigator.pop())
     }
 
     @Test
-    fun aDeferralIsHandedOnWithTheStackItsCommandAttempted() {
+    fun `a deferral is handed on with the stack its command attempted`() {
         // The navigator cannot await it; dropping it here meant the host never saw it at all,
         // because the stack it was handed was only the `meanwhile`.
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(deferringOnDetails)))
@@ -373,7 +373,7 @@ class BackStackNavigatorTest {
     }
 
     @Test
-    fun onlyACommandThatChangesTheStackIsReportedAsMovement() {
+    fun `only a command that changes the stack is reported as movement`() {
         val harness = Harness(listOf(Root), NavigationGuardRunnerImpl(listOf(rejecting(Edit))))
 
         harness.navigator.push(Edit)

@@ -51,7 +51,7 @@ class HostStackWriterTest {
     }
 
     @Test
-    fun twoCommandsInOneFrameBuildOnEachOther() {
+    fun `two commands in one frame build on each other`() {
         // The navigator used to build on the rendered stack, so the second pop undid nothing new
         // and `popBack(2)` popped once.
         val owner = LaggingOwner(persistentListOf(Root, Details, Edit))
@@ -62,7 +62,7 @@ class HostStackWriterTest {
     }
 
     @Test
-    fun aPopFollowedByAPushInOneFrameKeepsThePop() {
+    fun `a pop followed by a push in one frame keeps the pop`() {
         val owner = LaggingOwner(persistentListOf(Root, Details))
 
         owner.navigator.popBack()
@@ -72,7 +72,7 @@ class HostStackWriterTest {
     }
 
     @Test
-    fun anOwnWriteHandedBackIsNotAnExternalChange() {
+    fun `an own write handed back is not an external change`() {
         val owner = LaggingOwner(persistentListOf(Root))
         owner.navigator.push(Details)
 
@@ -81,7 +81,7 @@ class HostStackWriterTest {
     }
 
     @Test
-    fun aSkippedIntermediateWriteIsStillOwn() {
+    fun `a skipped intermediate write is still own`() {
         // A conflated owner hands back only the last of several writes.
         val owner = LaggingOwner(persistentListOf(Root))
         owner.navigator.push(Details)
@@ -91,7 +91,7 @@ class HostStackWriterTest {
     }
 
     @Test
-    fun eachWriteIsConfirmedInTurnByAnOwnerThatSkipsNothing() {
+    fun `each write is confirmed in turn by an owner that skips nothing`() {
         val writer = HostStackWriter<Route> { }
         val first = persistentListOf<Route>(Root, Details)
         val second = persistentListOf<Route>(Root)
@@ -104,7 +104,7 @@ class HostStackWriterTest {
     }
 
     @Test
-    fun aStackFromElsewhereIsExternalAndDropsTheWritesStillWaiting() {
+    fun `a stack from elsewhere is external and drops the writes still waiting`() {
         val owner = LaggingOwner(persistentListOf(Root))
         owner.navigator.push(Details)
         val foreign = persistentListOf<Route>(Root, Elsewhere)
@@ -114,7 +114,7 @@ class HostStackWriterTest {
     }
 
     @Test
-    fun theFirstStackAndAnUnchangedOneAreNobodysChange() {
+    fun `the first stack and an unchanged one are nobodys change`() {
         val writer = HostStackWriter<Route> { }
         val stack = persistentListOf<Route>(Root)
 

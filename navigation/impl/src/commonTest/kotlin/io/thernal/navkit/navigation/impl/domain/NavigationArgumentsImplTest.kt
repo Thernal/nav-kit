@@ -20,7 +20,7 @@ class NavigationArgumentsImplTest {
     private val inCheckout = whileInStack { route -> route is CheckoutAmount || route is CheckoutConfirm }
 
     @Test
-    fun anArgumentIsReadByEveryScreenThatAsksForIt() {
+    fun `an argument is read by every screen that asks for it`() {
         val arguments = NavigationArgumentsImpl()
         arguments.put(key = draft, value = "draft-1", scope = inCheckout)
 
@@ -29,7 +29,7 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun anArgumentSurvivesTheStackChangeThatStartsItsFlow() {
+    fun `an argument survives the stack change that starts its flow`() {
         val arguments = NavigationArgumentsImpl()
         // Put before the routes that read it are pushed: the stack the host prunes against does not
         // contain them yet, and pruning here would delete the value one frame before it is needed.
@@ -42,7 +42,7 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun anArgumentDiesWithTheFlowThatOwnedIt() {
+    fun `an argument dies with the flow that owned it`() {
         val arguments = NavigationArgumentsImpl()
         arguments.put(key = draft, value = "draft-1", scope = inCheckout)
 
@@ -55,7 +55,7 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun aScopeCanNameOneRouteType() {
+    fun `a scope can name one route type`() {
         val arguments = NavigationArgumentsImpl()
         arguments.put(key = draft, value = "draft-1", scope = whileRouteInStack<CheckoutConfirm>())
 
@@ -67,7 +67,7 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun removeDropsAnArgumentBeforeItsScopeWould() {
+    fun `remove drops an argument before its scope would`() {
         val arguments = NavigationArgumentsImpl()
         arguments.put(key = draft, value = "draft-1", scope = inCheckout)
 
@@ -77,7 +77,7 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun twoFeaturesSharingANameFailLoudlyInsteadOfReadingNull() {
+    fun `two features sharing a name fail loudly instead of reading null`() {
         val arguments = NavigationArgumentsImpl()
         val otherDraft = ArgumentKey(name = "checkout_draft", type = Int::class)
         arguments.put(key = draft, value = "draft-1", scope = inCheckout)
@@ -86,12 +86,12 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun aBlankKeyIsRejected() {
+    fun `a blank key is rejected`() {
         assertFailsWith<IllegalArgumentException> { argumentKey<String>(" ") }
     }
 
     @Test
-    fun aValueReplacedInsideItsFlowStillDiesWithTheFlow() {
+    fun `a value replaced inside its flow still dies with the flow`() {
         // A flow that updates its own argument re-puts it while its routes are already on the
         // stack. That put used to start over as "never alive", and backing out kept it forever.
         val arguments = NavigationArgumentsImpl()
@@ -105,7 +105,7 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun aValuePutAheadOfItsRoutesStillWaitsForThem() {
+    fun `a value put ahead of its routes still waits for them`() {
         val arguments = NavigationArgumentsImpl()
         arguments.pruneFor(listOf(Root))
 
@@ -117,7 +117,7 @@ class NavigationArgumentsImplTest {
     }
 
     @Test
-    fun aReplacementUnderANewScopeDoesNotInheritTheOldLifetime() {
+    fun `a replacement under a new scope does not inherit the old lifetime`() {
         val arguments = NavigationArgumentsImpl()
         arguments.put(key = draft, value = "draft-1", scope = inCheckout)
         arguments.pruneFor(listOf(Root, CheckoutAmount))

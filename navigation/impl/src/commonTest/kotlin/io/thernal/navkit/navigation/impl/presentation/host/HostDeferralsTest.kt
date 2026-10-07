@@ -28,9 +28,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-private const val RIGHT_PIN = "1234"
-private const val FRAMES_TO_SETTLE = 6
-
 class HostDeferralsTest {
     private data object Lobby : Route
     private data object Vault : Route
@@ -154,7 +151,7 @@ class HostDeferralsTest {
     }
 
     @Test
-    fun aLockedPushAsksForThePinAndContinuesOnceItIsRight(): TestResult {
+    fun `a locked push asks for the pin and continues once it is right`(): TestResult {
         // The navigator used to write `meanwhile` and drop the deferral, so the push did nothing.
         return runTest {
             val session = PinSession()
@@ -175,7 +172,7 @@ class HostDeferralsTest {
     }
 
     @Test
-    fun aLockInsideTheVaultAsksForThePinAndReturnsToTheVault(): TestResult {
+    fun `a lock inside the vault asks for the pin and returns to the vault`(): TestResult {
         // The run was keyed on the verdict, and its own prompt push changed the verdict.
         return runTest {
             val session = PinSession()
@@ -193,7 +190,7 @@ class HostDeferralsTest {
     }
 
     @Test
-    fun aWrongPinLeavesTheVaultShut(): TestResult {
+    fun `a wrong pin leaves the vault shut`(): TestResult {
         return runTest {
             val session = PinSession()
             val host = Host(listOf(Lobby), session)
@@ -211,7 +208,7 @@ class HostDeferralsTest {
     }
 
     @Test
-    fun backingOutOfThePromptAbandonsTheWaitAndAnotherAttemptAsksAgain(): TestResult {
+    fun `backing out of the prompt abandons the wait and another attempt asks again`(): TestResult {
         return runTest {
             val session = PinSession()
             val host = Host(listOf(Lobby), session)
@@ -237,7 +234,7 @@ class HostDeferralsTest {
     }
 
     @Test
-    fun aStackArrivingFromElsewhereAbandonsTheWait(): TestResult {
+    fun `a stack arriving from elsewhere abandons the wait`(): TestResult {
         return runTest {
             val session = PinSession()
             val host = Host(listOf(Lobby), session)
@@ -257,7 +254,7 @@ class HostDeferralsTest {
     }
 
     @Test
-    fun aSecondSubmissionForTheSameAttemptKeepsTheRunningOne() {
+    fun `a second submission for the same attempt keeps the running one`() {
         val deferrals = HostDeferrals()
         val attempted = persistentListOf<Route>(Lobby, Vault)
         val waitForever = GuardVerdict.Deferred(meanwhile = persistentListOf(Lobby)) {
@@ -274,7 +271,7 @@ class HostDeferralsTest {
     }
 
     @Test
-    fun aRunAbandonedWhileFinishingIsNotApplied(): TestResult {
+    fun `a run abandoned while finishing is not applied`(): TestResult {
         return runTest {
             val deferrals = HostDeferrals()
             val answer = CompletableDeferred<GuardVerdict>()
@@ -301,3 +298,6 @@ class HostDeferralsTest {
         }
     }
 }
+
+private const val RIGHT_PIN = "1234"
+private const val FRAMES_TO_SETTLE = 6

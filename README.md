@@ -143,7 +143,7 @@ fun AppRoot(graph: AppGraph) {
                 onBackStackChange = root::onBackStackChange,
             ),
         ) {
-            navEntry<AuthRoute.SignIn> { SignInScreen() }
+            navEntry<AuthRoute.SignIn> { SignInView() }
             bottomSheetEntry<ProfileRoute.Edit> { ProfileEditSheet() }
         }
     }

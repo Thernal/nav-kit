@@ -1,6 +1,5 @@
 package io.thernal.navkit.navigation.impl.domain.guard
 
-import io.thernal.navkit.navigation.api.presentation.guard.BlockReason
 import io.thernal.navkit.navigation.api.presentation.guard.GuardVerdict
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuard
 import io.thernal.navkit.navigation.api.presentation.guard.NavigationGuardRunner
@@ -8,9 +7,6 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
-
-/** Bounds the fixpoint below: reaching this many rounds is a bug in the guards, not a stack. */
-private const val MAX_ROUNDS = 8
 
 /**
  * Folds every guard over the proposed stack and repeats until it stops changing, so a route a guard
@@ -46,39 +42,49 @@ class NavigationGuardRunnerImpl(private val guards: List<NavigationGuard>) : Nav
         if (guards.isEmpty()) {
             return GuardVerdict.Resolved(new)
         }
-        var current = new
-        var reason: BlockReason? = null
-        var round = 0
-        while (round < MAX_ROUNDS) {
+        var resolved = GuardVerdict.Resolved(new)
+        repeat(MAX_ROUNDS) {
             // A round settles when no guard rewrote anything, not when it ends where it started:
             // two guards that undo each other leave a stack the first would reject again.
-            var didRewrite = false
-            guards.forEach { guard ->
-                when (val verdict = guard.evaluate(old = old, new = current)) {
-                    is GuardVerdict.Deferred -> {
-                        guard.requireWellFormed(proposed = current, candidate = verdict.meanwhile)
-                        return verdict
-                    }
-
-                    is GuardVerdict.Resolved -> {
-                        if (verdict.stack != current) {
-                            guard.requireWellFormed(proposed = current, candidate = verdict.stack)
-                            reason = verdict.reason ?: reason
-                            current = verdict.stack
-                            didRewrite = true
-                        }
-                    }
-                }
+            when (val round = runRound(old = old, start = resolved)) {
+                null -> return resolved
+                is GuardVerdict.Deferred -> return round
+                is GuardVerdict.Resolved -> resolved = round
             }
-            if (!didRewrite) {
-                return GuardVerdict.Resolved(stack = current, reason = reason)
-            }
-            round++
         }
         error(
             "Navigation guards did not settle after $MAX_ROUNDS rounds; two of " +
                 "${guards.joinToString { guard -> guard.typeName() }} rewrite each other's stack.",
         )
+    }
+
+    /** Every guard once over [start]: the first deferral, the rewritten stack, or `null` when none rewrote it. */
+    private fun runRound(
+        old: ImmutableList<Route>,
+        start: GuardVerdict.Resolved,
+    ): GuardVerdict? {
+        var current = start.stack
+        var reason = start.reason
+        var didRewrite = false
+        guards.forEach { guard ->
+            when (val verdict = guard.evaluate(old = old, new = current)) {
+                is GuardVerdict.Deferred -> {
+                    guard.requireWellFormed(proposed = current, candidate = verdict.meanwhile)
+                    return verdict
+                }
+
+                is GuardVerdict.Resolved -> if (verdict.stack != current) {
+                    guard.requireWellFormed(proposed = current, candidate = verdict.stack)
+                    reason = verdict.reason ?: reason
+                    current = verdict.stack
+                    didRewrite = true
+                }
+            }
+        }
+        if (!didRewrite) {
+            return null
+        }
+        return GuardVerdict.Resolved(stack = current, reason = reason)
     }
 }
 
@@ -104,3 +110,6 @@ private fun NavigationGuard.requireWellFormed(
 private fun Any.typeName(): String {
     return this::class.simpleName ?: toString()
 }
+
+/** Bounds the fixpoint: reaching this many rounds is a bug in the guards, not a stack. */
+private const val MAX_ROUNDS = 8

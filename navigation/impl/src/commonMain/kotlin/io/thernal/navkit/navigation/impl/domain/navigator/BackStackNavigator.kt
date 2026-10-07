@@ -162,28 +162,8 @@ class BackStackNavigator(
         predicate: (Route) -> Boolean,
     ): Boolean {
         return mutate(
-            builder = {
-                val index = indexOfLast(predicate)
-                if (index != -1) {
-                    val endExclusive = if (inclusive) {
-                        index
-                    } else {
-                        index + 1
-                    }
-                    val next = take(endExclusive)
-                    if (next.isNotEmpty()) {
-                        clear()
-                        addAll(next)
-                    }
-                }
-            },
-            event = { old, applied ->
-                if (applied == old) {
-                    null
-                } else {
-                    NavigationEvent.ReplaceAll(applied)
-                }
-            },
+            builder = { dropAboveLast(inclusive = inclusive, predicate = predicate) },
+            event = { old, applied -> replaceAllUnlessUnchanged(old = old, applied = applied) },
         ).didMove
     }
 
@@ -247,4 +227,33 @@ class BackStackNavigator(
         result.deferral?.let { deferral -> onDeferred(result.attempted, deferral) }
         return result
     }
+}
+
+/** Drops every route above the last match — the match too when [inclusive] — but never the whole stack. */
+private fun MutableList<Route>.dropAboveLast(
+    inclusive: Boolean,
+    predicate: (Route) -> Boolean,
+) {
+    val index = indexOfLast(predicate)
+    if (index == -1) {
+        return
+    }
+    val endExclusive = if (inclusive) {
+        index
+    } else {
+        index + 1
+    }
+    if (endExclusive > 0) {
+        subList(endExclusive, size).clear()
+    }
+}
+
+private fun replaceAllUnlessUnchanged(
+    old: ImmutableList<Route>,
+    applied: ImmutableList<Route>,
+): NavigationEvent? {
+    if (applied == old) {
+        return null
+    }
+    return NavigationEvent.ReplaceAll(applied)
 }

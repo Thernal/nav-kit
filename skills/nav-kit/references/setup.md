@@ -52,8 +52,8 @@ The root back stack lives in a ViewModel, so the app module also needs
 
 ### With Metro
 
-`NavigationWiring` is `@BindingContainer @ContributesTo(AppScope::class)`: a graph over `AppScope`
-includes it automatically. It declares `Set<NavigationGuard>`, `Set<DeepLinkHandler>`,
+`NavigationProvidersModule` and `NavigationBindingsModule` are `@BindingContainer @ContributesTo(AppScope::class)`:
+a graph over `AppScope` includes them automatically. They declare `Set<NavigationGuard>`, `Set<DeepLinkHandler>`,
 `Set<DeepLinkBase>` and `Set<NavigationEventSink>` as empty-allowed multibindings, binds every service
 as a singleton, and contributes three `ProvidedValue<*>` — the renderer, results and arguments locals.
 
@@ -70,7 +70,7 @@ interface AppGraph {
 // The app declares its own multibinding for screens; the kit does not.
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface AppBindings {
+interface AppProvidersModule {
     @Multibinds(allowEmpty = true)
     val graphProviders: Set<NavigationGraphProvider>
 

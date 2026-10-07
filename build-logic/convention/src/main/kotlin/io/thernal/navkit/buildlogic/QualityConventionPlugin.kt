@@ -36,6 +36,8 @@ internal class QualityConventionPlugin : Plugin<Project> {
             }
 
             tasks.withType<Detekt>().configureEach {
+                // `-PdetektAutoCorrect=true` lets ktlint fix formatting in place; findings still fail the build.
+                autoCorrect.set(providers.gradleProperty("detektAutoCorrect").orNull == "true")
                 exclude("**/build/**", "**/generated/**")
                 reports {
                     html.required.set(true)

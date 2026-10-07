@@ -25,29 +25,33 @@ data class CheckoutReceipt(val orderId: String) : CheckoutRoute
   stay internal.
 - Marker interfaces opt a route into a guard: `data object Account : Route, AuthGuarded`.
 - `TransientRoute` for placeholders that must not survive a restored stack.
-- Keep routes distinct within one stack: equal routes share one saved state (Navigation3's default content
-  key is `toString()`). To return to a route that may already be on the stack, `navigate(route)`.
+- Keep routes distinct within one stack: equal routes share one saved state. To return to a route that may
+  already be on the stack, `navigate(route)`.
+- Never override a route's `toString()`, and register with `navEntry` / `bottomSheetEntry`, never
+  Navigation3's `entry<…>`: they key content by the route's full name, so `data object Main` in two
+  features still animates.
 
 ## 2. Registering screens
 
-In a feature, contribute a provider (the root calls every provider inside its host):
+In a feature, contribute a `<Feature>GraphProvider`, kept in `presentation/navigation/` with the routes
+(the root calls every provider inside its host):
 
 ```kotlin
-class CheckoutGraph(private val repository: CheckoutRepository) : NavigationGraphProvider {
+class CheckoutGraphProvider(private val repository: CheckoutRepository) : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
-        navEntry<CheckoutAmount> { CheckoutAmountScreen(repository) }
-        navEntry<CheckoutReceipt> { route -> ReceiptScreen(orderId = route.orderId) }
+        navEntry<CheckoutAmount> { CheckoutAmountView(repository) }
+        navEntry<CheckoutReceipt> { route -> ReceiptView(orderId = route.orderId) }
     }
 }
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface CheckoutBindings {
+interface CheckoutProvidersModule {
     companion object {
         @Provides
         @IntoSet
-        fun provideCheckoutGraph(repository: CheckoutRepository): NavigationGraphProvider {
-            return CheckoutGraph(repository)
+        fun provideCheckoutGraphProvider(repository: CheckoutRepository): NavigationGraphProvider {
+            return CheckoutGraphProvider(repository)
         }
     }
 }
@@ -65,7 +69,7 @@ Registration rules (violations crash at runtime, not at compile time):
 | each route class is registered once per host (two providers registering the same class count) | `IllegalArgumentException` "An `entry` with the same `clazz` has already been added" |
 | a host's stack is never empty | `IllegalArgumentException: NavDisplay backstack cannot be empty` |
 
-Entry content can take the route: `navEntry<Order> { route -> OrderScreen(route.id) }`. `viewModel { }`
+Entry content can take the route: `navEntry<Order> { route -> OrderView(route.id) }`. `viewModel { }`
 inside an entry is scoped to that entry and cleared when it is popped.
 
 ## 3. Navigating and reading outcomes
@@ -124,7 +128,7 @@ class ProfileViewModel(private val profileId: String) : ViewModel() {
 }
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel) {
+fun ProfileView(viewModel: ProfileViewModel) {
     val navigator = LocalNavigator.current
     LaunchedEffect(viewModel, navigator) {
         viewModel.navigation.collect { effect ->
@@ -146,7 +150,7 @@ owner is a ViewModel scoped to that entry.
 
 ```kotlin
 @Composable
-fun CheckoutFlowScreen() {
+fun CheckoutFlowView() {
     val flow: CheckoutFlowViewModel = viewModel { CheckoutFlowViewModel() }
     val steps by flow.steps.collectAsState()
     val outer = LocalNavigator.current     // read BEFORE mounting; inside, LocalNavigator is the flow's
@@ -154,7 +158,7 @@ fun CheckoutFlowScreen() {
     NavigationHost(params = NavigationHostParams(backStack = steps, onBackStackChange = flow::onStepsChange)) {
         navEntry<CheckoutAmount> { AmountStep() }
         navEntry<CheckoutReceipt> { route -> ReceiptStep(route, onDone = { outer.popBack() }) }
-        navEntry<SignInRoute> { route -> SignInScreen(route) }   // if an app-wide guard can substitute it here
+        navEntry<SignInRoute> { route -> SignInView(route) }   // if an app-wide guard can substitute it here
     }
 }
 ```

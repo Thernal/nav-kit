@@ -21,7 +21,7 @@ Most nav-kit bugs come from adding a second mechanism beside one the project alr
 missing a registration. Find the existing pieces first:
 
 ```sh
-grep -rn --include=*.kt -e "NavigationWiring" -e "NavigationHostRendererImpl" -e "LocalNavigationHostRenderer provides" .  # installed?
+grep -rn --include=*.kt -e "NavigationProvidersModule" -e "NavigationHostRendererImpl" -e "LocalNavigationHostRenderer provides" .  # installed?
 grep -rn --include=*.kt "NavigationHostParams(" .                            # every host, and who owns each stack
 grep -rn --include=*.kt -e "NavigationGraphProvider" -e "navEntry<" -e "bottomSheetEntry<" .  # where screens are registered
 grep -rn --include=*.kt -e "RouteGuard<" -e ": NavigationGuard" -e "TransientRoute" .        # guards and their markers
@@ -99,6 +99,8 @@ Before calling the work done, walk this:
 - [ ] New result and argument keys are declared once, next to the producing feature's routes, with a
       feature-prefixed name.
 - [ ] No host can be handed an empty stack.
+- [ ] Routes never override `toString()`; screens are registered with `navEntry` / `bottomSheetEntry` in a
+      `<Feature>GraphProvider` (`presentation/navigation/`), contributed by `<Feature>ProvidersModule`.
 - [ ] The project builds, and its tests pass. For a guard, add a `commonTest` using
       `NavigationGuardRunnerImpl` (see [events-and-testing.md](references/events-and-testing.md)).
 - [ ] The review checklist in [troubleshooting.md](references/troubleshooting.md) passes.

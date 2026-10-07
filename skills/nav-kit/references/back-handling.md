@@ -21,7 +21,7 @@ and guard rewrites bypass it.
 import io.thernal.navkit.navigation.impl.presentation.back.NavigationBackHandler   // navigation/impl
 
 @Composable
-fun DraftScreen() {
+fun DraftView() {
     val navigator = LocalNavigator.current
     var text by rememberSaveable { mutableStateOf("") }
     var isAsking by rememberSaveable { mutableStateOf(false) }

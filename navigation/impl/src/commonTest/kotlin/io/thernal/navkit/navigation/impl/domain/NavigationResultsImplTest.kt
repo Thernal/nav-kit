@@ -14,7 +14,7 @@ class NavigationResultsImplTest {
     private val count = resultKey<Int>("count")
 
     @Test
-    fun aResultIsReadOnceAndThenGone() {
+    fun `a result is read once and then gone`() {
         val results = NavigationResultsImpl()
         results.post(key = selectedPhoto, value = "photo-1")
 
@@ -23,7 +23,7 @@ class NavigationResultsImplTest {
     }
 
     @Test
-    fun pendingNamesFollowWhatIsWaiting() {
+    fun `pending names follow what is waiting`() {
         val results = NavigationResultsImpl()
         assertTrue(results.pending.value.isEmpty())
 
@@ -35,7 +35,7 @@ class NavigationResultsImplTest {
     }
 
     @Test
-    fun clearDropsAValueWithoutDeliveringIt() {
+    fun `clear drops a value without delivering it`() {
         val results = NavigationResultsImpl()
         results.post(key = count, value = 7)
 
@@ -46,7 +46,7 @@ class NavigationResultsImplTest {
     }
 
     @Test
-    fun twoFeaturesSharingANameFailLoudlyInsteadOfReadingNull() {
+    fun `two features sharing a name fail loudly instead of reading null`() {
         val results = NavigationResultsImpl()
         val otherCount = ResultKey(name = "count", type = String::class)
         results.post(key = count, value = 7)
@@ -55,7 +55,7 @@ class NavigationResultsImplTest {
     }
 
     @Test
-    fun aBlankKeyIsRejected() {
+    fun `a blank key is rejected`() {
         assertFailsWith<IllegalArgumentException> { resultKey<String>(" ") }
     }
 }

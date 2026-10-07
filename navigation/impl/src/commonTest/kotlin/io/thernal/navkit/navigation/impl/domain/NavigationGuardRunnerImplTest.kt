@@ -70,7 +70,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun allowsWhenThereAreNoGuards() {
+    fun `allows when there are no guards`() {
         val runner = NavigationGuardRunnerImpl(emptyList())
 
         val verdict = runner.resolve(old = stackOf(Root), new = stackOf(Root, Details))
@@ -80,7 +80,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun allowsWhenEveryGuardAllows() {
+    fun `allows when every guard allows`() {
         val runner = NavigationGuardRunnerImpl(listOf(rejecting(Paywall), rejecting(SignIn)))
 
         val verdict = runner.resolve(old = stackOf(Root), new = stackOf(Root, Details))
@@ -89,7 +89,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun aRefusalIsThePreviousStackComingBack() {
+    fun `a refusal is the previous stack coming back`() {
         val runner = NavigationGuardRunnerImpl(listOf(rejecting(Details, Denied("denied"))))
 
         val verdict = runner.resolve(old = stackOf(Root), new = stackOf(Root, Details))
@@ -99,7 +99,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun everyRouteOfAProposedStackIsGuardedNotOnlyItsLast() {
+    fun `every route of a proposed stack is guarded not only its last`() {
         val runner = NavigationGuardRunnerImpl(listOf(rejecting(Details)))
 
         val verdict = runner.resolve(old = stackOf(Root), new = stackOf(Root, Details, Edit))
@@ -108,7 +108,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun aRouteAGuardIntroducedIsItselfGuarded() {
+    fun `a route a guard introduced is itself guarded`() {
         // The per-route runner pushed a redirect target exactly as named, unseen by every guard
         // including the one that produced it. Here the rewrite is simply the next proposal.
         val runner = NavigationGuardRunnerImpl(
@@ -125,7 +125,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun aGuardSeesThePreviousGuardsOutput() {
+    fun `a guard sees the previous guards output`() {
         val runner = NavigationGuardRunnerImpl(
             listOf(
                 redirecting(from = Details, to = SignIn),
@@ -139,7 +139,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun aGuardCanRefuseAPop() {
+    fun `a guard can refuse a pop`() {
         // Only expressible because a guard sees the transition: nothing is entering here.
         val guard = NavigationGuard { old, new ->
             if (old.contains(Edit) && !new.contains(Edit)) {
@@ -157,7 +157,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun revalidationPassesTheUnmovedStackAsBothArguments() {
+    fun `revalidation passes the unmoved stack as both arguments`() {
         val runner = NavigationGuardRunnerImpl(listOf(authGuard()))
 
         // Nothing moved; the guards may simply answer differently than they did on the way in.
@@ -167,7 +167,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun aStackThatIsItsOwnPreviousIsStillJudgedRouteByRoute() {
+    fun `a stack that is its own previous is still judged route by route`() {
         // The shape the host uses on its first composition, which is the path a cold-start deep
         // link takes: nothing is in effect yet, so the stack handed in is also `old`. A transition
         // guard correctly finds nothing to do; a route-scoped guard still judges every route it
@@ -188,7 +188,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun failsWhenAGuardEmptiesANonEmptyStack() {
+    fun `fails when a guard empties a non empty stack`() {
         val guard = NavigationGuard { _, _ -> GuardVerdict.Resolved(persistentListOf()) }
         val runner = NavigationGuardRunnerImpl(listOf(guard))
 
@@ -198,7 +198,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun failsWhenAGuardReordersTheRoutesItKept() {
+    fun `fails when a guard reorders the routes it kept`() {
         val guard = NavigationGuard { _, new -> GuardVerdict.Resolved(new.reversed().toImmutableList()) }
         val runner = NavigationGuardRunnerImpl(listOf(guard))
 
@@ -208,7 +208,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun failsWhenGuardsDoNotSettle() {
+    fun `fails when guards do not settle`() {
         val runner = NavigationGuardRunnerImpl(
             listOf(
                 redirecting(from = Details, to = SignIn),
@@ -222,7 +222,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun routeGuardOnlyLooksAtTheRoutesItsMarkerNames() {
+    fun `route guard only looks at the routes its marker names`() {
         val seen = mutableListOf<Route>()
         val runner = NavigationGuardRunnerImpl(listOf(authGuard(seen)))
 
@@ -235,7 +235,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun routeGuardAlsoJudgesRoutesThatWereAlreadyOnTheStack() {
+    fun `route guard also judges routes that were already on the stack`() {
         // Not a diff: "Secret requires a session" holds for any stack containing Secret, however it
         // got there. Judging only what is entering is what would make a revalidation a no-op.
         val runner = NavigationGuardRunnerImpl(listOf(authGuard()))
@@ -246,7 +246,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun routeGuardCollapsesTwoRoutesRedirectedToTheSameDestination() {
+    fun `route guard collapses two routes redirected to the same destination`() {
         val runner = NavigationGuardRunnerImpl(listOf(authGuard()))
 
         val verdict = runner.resolve(old = stackOf(Root), new = stackOf(Root, Secret, AlsoSecret))
@@ -269,14 +269,14 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun extendedWithReturnsItselfWhenAHostContributesNothing() {
+    fun `extended with returns itself when a host contributes nothing`() {
         val runner = NavigationGuardRunnerImpl(listOf(rejecting(Details)))
 
         assertSame(runner, runner.extendedWith(persistentListOf()))
     }
 
     @Test
-    fun extendedWithAppliesBothTheAppWideAndTheHostsOwnGuards() {
+    fun `extended with applies both the app wide and the hosts own guards`() {
         val appRunner = NavigationGuardRunnerImpl(listOf(rejecting(Paywall)))
         val hostRunner = appRunner.extendedWith(persistentListOf(rejecting(Details)))
 
@@ -289,7 +289,7 @@ class NavigationGuardRunnerImplTest {
     // The block body returns the TestResult rather than discarding it: on a JS target that value
     // is the only thing that keeps the runner waiting for the coroutine.
     @Test
-    fun invalidationsCarryEveryGuardsStreamIncludingAHostsOwn(): TestResult {
+    fun `invalidations carry every guards stream including a hosts own`(): TestResult {
         return runTest {
             val appRunner = NavigationGuardRunnerImpl(listOf(invalidatingGuard(times = 2)))
             val hostRunner = appRunner.extendedWith(persistentListOf(invalidatingGuard(times = 3)))
@@ -300,7 +300,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun invalidationsAreSilentForGuardsThatDoNotOverrideThem(): TestResult {
+    fun `invalidations are silent for guards that do not override them`(): TestResult {
         return runTest {
             val runner = NavigationGuardRunnerImpl(listOf(rejecting(Details), authGuard()))
 
@@ -323,7 +323,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun resolveDeferrableSurfacesADeferralAndResolveCollapsesItToWhatExistsMeanwhile() {
+    fun `resolve deferrable surfaces a deferral and resolve collapses it to what exists meanwhile`() {
         val runner = NavigationGuardRunnerImpl(listOf(deferring(Details)))
 
         val deferrable = runner.resolveDeferrable(old = stackOf(Root), new = stackOf(Root, Details))
@@ -337,7 +337,7 @@ class NavigationGuardRunnerImplTest {
     }
 
     @Test
-    fun aDeferralStopsTheFoldSoLaterGuardsDoNotJudgeAStackNobodySettledOn() {
+    fun `a deferral stops the fold so later guards do not judge a stack nobody settled on`() {
         var wasLaterGuardCalled = false
         val later = NavigationGuard { _, new ->
             wasLaterGuardCalled = true

@@ -85,7 +85,7 @@ class LayerPackageBoundaryTest {
             package io.thernal.navkit.navigation.impl.data
 
             import io.thernal.navkit.session.impl.presentation.SessionState
-            import io.thernal.navkit.navigation.wiring.NavigationWiring
+            import io.thernal.navkit.navigation.wiring.NavigationProvidersModule
             """.trimIndent(),
         )
 

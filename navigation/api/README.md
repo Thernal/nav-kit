@@ -66,7 +66,7 @@ Start from what you are trying to do; the section named is where the mechanism i
 | show a route as a bottom sheet | `bottomSheetEntry` | [Bottom sheets](#bottom-sheets-scenes-and-transitions) | [sheets](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/sheets/README.md) |
 | show something instead of crashing on a route a host does not register | `NavigationHostParams.fallback` | [Fallback entries](#fallback-entries) | [sample](../../sample/README.md) |
 | change or turn off the animations | `transitionSpec` and friends on `NavigationHostParams` | [Transitions](#transitions) | — |
-| log, measure or test what navigation did | `NavigationEventSink` | [Navigation events](#navigation-events) | [`SampleBindings.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) |
+| log, measure or test what navigation did | `NavigationEventSink` | [Navigation events](#navigation-events) | [`SampleProvidersModule.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleProvidersModule.kt) |
 
 ## The model
 
@@ -106,7 +106,7 @@ Five facts carry the rest of this document:
 |---|---|---|
 | `:navigation:api` | every feature module, and the app | the contracts in this document; re-exports nothing — see [Dependencies you declare](#dependencies-you-declare) |
 | `:navigation:impl` | the module that builds the graph; any module using `NavigationBackHandler` or `NavAnimations` | the Navigation3 host, the navigator, guards runner, stores, deep-link parsing |
-| `:navigation:wiring` | the module that declares the [Metro](https://github.com/ZacSweers/metro) graph | `NavigationWiring`, the bindings below |
+| `:navigation:wiring` | the module that declares the [Metro](https://github.com/ZacSweers/metro) graph | `NavigationProvidersModule` and `NavigationBindingsModule`, the bindings below |
 
 The modules are not published to a Maven repository; build against them from source.
 [`sample/shared/build.gradle.kts`](../../sample/shared/build.gradle.kts) is the reference consumer:
@@ -150,8 +150,9 @@ A module that names none of these types needs none of them. A missing one shows 
 
 ### With Metro
 
-`NavigationWiring` is a `@BindingContainer` contributed to `AppScope`, so a graph over `AppScope`
-picks it up once the module is on the classpath. It binds:
+`NavigationProvidersModule` (`@Provides`, the multibindings) and `NavigationBindingsModule` (`@Binds`)
+are `@BindingContainer`s contributed to `AppScope`, so a graph over `AppScope` picks them up once the
+module is on the classpath. They bind:
 
 | Binding | Scope | Built from |
 |---|---|---|
@@ -182,7 +183,7 @@ interface AppGraph {
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface AppBindings {
+interface AppProvidersModule {
     @Multibinds(allowEmpty = true)
     val graphProviders: Set<NavigationGraphProvider>
 
@@ -286,7 +287,7 @@ fun App(graph: AppGraph) {
 }
 ```
 
-The worked version is [`SampleApp.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleApp.kt).
+The worked version is [`SampleApp.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleApp.kt).
 
 ### The root back-stack owner
 
@@ -317,7 +318,7 @@ providers, and a closed type would make the root import every feature.
 Links reach the app on the platform and are resolved in common code. The platform's only job is
 `deepLinkIngress.publish(…)`.
 
-**Android** — [`MainActivity.kt`](../../sample/app/src/main/kotlin/io/thernal/navkit/sample/android/MainActivity.kt),
+**Android** — [`MainActivity.kt`](../../sample/app/src/main/kotlin/io/thernal/navkit/sample/app/MainActivity.kt),
 [`AndroidManifest.xml`](../../sample/app/src/main/AndroidManifest.xml):
 
 ```kotlin
@@ -346,7 +347,7 @@ reaches `onNewIntent` instead of a second activity, and add a `VIEW` intent filt
 `BROWSABLE` and your scheme. Set `android:enableOnBackInvokedCallback="true"` on `<application>`:
 that is what lets the predictive-back gesture reach the host — see [Transitions](#transitions).
 
-**iOS** — [`MainViewController.kt`](../../sample/shared/src/iosMain/kotlin/io/thernal/navkit/sample/app/MainViewController.kt),
+**iOS** — [`MainViewController.kt`](../../sample/shared/src/iosMain/kotlin/io/thernal/navkit/sample/shared/app/MainViewController.kt),
 [`iOSApp.swift`](../../sample/iosApp/iosApp/iOSApp.swift), [`Info.plist`](../../sample/iosApp/iosApp/Info.plist):
 
 ```kotlin
@@ -402,10 +403,14 @@ data class CheckoutReceipt(val orderId: String) : CheckoutRoute
 - **Implement `TransientRoute`** for a route that must not outlive the composition that put it
   there, such as a guard's placeholder. A host drops transient routes from the stack it is handed
   when it first composes.
-- **Keep routes in a stack distinct.** Navigation3 keys an entry's saved state by its content key —
-  `route.toString()` by default — so two equal routes in one stack share one state. `navigate(route)`
+- **Keep routes in a stack distinct.** An entry's saved state is keyed by its content key, so two
+  equal routes in one stack share one state. `navigate(route)`
   returns to an entry already in the stack instead of pushing a duplicate; `RouteGuard`
   de-duplicates its rewrites, and the guard runner rejects a guard that introduces a duplicate.
+- **Never override `toString()`, and register with `navEntry` / `bottomSheetEntry`.** They key an
+  entry's content by the route's full name plus its `toString()` (a `data class` adds its arguments).
+  Navigation3's own `entry<…>` keys by `toString()` alone, so `data object Main` in two features would
+  share one key and the transition between them would not run.
 
 The kit does not persist a back stack; its owner decides whether to. An owner that saves its stack
 across process death needs routes it can serialize — one more reason to keep them small.
@@ -437,8 +442,8 @@ fun <R : Route> NavigationHost(
 
 ```kotlin
 NavigationHost(params = params) {
-    navEntry<CheckoutAmount> { AmountScreen() }
-    navEntry<CheckoutReceipt> { route -> ReceiptScreen(orderId = route.orderId) }
+    navEntry<CheckoutAmount> { AmountView() }
+    navEntry<CheckoutReceipt> { route -> ReceiptView(orderId = route.orderId) }
     bottomSheetEntry<CouponSheet> { CouponSheetContent() }
 }
 ```
@@ -460,24 +465,26 @@ and a lambda Compose cannot memoize rebuilds every feature's entries on every re
 
 ### Feature-owned graphs
 
-A feature registers its own screens so the composition root never imports them:
+A feature registers its own screens so the composition root never imports them. The provider is
+`<Feature>GraphProvider`, next to the feature's routes in `presentation/navigation/`; the binding
+container that contributes it is the feature's `<Feature>ProvidersModule`:
 
 ```kotlin
-class ProfileGraph(private val repository: ProfileRepository) : NavigationGraphProvider {
+class ProfileGraphProvider(private val repository: ProfileRepository) : NavigationGraphProvider {
     override fun EntryProviderScope<Route>.provide() {
-        navEntry<ProfileRoute.Overview> { ProfileScreen(repository) }
-        navEntry<ProfileRoute.Edit> { route -> EditProfileScreen(route.profileId, repository) }
+        navEntry<ProfileRoute.Overview> { ProfileView(repository) }
+        navEntry<ProfileRoute.Edit> { route -> EditProfileView(route.profileId, repository) }
     }
 }
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-interface ProfileBindings {
+interface ProfileProvidersModule {
     companion object {
         @Provides
         @IntoSet
-        fun provideProfileGraph(repository: ProfileRepository): NavigationGraphProvider {
-            return ProfileGraph(repository)
+        fun provideProfileGraphProvider(repository: ProfileRepository): NavigationGraphProvider {
+            return ProfileGraphProvider(repository)
         }
     }
 }
@@ -493,7 +500,7 @@ typed `Route`; a nested host over a sealed flow type registers its entries inlin
 
 ```kotlin
 private fun unknownRouteEntry(route: Route): NavEntry<Route> {
-    return NavEntry(key = route) { unknown -> UnknownRouteScreen(route = unknown) }
+    return NavEntry(key = route) { unknown -> UnknownRouteView(route = unknown) }
 }
 
 NavigationHostParams(
@@ -533,7 +540,7 @@ nested host's stack.
 
 ```kotlin
 @Composable
-fun ProductScreen(productId: String) {
+fun ProductView(productId: String) {
     val navigator = LocalNavigator.current
     Button(onClick = { navigator.push(ReviewsRoute(productId)) }) { Text("Reviews") }
 }
@@ -602,7 +609,7 @@ class ProfileViewModel(private val profileId: String) : ViewModel() {
 }
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel) {
+fun ProfileView(viewModel: ProfileViewModel) {
     val navigator = LocalNavigator.current
     LaunchedEffect(viewModel, navigator) {
         viewModel.navigation.collect { effect ->
@@ -921,7 +928,7 @@ nothing is popped. Callbacks run newest first.
 
 ```kotlin
 @Composable
-fun DraftScreen() {
+fun DraftView() {
     val navigator = LocalNavigator.current
     var text by rememberSaveable { mutableStateOf("") }
     var isAsking by rememberSaveable { mutableStateOf(false) }
@@ -1093,7 +1100,7 @@ be mounted anywhere, but there is one link stream per app. The root applies `Nav
 through its own stack setter — see [the composition root](#the-composition-root). The ingress's
 `Boolean` only says the link was queued (`false` for a blank URI or a full buffer); what a handler
 decided arrives later, at the root. Record it there if a screen needs to show it, as the sample's
-[`DeepLinkLog`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/DeepLinkLog.kt) does.
+[`DeepLinkLog`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/DeepLinkLog.kt) does.
 
 The bridge is buffered, so a link published at cold start — before the root collects — still
 arrives.
@@ -1135,7 +1142,7 @@ mounts it.
 
 ```kotlin
 @Composable
-fun CheckoutFlowScreen() {
+fun CheckoutFlowView() {
     val flow: CheckoutFlowViewModel = viewModel { CheckoutFlowViewModel() }
     val steps by flow.steps.collectAsState()
     val outer = LocalNavigator.current           // read before mounting: inside, this is the flow's
@@ -1169,7 +1176,7 @@ fun CheckoutFlowScreen() {
 | Select a tab | replace the stack with the tab's root | hand the host that tab's list |
 | Depth after switching away and back | gone | kept |
 | Re-selecting the active tab | — | reset it to its root |
-| Sample | [`SingleHostTabsScreen.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/SingleHostTabsScreen.kt) | not in the sample |
+| Sample | [`SingleHostTabsScreen.kt`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/tabs/SingleHostTabsScreen.kt) | not in the sample |
 
 **Entry state does not survive a tab switch in either shape.** Navigation3 treats an entry that
 leaves the list it is handed as popped, and a pop clears that entry's `rememberSaveable` state and
@@ -1255,7 +1262,7 @@ left the stack.
 
 The overlay is rendered as a sibling of the pane rather than inside it, so the surface you draw has
 to fill the window and place the panel itself — see
-[`SheetSurface`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/ui/SheetSurface.kt)
+[`SheetSurface`](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/ui/SheetSurface.kt)
 for one that does, and the [sheets example](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/sheets/README.md)
 for the rest of it. A pane under an overlay stays composed, capped at `STARTED`: a result posted
 from a sheet reaches the screen behind it while the sheet is still open.
@@ -1400,7 +1407,9 @@ fun signedOutAccountBecomesSignIn() {
 
 ## Rules checklist
 
-- [ ] Routes implement `Route`, carry identifiers only, and are distinct within a stack.
+- [ ] Routes implement `Route`, carry identifiers only, are distinct within a stack, and never
+      override `toString()`; entries are registered with `navEntry` / `bottomSheetEntry`.
+- [ ] A feature's screens are registered by a `<Feature>GraphProvider` in its `presentation/navigation/`.
 - [ ] Each host's stack is owned outside it, and `onBackStackChange` is a plain setter.
 - [ ] The graph is created once per process; the root installs its provided values once.
 - [ ] Screens navigate through `LocalNavigator.current`; nothing stores a navigator.
@@ -1467,4 +1476,4 @@ fun signedOutAccountBecomesSignIn() {
 | `domain.deeplink` | `DeepLinkDispatcherImpl`, `parseDeepLink` |
 | `data` | `RuntimeDeepLinkBridge` |
 
-`wiring` — `io.thernal.navkit.navigation.wiring.NavigationWiring`.
+`wiring` — `io.thernal.navkit.navigation.wiring`: `NavigationProvidersModule`, `NavigationBindingsModule`.

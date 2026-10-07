@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class BackDispatcherImplTest {
     @Test
-    fun dispatchReturnsFalseWithNoCallbacks() {
+    fun `dispatch returns false with no callbacks`() {
         val dispatcher = BackDispatcherImpl()
 
         assertFalse(dispatcher.dispatch())
@@ -17,7 +17,7 @@ class BackDispatcherImplTest {
     }
 
     @Test
-    fun theMostRecentlyRegisteredCallbackWins() {
+    fun `the most recently registered callback wins`() {
         val dispatcher = BackDispatcherImpl()
         val handled = mutableListOf<String>()
         dispatcher.register(
@@ -38,7 +38,7 @@ class BackDispatcherImplTest {
     }
 
     @Test
-    fun aCallbackThatDeclinesFallsThroughToTheNextOne() {
+    fun `a callback that declines falls through to the next one`() {
         val dispatcher = BackDispatcherImpl()
         val handled = mutableListOf<String>()
         dispatcher.register(
@@ -59,7 +59,7 @@ class BackDispatcherImplTest {
     }
 
     @Test
-    fun closingTheRegistrationStopsInterception() {
+    fun `closing the registration stops interception`() {
         val dispatcher = BackDispatcherImpl()
         val registration = dispatcher.register(BackCallback { true })
 
@@ -70,7 +70,7 @@ class BackDispatcherImplTest {
     }
 
     @Test
-    fun aNestedDispatchConsumesNothing() {
+    fun `a nested dispatch consumes nothing`() {
         // A callback that lets back through by calling the navigator — which consults this
         // dispatcher first — would otherwise be dispatched to again, forever.
         val dispatcher = BackDispatcherImpl()

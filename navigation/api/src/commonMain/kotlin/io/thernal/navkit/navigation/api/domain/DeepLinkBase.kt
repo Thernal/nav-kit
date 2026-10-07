@@ -3,16 +3,6 @@ package io.thernal.navkit.navigation.api.domain
 import io.ktor.http.decodeURLPart
 import io.ktor.http.encodeURLParameter
 
-/** `scheme://host/path` — the host and the path optional, a query or a fragment not allowed. */
-private val BASE_PATTERN = Regex("^([a-zA-Z][a-zA-Z0-9+.\\-]*)://([^/?#]*)(/[^?#]*)?$")
-
-private const val SCHEME_GROUP = 1
-private const val HOST_GROUP = 2
-private const val PATH_GROUP = 3
-
-/** Schemes whose host is a domain, which a base therefore has to name. */
-private val WEB_SCHEMES = setOf("http", "https")
-
 /**
  * A prefix the application's links start with — `navkit://`, `https://example.com/app`. A link is
  * read by removing the most specific registered base it starts with; one matching none is not the
@@ -66,3 +56,13 @@ class DeepLinkBase(uri: String) {
         return uri
     }
 }
+
+/** `scheme://host/path` — the host and the path optional, a query or a fragment not allowed. */
+private val BASE_PATTERN = Regex("^([a-zA-Z][a-zA-Z0-9+.\\-]*)://([^/?#]*)(/[^?#]*)?$")
+
+private const val SCHEME_GROUP = 1
+private const val HOST_GROUP = 2
+private const val PATH_GROUP = 3
+
+/** Schemes whose host is a domain, which a base therefore has to name. */
+private val WEB_SCHEMES = setOf("http", "https")

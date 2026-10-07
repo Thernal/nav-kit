@@ -91,13 +91,13 @@ commonMain.dependencies {
 
 ### 2. Build one graph for the whole process
 
-[`app/SampleGraph.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleGraph.kt)
+[`app/SampleGraph.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleGraph.kt)
 asks for what the root needs, by contract, and names no feature:
 
 ```kotlin
 @DependencyGraph(AppScope::class)
 interface SampleGraph {
-    val providedValues: Set<ProvidedValue<*>>          // renderer, results, arguments — from NavigationWiring
+    val providedValues: Set<ProvidedValue<*>>          // renderer, results, arguments — from NavigationProvidersModule
     val graphProviders: Set<NavigationGraphProvider>   // every feature's screens
     val examples: Set<SampleExample>                   // the sample's own index
     val deepLinkEvents: DeepLinkEvents
@@ -107,22 +107,22 @@ interface SampleGraph {
 }
 ```
 
-[`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt)
+[`app/SampleProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleProvidersModule.kt)
 declares the application's own multibindings (`@Multibinds(allowEmpty = true)`) and the two
 `DeepLinkBase`s its links start with. The kit's multibindings — guards, deep-link handlers, deep-link
-bases, event sinks — are declared by `NavigationWiring`.
+bases, event sinks — are declared by `NavigationProvidersModule`.
 
 The graph is created **once per process** and handed to the composition:
-[`SampleApplication.kt`](app/src/main/kotlin/io/thernal/navkit/sample/android/SampleApplication.kt)
+[`SampleApplication.kt`](app/src/main/kotlin/io/thernal/navkit/sample/app/SampleApplication.kt)
 on Android, a process-wide `lazy` in
-[`MainViewController.kt`](shared/src/iosMain/kotlin/io/thernal/navkit/sample/app/MainViewController.kt)
+[`MainViewController.kt`](shared/src/iosMain/kotlin/io/thernal/navkit/sample/shared/app/MainViewController.kt)
 on iOS. The sample used to remember the graph in the composition: a rotation rebuilt the session, the
 drafts, the argument store and the results mailbox, while the back stack — in a ViewModel — survived and
 pointed at state that no longer existed.
 
 ### 3. Write the composition root
 
-[`app/SampleApp.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleApp.kt) does the
+[`app/SampleApp.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleApp.kt) does the
 three things every application does:
 
 ```kotlin
@@ -170,7 +170,7 @@ fun SampleApp(graph: SampleGraph) {
 
 ### 4. Own the root back stack outside the host
 
-[`app/RootViewModel.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/RootViewModel.kt):
+[`app/RootViewModel.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/RootViewModel.kt):
 a `StateFlow<ImmutableList<Route>>`, a **plain** `onBackStackChange` setter — every command, guard
 correction and settled deferral arrives through it — and `onDeepLink(routes)`, which replaces the stack.
 It is typed `Route` rather than a sealed application type, because the entries come from feature
@@ -178,16 +178,16 @@ providers and a closed type would import every feature.
 
 ### 5. Contribute each feature
 
-Every example package ends in a `*Bindings.kt` of the same shape — see
-[`basics/BasicsBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/BasicsBindings.kt):
+Every example package ends in a `*ProvidersModule.kt` of the same shape — see
+[`basics/BasicsProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/basics/BasicsProvidersModule.kt):
 
 | Contribute `@IntoSet` | Type | Example |
 |---|---|---|
 | the feature's screens | `NavigationGraphProvider` | every package |
-| an access or transition rule | `NavigationGuard` | [`GuardsBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/GuardsBindings.kt), [`BackBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/BackBindings.kt) |
-| the pages it opens from links | `DeepLinkHandler` | [`DeepLinksBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/DeepLinksBindings.kt) |
-| the schemes and domains the app's links start with — once, by the application | `DeepLinkBase` | [`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) |
-| an observer of navigation | `NavigationEventSink` | [`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) — prints every command |
+| an access or transition rule | `NavigationGuard` | [`GuardsProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/guards/GuardsProvidersModule.kt), [`GuardsGraphProvider.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/guards/GuardsGraphProvider.kt), [`BackProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/backoverride/BackProvidersModule.kt), [`BackGraphProvider.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/backoverride/BackGraphProvider.kt) |
+| the pages it opens from links | `DeepLinkHandler` | [`DeepLinksProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/deeplinks/DeepLinksProvidersModule.kt), [`DeepLinksGraphProvider.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/deeplinks/DeepLinksGraphProvider.kt) |
+| the schemes and domains the app's links start with — once, by the application | `DeepLinkBase` | [`app/SampleProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleProvidersModule.kt) |
+| an observer of navigation | `NavigationEventSink` | [`app/SampleProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleProvidersModule.kt) — prints every command |
 
 State a guard reads — a session, a draft — is provided `@SingleIn(AppScope::class)`, because a guard
 runs outside composition and cannot see what a screen remembers.
@@ -196,10 +196,10 @@ runs outside composition and cannot see what a screen remembers.
 
 The platform's only navigation duty is to publish links; everything else is shared. Every scheme the
 platform declares is also registered as a `DeepLinkBase` in
-[`app/SampleBindings.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/app/SampleBindings.kt) —
+[`app/SampleProvidersModule.kt`](shared/src/commonMain/kotlin/io/thernal/navkit/sample/shared/app/SampleProvidersModule.kt) —
 a link whose scheme or domain is not registered resolves to `NotFound`.
 
-**Android** — [`MainActivity.kt`](app/src/main/kotlin/io/thernal/navkit/sample/android/MainActivity.kt)
+**Android** — [`MainActivity.kt`](app/src/main/kotlin/io/thernal/navkit/sample/app/MainActivity.kt)
 and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
 
 - the activity is `android:launchMode="singleTop"`, so a link arriving while the app is open reaches
@@ -214,7 +214,7 @@ and [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml):
 
 **iOS** — [`iOSApp.swift`](iosApp/iosApp/iOSApp.swift), [`ContentView.swift`](iosApp/iosApp/ContentView.swift),
 [`Info.plist`](iosApp/iosApp/Info.plist) and
-[`MainViewController.kt`](shared/src/iosMain/kotlin/io/thernal/navkit/sample/app/MainViewController.kt):
+[`MainViewController.kt`](shared/src/iosMain/kotlin/io/thernal/navkit/sample/shared/app/MainViewController.kt):
 
 - `ContentView` wraps `mainViewController()` — a `ComposeUIViewController` over the same `SampleApp`;
 - `.onOpenURL` calls the Kotlin `handleDeepLink(url:)`, which publishes to the ingress;
