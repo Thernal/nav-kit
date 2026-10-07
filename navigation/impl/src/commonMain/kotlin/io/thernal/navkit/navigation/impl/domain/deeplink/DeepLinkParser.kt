@@ -5,14 +5,6 @@ import io.ktor.http.parseQueryString
 import io.thernal.navkit.navigation.api.domain.DeepLink
 import io.thernal.navkit.navigation.api.domain.DeepLinkBase
 
-/** `scheme://host/path?query#fragment`, everything after the scheme optional. */
-private val LINK_PATTERN = Regex("^([a-zA-Z][a-zA-Z0-9+.\\-]*)://([^/?#]*)([^?#]*)(?:\\?([^#]*))?(?:#.*)?$")
-
-private const val SCHEME_GROUP = 1
-private const val HOST_GROUP = 2
-private const val PATH_GROUP = 3
-private const val QUERY_GROUP = 4
-
 /** A link split at its host, before any base is removed. */
 private class LinkParts(
     val scheme: String,
@@ -92,3 +84,11 @@ private fun DeepLinkBase.specificity(): Int {
     }
     return hostCount + pathSegments.size
 }
+
+/** `scheme://host/path?query#fragment`, everything after the scheme optional. */
+private val LINK_PATTERN = Regex("^([a-zA-Z][a-zA-Z0-9+.\\-]*)://([^/?#]*)([^?#]*)(?:\\?([^#]*))?(?:#.*)?$")
+
+private const val SCHEME_GROUP = 1
+private const val HOST_GROUP = 2
+private const val PATH_GROUP = 3
+private const val QUERY_GROUP = 4

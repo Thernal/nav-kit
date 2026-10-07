@@ -22,6 +22,8 @@ import io.thernal.navkit.navigation.api.presentation.log.NavigationEventSink
 import io.thernal.navkit.navigation.api.presentation.model.NavigationHostParams
 import io.thernal.navkit.navigation.api.presentation.model.Route
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
+import io.thernal.navkit.navigation.api.presentation.navigator.Navigator
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * Assembles one mounted host out of three parts — [rememberGuardedBackStack] what may be rendered,
@@ -57,31 +59,13 @@ internal fun <R : Route> NavigationHostImpl(
         events = events,
     )
 
-    // A stack this host did not write — a deep link, a tab bar handing over a different list — is a
-    // way out of a waiting deferral. After composition, so it runs before this frame submits one.
-    SideEffect {
-        if (writer.acknowledge(params.backStack)) {
-            deferrals.abandon()
-        }
-    }
-
-    // A deferral this host found itself, on a stack it was handed or revalidated. The navigator
-    // submits its own; both land in the same slot.
-    LaunchedEffect(guarded.verdict) {
-        val verdict = guarded.verdict
-        if (verdict is GuardVerdict.Deferred) {
-            deferrals.submit(attempted = guarded.proposed, deferral = verdict)
-        }
-    }
-
-    // The one place a deferral is awaited: the scope is tied to this composition, so an unmounted
-    // host cancels what it started.
-    val pending = deferrals.pending
-    LaunchedEffect(pending) {
-        if (pending != null) {
-            deferrals.drive(run = pending, navigator = navigators.deferral)
-        }
-    }
+    DeferralEffects(
+        backStack = params.backStack,
+        guarded = guarded,
+        writer = writer,
+        deferrals = deferrals,
+        navigator = navigators.deferral,
+    )
 
     // An argument's lifetime is a fact about the stack, so the host that owns the stack applies it.
     // Depth 0 only — see LocalNavigationHostDepth.
@@ -118,5 +102,41 @@ internal fun <R : Route> NavigationHostImpl(
             entryDecorators = config.decorators,
             entryProvider = config.entryProvider,
         )
+    }
+}
+
+/** Where this host's deferrals start, are abandoned and are awaited. */
+@Composable
+private fun <R : Route> DeferralEffects(
+    backStack: ImmutableList<R>,
+    guarded: GuardedBackStack<R>,
+    writer: HostStackWriter<R>,
+    deferrals: HostDeferrals,
+    navigator: Navigator,
+) {
+    // A stack this host did not write — a deep link, a tab bar handing over a different list — is a
+    // way out of a waiting deferral. After composition, so it runs before this frame submits one.
+    SideEffect {
+        if (writer.acknowledge(backStack)) {
+            deferrals.abandon()
+        }
+    }
+
+    // A deferral this host found itself, on a stack it was handed or revalidated. The navigator
+    // submits its own; both land in the same slot.
+    LaunchedEffect(guarded.verdict) {
+        val verdict = guarded.verdict
+        if (verdict is GuardVerdict.Deferred) {
+            deferrals.submit(attempted = guarded.proposed, deferral = verdict)
+        }
+    }
+
+    // The one place a deferral is awaited: the scope is tied to this composition, so an unmounted
+    // host cancels what it started.
+    val pending = deferrals.pending
+    LaunchedEffect(pending) {
+        if (pending != null) {
+            deferrals.drive(run = pending, navigator = navigator)
+        }
     }
 }

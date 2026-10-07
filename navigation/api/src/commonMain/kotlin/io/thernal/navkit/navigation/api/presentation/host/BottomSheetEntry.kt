@@ -10,6 +10,7 @@ const val BOTTOM_SHEET_METADATA_KEY = "nav-bottom-sheet"
 /** Registers [K] to render inside a bottom sheet instead of the primary pane. */
 inline fun <reified K : Route> EntryProviderScope<in K>.bottomSheetEntry(noinline content: @Composable (K) -> Unit) {
     entry<K>(
+        clazzContentKey = { route -> routeContentKey(route) },
         metadata = mapOf(BOTTOM_SHEET_METADATA_KEY to true),
         content = content,
     )

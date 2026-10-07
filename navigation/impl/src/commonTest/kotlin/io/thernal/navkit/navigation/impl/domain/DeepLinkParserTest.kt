@@ -15,7 +15,7 @@ class DeepLinkParserTest {
     private val bases = setOf(appScheme, web)
 
     @Test
-    fun anAppSchemeBaseLeavesTheHostAsTheFirstPage() {
+    fun `an app scheme base leaves the host as the first page`() {
         val link = parseDeepLink("navkit://booking/42", bases)
 
         assertEquals(listOf("booking", "42"), link?.pathSegments)
@@ -25,7 +25,7 @@ class DeepLinkParserTest {
     }
 
     @Test
-    fun aWebBaseRemovesItsHost() {
+    fun `a web base removes its host`() {
         val link = parseDeepLink("https://example.com/booking/42", bases)
 
         assertEquals(listOf("booking", "42"), link?.pathSegments)
@@ -35,14 +35,14 @@ class DeepLinkParserTest {
     }
 
     @Test
-    fun aWebBaseRemovesItsPathToo() {
+    fun `a web base removes its path too`() {
         val link = parseDeepLink("https://example.com/app/booking/42", setOf(webApp))
 
         assertEquals(listOf("booking", "42"), link?.pathSegments)
     }
 
     @Test
-    fun theMostSpecificMatchingBaseWins() {
+    fun `the most specific matching base wins`() {
         val link = parseDeepLink("https://example.com/app/booking", setOf(web, webApp))
 
         assertEquals(webApp, link?.base)
@@ -50,19 +50,19 @@ class DeepLinkParserTest {
     }
 
     @Test
-    fun aBasePathMatchesWholeSegmentsOnly() {
+    fun `a base path matches whole segments only`() {
         assertNull(parseDeepLink("https://example.com/apple/booking", setOf(webApp)))
     }
 
     @Test
-    fun aLinkThatStartsWithNoRegisteredBaseIsRejected() {
+    fun `a link that starts with no registered base is rejected`() {
         assertNull(parseDeepLink("https://elsewhere.example/booking/42", bases))
         assertNull(parseDeepLink("otherapp://booking/42", bases))
         assertNull(parseDeepLink("navkit://booking/42", emptySet()))
     }
 
     @Test
-    fun theSchemeAndHostCompareCaseInsensitively() {
+    fun `the scheme and host compare case insensitively`() {
         val link = parseDeepLink("HTTPS://Example.COM/booking", bases)
 
         assertEquals(web, link?.base)
@@ -70,7 +70,7 @@ class DeepLinkParserTest {
     }
 
     @Test
-    fun queryValuesAreDecodedAndGroupedByKey() {
+    fun `query values are decoded and grouped by key`() {
         val link = parseDeepLink("navkit://search?q=bar%20table&tag=a&tag=b", bases)
 
         assertEquals("bar table", link?.query("q"))
@@ -78,21 +78,21 @@ class DeepLinkParserTest {
     }
 
     @Test
-    fun pathSegmentsAreDecoded() {
+    fun `path segments are decoded`() {
         val link = parseDeepLink("https://example.com/venue/bar%20table", bases)
 
         assertEquals(listOf("venue", "bar table"), link?.pathSegments)
     }
 
     @Test
-    fun aLinkWithNoPageIsRejected() {
+    fun `a link with no page is rejected`() {
         assertNull(parseDeepLink("https://example.com", bases))
         assertNull(parseDeepLink("https://example.com/app", setOf(webApp)))
         assertNull(parseDeepLink("   ", bases))
     }
 
     @Test
-    fun aBuiltLinkIsReadBackAsTheSamePage() {
+    fun `a built link is read back as the same page`() {
         listOf(appScheme, web, webApp).forEach { base ->
             val built = buildDeepLinkUri(base = base, page = "profile", query = mapOf("id" to "42 a"))
 
@@ -105,20 +105,20 @@ class DeepLinkParserTest {
     }
 
     @Test
-    fun aBuiltLinkHasTheShapeOfItsBase() {
+    fun `a built link has the shape of its base`() {
         assertEquals("navkit://profile?id=42", buildDeepLinkUri(appScheme, "profile", mapOf("id" to "42")))
         assertEquals("https://example.com/profile", buildDeepLinkUri(web, "profile"))
         assertEquals("https://example.com/app/profile", buildDeepLinkUri(webApp, "profile"))
     }
 
     @Test
-    fun aBaseIsNormalizedSoEquivalentFormsAreEqual() {
+    fun `a base is normalized so equivalent forms are equal`() {
         assertEquals(DeepLinkBase("https://example.com"), DeepLinkBase("HTTPS://Example.com/"))
         assertEquals("navkit://", DeepLinkBase("NavKit://").uri)
     }
 
     @Test
-    fun aMalformedBaseIsRejected() {
+    fun `a malformed base is rejected`() {
         assertFailsWith<IllegalArgumentException> { DeepLinkBase("navkit") }
         assertFailsWith<IllegalArgumentException> { DeepLinkBase("https://example.com?tab=1") }
         assertFailsWith<IllegalArgumentException> { DeepLinkBase("https://") }

@@ -69,12 +69,7 @@ internal fun <R : Route> rememberGuardedBackStack(
         if (inEffect != null) {
             params.backStack
         } else {
-            val restored = params.backStack.filterNot { route -> route is TransientRoute }
-            if (restored.isEmpty()) {
-                params.backStack
-            } else {
-                restored.toImmutableList()
-            }
+            params.backStack.withoutTransientRoutes()
         }
     }
 
@@ -110,4 +105,13 @@ internal fun <R : Route> rememberGuardedBackStack(
             runner = hostRunner,
         )
     }
+}
+
+/** The stack without its transient routes, unless nothing else would be left. */
+private fun <R : Route> ImmutableList<R>.withoutTransientRoutes(): ImmutableList<R> {
+    val restored = filterNot { route -> route is TransientRoute }
+    if (restored.isEmpty()) {
+        return this
+    }
+    return restored.toImmutableList()
 }
