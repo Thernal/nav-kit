@@ -13,10 +13,10 @@ class LayerPackageBoundaryTest {
     fun `reports data imports from presentation and allows domain`() {
         val findings = rule.lint(
             """
-            package io.thernal.navkit.navigation.impl.data
+            package io.thernal.navkit.feature.impl.data
 
-            import io.thernal.navkit.navigation.impl.domain.deeplink.DeepLinkParser
-            import io.thernal.navkit.navigation.impl.presentation.host.NavigationView
+            import io.thernal.navkit.feature.impl.domain.parser.FeedParser
+            import io.thernal.navkit.feature.impl.presentation.feed.FeedView
             """.trimIndent(),
         )
 
@@ -27,10 +27,10 @@ class LayerPackageBoundaryTest {
     fun `reports presentation imports from data and allows domain`() {
         val findings = rule.lint(
             """
-            package io.thernal.navkit.navigation.impl.presentation.host
+            package io.thernal.navkit.feature.impl.presentation.feed
 
-            import io.thernal.navkit.navigation.impl.data.RuntimeDeepLinkBridge
-            import io.thernal.navkit.navigation.impl.domain.navigator.BackStackNavigator
+            import io.thernal.navkit.feature.impl.data.RemoteFeedSource
+            import io.thernal.navkit.feature.impl.domain.feed.FeedLoader
             """.trimIndent(),
         )
 
@@ -41,11 +41,11 @@ class LayerPackageBoundaryTest {
     fun `reports domain imports from data and presentation`() {
         val findings = rule.lint(
             """
-            package io.thernal.navkit.navigation.impl.domain.navigator
+            package io.thernal.navkit.feature.impl.domain.feed
 
-            import io.thernal.navkit.navigation.api.presentation.model.Route
-            import io.thernal.navkit.navigation.impl.data.RuntimeDeepLinkBridge
-            import io.thernal.navkit.navigation.impl.presentation.host.NavigationView
+            import io.thernal.navkit.feature.api.presentation.model.FeedItem
+            import io.thernal.navkit.feature.impl.data.RemoteFeedSource
+            import io.thernal.navkit.feature.impl.presentation.feed.FeedView
             """.trimIndent(),
         )
 
@@ -56,9 +56,9 @@ class LayerPackageBoundaryTest {
     fun `allows presentation to name a domain type inside an api module`() {
         val findings = rule.lint(
             """
-            package io.thernal.navkit.navigation.api.presentation.deeplink
+            package io.thernal.navkit.feature.api.presentation.feed
 
-            import io.thernal.navkit.navigation.api.domain.DeepLinkSource
+            import io.thernal.navkit.feature.api.domain.FeedSource
             """.trimIndent(),
         )
 
@@ -69,9 +69,9 @@ class LayerPackageBoundaryTest {
     fun `ignores the api module of the same capability`() {
         val findings = rule.lint(
             """
-            package io.thernal.navkit.navigation.impl.domain.deeplink
+            package io.thernal.navkit.feature.impl.domain.feed
 
-            import io.thernal.navkit.navigation.api.data.DeepLinkService
+            import io.thernal.navkit.feature.api.data.FeedService
             """.trimIndent(),
         )
 
@@ -82,10 +82,10 @@ class LayerPackageBoundaryTest {
     fun `ignores another module and non layered packages`() {
         val findings = rule.lint(
             """
-            package io.thernal.navkit.navigation.impl.data
+            package io.thernal.navkit.feature.impl.data
 
             import io.thernal.navkit.session.impl.presentation.SessionState
-            import io.thernal.navkit.navigation.wiring.NavigationProvidersModule
+            import io.thernal.navkit.feature.wiring.FeedProvidersModule
             """.trimIndent(),
         )
 

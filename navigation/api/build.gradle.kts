@@ -10,6 +10,7 @@ kotlin {
             // `ImmutableList`), yet none is re-exported: `api(...)` is not used in this repository,
             // so a consumer declares each of them itself (navigation/api/README.md → Dependencies you declare).
             dependencies {
+                implementation(libs.compose.animation)
                 implementation(libs.navigation3.runtime)
                 implementation(libs.navigation3.ui)
                 implementation(libs.kotlinx.coroutines.core)

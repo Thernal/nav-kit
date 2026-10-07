@@ -49,6 +49,7 @@ docs:
 # whenever these lines change; never written into the application's build.
 requires:
   - plugin <alias>.compose — Kotlin Multiplatform library + Compose Multiplatform (build-logic/convention: KmpLibraryConventionPlugin, ComposeConventionPlugin)
+  - catalog compose-runtime, compose-foundation, compose-ui, compose-animation (compose-multiplatform = 1.12.0) — the modules declare compose-animation themselves
   - plugin <alias>.injection — Metro, for navigation/wiring only (build-logic/convention: InjectionConventionPlugin)
   - targets android, iosArm64, iosSimulatorArm64 — navigation3-ui has no iosX64 variant
   - catalog navigation3-runtime, navigation3-ui (navigation3 = 1.1.1)
