@@ -20,6 +20,7 @@ kotlin {
                 // The sample is a consumer, so it names the three modules an application names:
                 // the contracts, the implementation that backs them, and the bindings that install
                 // both into a graph.
+                implementation(libs.compose.animation)
                 implementation(projects.navigation.api)
                 implementation(projects.navigation.impl)
                 implementation(projects.navigation.wiring)

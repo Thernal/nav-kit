@@ -27,8 +27,8 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 freeCompilerArgs.add("-Xexpect-actual-classes")
             }
 
-            // iosArm64 + iosSimulatorArm64 only: those are the two targets every Navigation3
-            // artifact in the catalog publishes. iosX64 has no navigation3-ui variant.
+            // The target set every kit builds for, so any of them can sit in one application. Compose
+            // Multiplatform publishes more (desktop, web, iosX64); no kit builds for them yet.
             androidTarget(namespace, catalog)
             iosArm64()
             iosSimulatorArm64()

@@ -6,6 +6,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(libs.compose.animation)
                 implementation(projects.navigation.api)
                 implementation(libs.navigation3.runtime)
                 implementation(libs.navigation3.ui)
