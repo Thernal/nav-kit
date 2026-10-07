@@ -19,7 +19,7 @@ compose-multiplatform = "1.12.0"
 compose-material3 = "1.12.0-alpha03"
 
 # AndroidX, for the sample application module only: `setContent` lives in activity-compose.
-androidx-activity = "1.+"
+androidx-activity = "1.13.0"
 
 # Navigation 3
 # navigation3-runtime is the multiplatform AndroidX artifact (Google Maven); the UI layer is the
