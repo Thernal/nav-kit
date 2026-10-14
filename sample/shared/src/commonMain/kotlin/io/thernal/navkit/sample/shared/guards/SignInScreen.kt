@@ -20,8 +20,6 @@ import io.thernal.navkit.sample.shared.ui.SamplePalette
 import io.thernal.navkit.sample.shared.ui.SampleScreen
 import io.thernal.navkit.sample.shared.ui.Topic
 
-private val accent = Topic.GUARDS.accent
-
 @Composable
 fun SignInScreen(
     route: SignInRoute,

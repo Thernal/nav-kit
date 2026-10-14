@@ -9,5 +9,6 @@ import io.thernal.navkit.navigation.api.presentation.model.Route
  */
 @PublishedApi
 internal fun routeContentKey(route: Route): String {
-    return "${route::class.qualifiedName}:$route"
+    val name = route::class.qualifiedName ?: route::class.toString()
+    return "$name:$route"
 }
