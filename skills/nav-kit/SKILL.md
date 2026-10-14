@@ -11,9 +11,9 @@ what happened, stack-level guards, typed results and arguments, back interceptio
 Source and the complete API guide: https://github.com/Thernal/nav-kit — `navigation/api/README.md`;
 `sample/` runs every capability.
 
-Three modules. `navigation/api` (package `io.thernal.navkit.navigation.api`) holds the contracts and is
+Four modules. `navigation/api` (package `io.thernal.navkit.navigation.api`) holds the contracts and is
 all a feature module needs. `navigation/impl` implements them. `navigation/wiring` binds them into a
-[Metro](https://github.com/ZacSweers/metro) graph.
+[Metro](https://github.com/ZacSweers/metro) graph. `navigation/testing` gives a feature's tests a `TestNavigator`.
 
 ## 1. Orient before writing
 
@@ -80,7 +80,7 @@ These hold everywhere; each reference builds on them.
 | forbid leaving a screen by any route | transition `NavigationGuard` | [guards.md](references/guards.md), [back-handling.md](references/back-handling.md) |
 | return a value; share a draft across steps | results; arguments | [passing-data.md](references/passing-data.md) |
 | open the app from a link or notification; build a link | `DeepLinkHandler`, `DeepLinkIngress` | [deep-links.md](references/deep-links.md) |
-| analytics or logging of navigation; unit tests | `NavigationEventSink`; the `*Impl` classes | [events-and-testing.md](references/events-and-testing.md) |
+| analytics or logging of navigation; unit tests | `NavigationEventSink`; `TestNavigator` (`navigation/testing`); the `*Impl` classes | [events-and-testing.md](references/events-and-testing.md) |
 | a crash, an exception message, a screen that does not appear, a value that is null; reviewing navigation code | — | [troubleshooting.md](references/troubleshooting.md) |
 
 Read only the references the task needs.

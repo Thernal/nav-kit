@@ -27,12 +27,14 @@ code:
   - navigation/api
   - navigation/impl
   - navigation/wiring
+  - navigation/testing
 
 # The public contract — its source, not its README, so a documentation fix does
 # not count. When it moves and `skill` has not moved since, the skill is reported
 # as behind the code it describes.
 surface:
   - navigation/api/src
+  - navigation/testing/src/commonMain
 
 # Installed into the application's skills directory, renamed like the code.
 skill:

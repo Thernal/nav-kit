@@ -46,6 +46,18 @@ fast and non-throwing. A `Push` of a route class name is not a screen view for p
 Everything except the composable host is plain Kotlin — put tests in `commonTest` so they run on JVM and iOS.
 Dependencies: `kotlin-test`, `kotlinx-coroutines-test`, and `:navigation:impl`.
 
+**A feature's test** that only needs a navigator — a screen's `Navigation(process: Navigator.() -> Unit)`
+effect — takes `:navigation:testing` and runs it on a `TestNavigator`, never a hand-written fake:
+
+```kotlin
+val navigator = TestNavigator(initial = listOf(SignInRoute))
+effect.process(navigator)
+assertEquals(listOf(SignInRoute, CodeRoute(phone)), navigator.stack)
+```
+
+It is the kit's `BackStackNavigator` with no guards, so a command behaves as in the app. Guards, events and
+back interception need the harness below.
+
 | Subject | Build | Assert |
 |---|---|---|
 | a guard | `NavigationGuardRunnerImpl(listOf(guard))` | `resolve(old, new).stack` / `.reason`; `resolveDeferrable` is `GuardVerdict.Deferred` |

@@ -91,6 +91,7 @@ delivery) — they are not about navigation.
 |---|---|
 | `navigation/api` | Routes, the navigator command surface, the `NavigationHost` render contract, guard/deep-link/result/back contracts, the navigation event stream. Depends on no implementation. |
 | `navigation/impl` | The Navigation3 host, the back-stack navigator, the bottom-sheet scene and its animation, transitions, deep-link parsing and dispatch, guards, results, arguments. |
+| `navigation/testing` | `TestNavigator`: the kit's own navigator over a list, for a feature's `commonTest` — a screen's navigation effect runs on it and the test reads `stack`. |
 | `navigation/wiring` | The worked example of installing the above into an application graph, with [Metro](https://github.com/ZacSweers/metro). `api` and `impl` name no container, so an app on a different one replaces just this module. |
 | `sample/` | A runnable Android and iOS app with simple and advanced examples of every capability — see [`sample/README.md`](sample/README.md). |
 | `skills/` | Agent skills for projects that use the kit — see [For AI agents](#for-ai-agents). |
