@@ -40,6 +40,7 @@ about delivery.
 | `docs/todos/` | open questions, one file each | a question opens or is decided (then delete it) |
 | `skills/nav-kit` | the same for an agent in an app that took the kit | the public surface changes — `kit status` flags a skill older than the surface (LAG) |
 | `kit.yml` | what an app copies and what its build must provide | a module, file part or requirement changes |
+| `evals/<skill>/` | one to three cases per skill, each failing without the skill and passing with it (knowledge `docs/SKILLS.md`) | the skill changes; a run on a new model appends a row |
 
 The skill's frontmatter has to load in Claude Code and in Codex alike (knowledge `docs/SKILLS.md`): a
 `description` of at most 1024 characters — 600–900 in practice, since an app's renamed package can
