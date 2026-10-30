@@ -11,7 +11,7 @@ import androidx.compose.runtime.rememberUpdatedState
  * screen, since a covered one is not composed. [onResult] belongs to the state holder.
  */
 @Composable
-fun <T : Any> ResultEffect(
+fun <T : Any> NavigationResultEffect(
     key: ResultKey<T>,
     onResult: (T) -> Unit,
 ) {

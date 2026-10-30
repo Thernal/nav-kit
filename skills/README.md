@@ -18,7 +18,7 @@ nav-kit/
     ├── screens-and-navigation.md         routes, entries, commands and outcomes, nested hosts, tabs, sheets, transitions
     ├── guards.md                         RouteGuard, transition guards, deferred decisions, invalidations, the runner's rules
     ├── passing-data.md                   results, arguments, and what survives process death
-    ├── back-handling.md                  NavigationBackHandler and its limits
+    ├── back-handling.md                  PopBackHandler and its limits
     ├── deep-links.md                     handlers, parsing, root resolution, platform wiring, outbound links
     ├── events-and-testing.md             NavigationEventSink recipes, unit-test harnesses
     └── troubleshooting.md                error messages, symptoms, review checklist

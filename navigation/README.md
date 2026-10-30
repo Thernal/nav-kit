@@ -344,13 +344,18 @@ val SelectedPhoto = resultKey<String>("selected_photo")
 screenResults.post(SelectedPhoto, photoUri)
 
 // the screen it returns to, from its own composable
-ResultEffect(SelectedPhoto) { photoUri -> state.onPhotoSelected(photoUri) }
+NavigationResultEffect(SelectedPhoto) { photoUri -> state.onPhotoSelected(photoUri) }
 ```
 
-`ResultEffect` collects `pending` and consumes inside a `LaunchedEffect`. Navigation3 composes only
-the entries of the current scene, so a covered screen is not composed and the effect does not run —
-it runs when the user comes back to it, which is exactly when a returning result is wanted. The
-composable forwards to its state holder; it does not decide.
+`NavigationResultEffect` collects `pending` and consumes inside a `LaunchedEffect`. Navigation3
+composes only the entries of the current scene, so a covered screen is not composed and the effect
+does not run — it runs when the user comes back to it, which is exactly when a returning result is
+wanted. The composable forwards to its state holder; it does not decide.
+
+It is not called `ResultEffect` because Navigation3 1.2 ships one:
+`androidx.navigation3.runtime.result.ResultEffect`, keyed by a string and reading its own
+`ResultEventBus`. A consumer whose short name resolved to that one — an IDE's auto-import, an agent
+that knows Navigation3 — would compile and never hear a result posted here.
 
 `pending` exposes names, not values, so one feature's results are not readable by every screen.
 Consuming removes the value: one delivery, never two. A value posted under a name that another
@@ -403,7 +408,7 @@ Navigation3 when that entry is popped.
 
 ## Back handling
 
-`NavigationBackHandler(enabled) { … }` (`impl`, `presentation.back`) lets a composable — a bottom
+`PopBackHandler(enabled) { … }` (`impl`, `presentation.back`) lets a composable — a bottom
 sheet, an in-screen editor — intercept back ahead of the host's own pop, for as long as it is in
 the composition. It registers against the `BackDispatcher` the mounted host provides through
 `LocalBackDispatcher`, which is the same object the host dispatches through. `BackDispatcher.register`
@@ -416,6 +421,12 @@ in the other — the same class of split the port table below records having rem
 `popBackTo` deliberately does not consult it: that is a jump, not a back. A callback that lets back
 through by calling `popBack()` from inside its own handler is not dispatched to again, because a
 nested dispatch consumes nothing.
+
+**The name says which back it hears.** It was `NavigationBackHandler` until that collided with
+`androidx.navigationevent.compose.NavigationBackHandler`, which `impl` itself uses for the bottom
+sheet and which hears only the system's back events, never a screen's own `popBack()`. Two
+functions of one name and different reach, side by side in one module, are an import away from
+the split the paragraph above removed.
 
 ## Navigation events
 

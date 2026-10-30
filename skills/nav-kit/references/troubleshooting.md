@@ -38,12 +38,12 @@
 | the host keeps "fighting" the owner; stack flickers or corrections vanish | `onBackStackChange` filters, transforms or re-applies a pending link | make it a plain setter; move rules into guards |
 | a guard's decision is not applied / a deferred prompt never resolves | the guard defers again after settling; or the wait was abandoned (user left the placeholder, a deep link or another list arrived); or the host was unmounted | update the cached answer before returning from `resolve`; re-trigger the navigation |
 | a PIN/loading placeholder is stuck after restoring | the placeholder is not a `TransientRoute` | implement `TransientRoute` |
-| a result never arrives | wrong key object/name; consumer not composed (covered, or in a hidden tab); `ResultEffect` placed in a composable that is not the waiting screen; value consumed elsewhere | declare one shared key; put `ResultEffect` in the waiting screen |
+| a result never arrives | wrong key object/name; consumer not composed (covered, or in a hidden tab); `NavigationResultEffect` placed in a composable that is not the waiting screen; value consumed elsewhere; Navigation3's `ResultEffect` imported instead | declare one shared key; put `NavigationResultEffect` in the waiting screen |
 | a result arrives but the UI forgets it | consumer state in `remember` | `rememberSaveable` or an entry-scoped ViewModel |
 | an argument is `null` on a later step | the scope names one route and that route left the stack (a `replace`, a guard rewrite); it names routes that exist only inside a nested host; a different key object with another name; process death | scope to the flow's sealed type in the outermost stack, put in the action that starts the flow; treat `null` as "restart the flow" |
 | an argument outlives its flow | its scope was never alive (flow never started), or it is scoped to nested-host routes | `remove` it; scope to outermost-stack routes |
 | typing in a field is lost or the cursor jumps | field bound to the argument store (not snapshot state) or to a `StateFlow` collected a frame late | own the field in `rememberSaveable`/snapshot state and write through |
-| "discard changes?" not shown for some exits | `NavigationBackHandler` only sees `popBack` while composed | add a transition guard for jumps, `replaceAll` and links |
+| "discard changes?" not shown for some exits | `PopBackHandler` only sees `popBack` while composed; or navigation-event's `NavigationBackHandler` was imported, which never sees an in-app `popBack()` | add a transition guard for jumps, `replaceAll` and links; import the kit's `PopBackHandler` |
 | the confirm dialog reappears after "Discard" | leaving with `popBack()` while the handler is still enabled | leave with `popBackTo(inclusive = true) { it is ThisRoute }` |
 | a back handler inside a tab also blocks the outer host's back | one `BackDispatcher` for all hosts | disable the handler when its host is not the one being navigated |
 | a deep link opens but back exits the app | the handler returned only the destination | return a stack with the app's root at the bottom |
@@ -95,7 +95,7 @@
 
 **Back and links**
 
-- [ ] "Confirm on back" is `NavigationBackHandler`; "never leave" is a transition guard.
+- [ ] "Confirm on back" is `PopBackHandler`; "never leave" is a transition guard.
 - [ ] Deep links resolve at the root, return whole stacks, do not check access, respect `source`.
 - [ ] Every platform-declared scheme and domain is a registered `DeepLinkBase`; outbound links use
       `buildDeepLinkUri` on those bases.

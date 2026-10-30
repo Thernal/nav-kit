@@ -7,7 +7,7 @@ and [Unsaved work](#advanced-unsaved-work) (advanced).
 
 | You want to… | Use | Hears |
 |---|---|---|
-| ask before **back** on one screen | `NavigationBackHandler` | the system gesture and every `popBack()` — only while the screen is composed |
+| ask before **back** on one screen | `PopBackHandler` | the system gesture and every `popBack()` — only while the screen is composed |
 | refuse **every way out** of a screen | a transition `NavigationGuard` | every stack change: back, `popBackTo`, `replaceAll`, `navigate`, deep links, guard rewrites |
 
 | File | What is in it |
@@ -28,7 +28,7 @@ fun DraftEditorScreen() {
     var text by rememberSaveable { mutableStateOf("") }
     var isAsking by rememberSaveable { mutableStateOf(false) }
 
-    NavigationBackHandler(enabled = text.isNotBlank()) {
+    PopBackHandler(enabled = text.isNotBlank()) {
         isAsking = true
     }
 
@@ -62,7 +62,7 @@ What to notice:
   not blank.
 - **`enabled` is read live.** Toggling it re-registers nothing, so the callback keeps its place among
   other interceptors.
-- `NavigationBackHandler` lives in `navigation/impl`. A module that must not see `impl` registers
+- `PopBackHandler` lives in `navigation/impl`. A module that must not see `impl` registers
   through `LocalBackDispatcher.current.register(BackCallback { … })` in a `DisposableEffect` instead.
 
 **Try it:** open *Confirm before leaving*, type a note, then press back with the gesture — and then
@@ -140,7 +140,7 @@ why. *Save* or *Discard*, and every way out works again.
 
 ## Doing this in your app
 
-- **Confirm on back for one screen:** `NavigationBackHandler(enabled = hasChanges) { showDialog() }`;
+- **Confirm on back for one screen:** `PopBackHandler(enabled = hasChanges) { showDialog() }`;
   leave after confirming with `popBackTo(inclusive = true) { it is ThisRoute }`, or disable the
   handler first and then `popBack()`.
 - **Refuse every way out:** keep the dirty state in an application-scoped object; write a

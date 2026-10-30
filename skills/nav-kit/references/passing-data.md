@@ -42,16 +42,18 @@ Consumer (the screen underneath):
 
 ```kotlin
 var colour by rememberSaveable { mutableStateOf<String?>(null) }
-ResultEffect(SelectedColour) { picked -> colour = picked }
-// or: ResultEffect(key = ReviewOutcome, onResult = viewModel::onDecision)
+NavigationResultEffect(SelectedColour) { picked -> colour = picked }
+// or: NavigationResultEffect(key = ReviewOutcome, onResult = viewModel::onDecision)
 ```
 
 Packages: `io.thernal.navkit.navigation.api.presentation.result` (`resultKey`, `LocalNavigationResults`,
-`ResultEffect`, `NavigationResults`).
+`NavigationResultEffect`, `NavigationResults`).
 
 Facts to rely on:
 
-- `ResultEffect` consumes when the consumer is composed. A covered screen is not composed, so delivery
+- Not `androidx.navigation3.runtime.result.ResultEffect`: it reads Navigation3's string-keyed
+  `ResultEventBus`, which nothing in nav-kit posts to, so it compiles and never fires.
+- `NavigationResultEffect` consumes when the consumer is composed. A covered screen is not composed, so delivery
   happens when it is uncovered; a result posted while it is on top arrives immediately.
 - Consuming removes the value: one delivery. A second `post` before consumption replaces the first.
 - `clear(key)` drops a value undelivered (a flow abandoned). `pending: StateFlow<Set<String>>` exposes names

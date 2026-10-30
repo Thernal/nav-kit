@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
 import io.thernal.navkit.navigation.api.presentation.result.LocalNavigationResults
-import io.thernal.navkit.navigation.api.presentation.result.ResultEffect
+import io.thernal.navkit.navigation.api.presentation.result.NavigationResultEffect
 import io.thernal.navkit.sample.shared.ui.ContentCard
 import io.thernal.navkit.sample.shared.ui.Explanation
 import io.thernal.navkit.sample.shared.ui.IconBadge
@@ -46,12 +46,12 @@ fun ReviewHomeScreen() {
     val decision by model.decision.collectAsState()
     val pending by results.pending.collectAsState()
 
-    // Read as this screen is composed, before `ResultEffect` consumes. Coming back from the flow is
+    // Read as this screen is composed, before `NavigationResultEffect` consumes. Coming back from the flow is
     // the only moment a pending name can be seen from here: while the flow is open, this screen is
     // not composed at all.
     val pendingOnArrival = remember { results.pending.value }
 
-    ResultEffect(key = ReviewOutcome, onResult = model::onDecision)
+    NavigationResultEffect(key = ReviewOutcome, onResult = model::onDecision)
 
     SampleScreen(
         title = "Approvals",

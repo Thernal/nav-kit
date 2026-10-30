@@ -51,13 +51,13 @@ Start from what you are trying to do; the section named is where the mechanism i
 | open, close or replace screens | `LocalNavigator.current` | [Navigator](#navigator) | [basics](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/README.md) |
 | know whether a command really happened | the returned `NavigationOutcome` | [Outcomes](#outcomes) | [basics](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/README.md) |
 | pass an id to the next screen | a property on the route | [Routes](#routes) | [basics](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/README.md) |
-| return a value to the screen underneath | `resultKey` + `post` + `ResultEffect` | [Results](#results) | [results](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/results/README.md) |
+| return a value to the screen underneath | `resultKey` + `post` + `NavigationResultEffect` | [Results](#results) | [results](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/results/README.md) |
 | share one value across the next several screens | `argumentKey` + `put(…, whileInStack { … })` | [Arguments](#arguments) | [arguments](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/arguments/README.md) |
 | keep users out of a screen unless a condition holds | `RouteGuard` over a marker interface | [Destination rules](#destination-rules-with-routeguard) | [guards](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) |
 | send users to sign-in and continue afterwards | `RouteGuard` substituting `SignIn(next = route)` | [Destination rules](#destination-rules-with-routeguard) | [guards](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) |
 | remove a screen when its condition stops holding | `NavigationGuard.invalidations` | [Staying correct](#staying-correct-when-the-answer-changes) | [guards](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) |
 | decide asynchronously — token refresh, PIN, server check | `GuardVerdict.Deferred` + a `TransientRoute` placeholder | [Deciding later](#deciding-later) | [guards](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) |
-| ask "discard changes?" when back is pressed on one screen | `NavigationBackHandler` | [Back handling](#back-handling) | [backoverride](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) |
+| ask "discard changes?" when back is pressed on one screen | `PopBackHandler` | [Back handling](#back-handling) | [backoverride](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) |
 | refuse every way out of a screen, not only back | a transition `NavigationGuard` | [Transition rules](#transition-rules) | [backoverride](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) |
 | open the app from a link or a notification | `DeepLinkHandler` + `DeepLinkIngress` | [Deep links](#deep-links) | [deeplinks](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) |
 | accept links on a scheme or a domain | a `DeepLinkBase` contributed `@IntoSet` | [Link bases](#link-bases) | [deeplinks](../../sample/shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) |
@@ -105,7 +105,7 @@ Five facts carry the rest of this document:
 | Module | Who depends on it | What it holds |
 |---|---|---|
 | `:navigation:api` | every feature module, and the app | the contracts in this document; re-exports nothing — see [Dependencies you declare](#dependencies-you-declare) |
-| `:navigation:impl` | the module that builds the graph; any module using `NavigationBackHandler` or `NavAnimations` | the Navigation3 host, the navigator, guards runner, stores, deep-link parsing |
+| `:navigation:impl` | the module that builds the graph; any module using `PopBackHandler` or `NavAnimations` | the Navigation3 host, the navigator, guards runner, stores, deep-link parsing |
 | `:navigation:wiring` | the module that declares the [Metro](https://github.com/ZacSweers/metro) graph | `NavigationProvidersModule` and `NavigationBindingsModule`, the bindings below |
 
 The modules are not published to a Maven repository; build against them from source.
@@ -840,7 +840,7 @@ Button(onClick = {
 
 // The screen it returns to
 var colour by rememberSaveable { mutableStateOf<String?>(null) }
-ResultEffect(SelectedColour) { picked -> colour = picked }
+NavigationResultEffect(SelectedColour) { picked -> colour = picked }
 ```
 
 | `NavigationResults` | |
@@ -850,12 +850,12 @@ ResultEffect(SelectedColour) { picked -> colour = picked }
 | `clear(key)` | drops it undelivered, for a flow abandoned rather than completed |
 | `pending: StateFlow<Set<String>>` | the names waiting — names only, so one feature's values are not readable by every screen |
 
-- **`ResultEffect` runs when the waiting screen is composed.** Navigation3 composes only the current
+- **`NavigationResultEffect` runs when the waiting screen is composed.** Navigation3 composes only the current
   scene, so a covered screen receives its result when it is uncovered; a result posted while it is
   on top arrives immediately.
 - **Store what the result updates in `rememberSaveable` or an entry-scoped ViewModel**, not in
   `remember`: the waiting screen leaves composition while it is covered, and `remember` forgets.
-  Forward to the state holder: `ResultEffect(ReviewOutcome, onResult = viewModel::onDecision)`.
+  Forward to the state holder: `NavigationResultEffect(ReviewOutcome, onResult = viewModel::onDecision)`.
 - **A flow can post and leave in one step** — `post` then `popBackTo { it is LauncherRoute }` — and
   the launcher is uncovered with the answer waiting. The mailbox is application-scoped, so this also
   works when the flow is a nested host.
@@ -933,8 +933,8 @@ fun DraftView() {
     var text by rememberSaveable { mutableStateOf("") }
     var isAsking by rememberSaveable { mutableStateOf(false) }
 
-    // impl: io.thernal.navkit.navigation.impl.presentation.back.NavigationBackHandler
-    NavigationBackHandler(enabled = text.isNotBlank()) { isAsking = true }
+    // impl: io.thernal.navkit.navigation.impl.presentation.back.PopBackHandler
+    PopBackHandler(enabled = text.isNotBlank()) { isAsking = true }
 
     if (isAsking) {
         DiscardDialog(
@@ -1428,7 +1428,7 @@ fun signedOutAccountBecomesSignIn() {
 - [ ] Deep links are resolved at the root and return whole stacks; handlers do not check access.
 - [ ] Every scheme and domain the platform declares is registered as a `DeepLinkBase`, and outbound
       links are built on those bases.
-- [ ] "Refuse every way out" is a transition guard; "confirm on back" is `NavigationBackHandler`.
+- [ ] "Refuse every way out" is a transition guard; "confirm on back" is `PopBackHandler`.
 
 ## Known limitations
 
@@ -1453,7 +1453,7 @@ fun signedOutAccountBecomesSignIn() {
 | `presentation.host` | `NavigationHost`, `NavigationHostRenderer`, `LocalNavigationHostRenderer`, `navEntry`, `bottomSheetEntry`, `BOTTOM_SHEET_METADATA_KEY` |
 | `presentation.navigator` | `Navigator`, `LocalNavigator`, `NavigationOutcome`, `NavigationGraphProvider`, `pop`, `popTo`, `reset` |
 | `presentation.guard` | `NavigationGuard`, `RouteGuard`, `GuardVerdict`, `BlockReason`, `NavigationGuardRunner` |
-| `presentation.result` | `ResultKey`, `resultKey`, `NavigationResults`, `LocalNavigationResults`, `ResultEffect` |
+| `presentation.result` | `ResultKey`, `resultKey`, `NavigationResults`, `LocalNavigationResults`, `NavigationResultEffect` |
 | `presentation.argument` | `ArgumentKey`, `argumentKey`, `NavigationArguments`, `LocalNavigationArguments`, `ArgumentScope`, `whileInStack`, `whileRouteInStack`, `ArgumentPruner` |
 | `presentation.back` | `BackDispatcher`, `BackCallback`, `LocalBackDispatcher` |
 | `presentation.deeplink` | `DeepLinkHandler`, `TypedDeepLinkHandler`, `DeepLinkOutcome`, `DeepLinkDispatcher`, `DeepLinkIngress`, `DeepLinkEvents`; `DeepLinkIngress.publish(intent)` on Android |
@@ -1465,7 +1465,7 @@ fun signedOutAccountBecomesSignIn() {
 
 | Package | Declarations |
 |---|---|
-| `presentation.back` | `NavigationBackHandler` |
+| `presentation.back` | `PopBackHandler` |
 | `presentation.host` | `NavAnimations`, `NavigationHostRendererImpl` |
 | `presentation.scene` | `BottomSheetSceneStrategy` |
 | `domain.navigator` | `BackStackNavigator` |
