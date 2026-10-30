@@ -54,7 +54,7 @@ every box below is settled. What follows is the record of why.
 - [x] Install it the way `LocalNavigationHostRenderer` already is: a `@Provides @IntoSet` function
       returning `ProvidedValue<*>` in `NavigationWiring`. The composition root already spreads
       `graph.providedValues`, so nothing else changes.
-- [x] Add `ResultEffect(key) { value -> … }`: collects `pending`, consumes in a `LaunchedEffect`.
+- [x] Add `NavigationResultEffect(key) { value -> … }`: collects `pending`, consumes in a `LaunchedEffect`.
       The waiting screen is not composed while covered (see §2), so the effect runs exactly when
       the user comes back to it. The composable forwards to its state holder; it does not decide.
 - [x] Document that results are in memory only and are lost on process death.
@@ -200,8 +200,8 @@ and per-entry ViewModel stores (`androidx/navigation3/ui/NavDisplay.kt`), on top
       `GuardedBackStack.kt`), so N mounted hosts run N full revalidations per emission.
 - [ ] **One `BackDispatcher` is shared by every host.** `NavigationHostRendererImpl` receives the
       single app-scoped instance and each host provides it as `LocalBackDispatcher`, so a callback
-      registered inside a nested host is consulted by the outer host's `popBack()`. Navigation3's
-      own `NavigationBackHandler`s nest correctly; ours has no hierarchy. `LocalNavigationHostDepth`
+      registered inside a nested host is consulted by the outer host's `popBack()`. navigation-event's
+      own `NavigationBackHandler`s nest correctly; `PopBackHandler` has no hierarchy. `LocalNavigationHostDepth`
       (`impl/.../presentation/host/`), added for argument pruning, is the counter a host scope
       would build on.
 

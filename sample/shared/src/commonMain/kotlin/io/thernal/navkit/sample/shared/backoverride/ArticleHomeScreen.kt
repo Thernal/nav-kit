@@ -20,7 +20,7 @@ fun ArticleHomeScreen(drafts: ArticleDraftStore) {
         howItWorks = {
             Explanation(
                 "The editor cannot be left with unsaved work — enforced by a guard, not by a " +
-                    "screen. A `NavigationBackHandler` only fires while its screen is composed, so " +
+                    "screen. A `PopBackHandler` only fires while its screen is composed, so " +
                     "it cannot stop a jump that skips the screen — a deep link, a `replaceAll`, a " +
                     "guard rewrite. A transition guard can, because it sees every stack change.",
             )

@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * The launcher's state holder, and where a returning result lands — `ResultEffect` forwards, the
+ * The launcher's state holder, and where a returning result lands — `NavigationResultEffect` forwards, the
  * state holder decides.
  *
  * Scoped to the launcher's entry, so it lives exactly as long as that entry is on the stack. State

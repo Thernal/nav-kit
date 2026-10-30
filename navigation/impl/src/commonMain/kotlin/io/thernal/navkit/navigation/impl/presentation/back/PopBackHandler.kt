@@ -13,7 +13,7 @@ import io.thernal.navkit.navigation.api.presentation.back.LocalBackDispatcher
  * was triggered.
  */
 @Composable
-fun NavigationBackHandler(
+fun PopBackHandler(
     enabled: Boolean = true,
     onBack: () -> Unit,
 ) {

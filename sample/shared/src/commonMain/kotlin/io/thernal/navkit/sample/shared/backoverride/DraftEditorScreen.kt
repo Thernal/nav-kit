@@ -13,7 +13,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
-import io.thernal.navkit.navigation.impl.presentation.back.NavigationBackHandler
+import io.thernal.navkit.navigation.impl.presentation.back.PopBackHandler
 import io.thernal.navkit.sample.shared.ui.Explanation
 import io.thernal.navkit.sample.shared.ui.SamplePalette
 import io.thernal.navkit.sample.shared.ui.SampleScreen
@@ -34,7 +34,7 @@ fun DraftEditorScreen() {
     var text by rememberSaveable { mutableStateOf("") }
     var isAsking by rememberSaveable { mutableStateOf(false) }
 
-    NavigationBackHandler(enabled = text.isNotBlank()) {
+    PopBackHandler(enabled = text.isNotBlank()) {
         isAsking = true
     }
 
@@ -45,7 +45,7 @@ fun DraftEditorScreen() {
             Explanation(
                 "Type something, then leave — with the system gesture or with the arrow in the top " +
                     "bar. Both end in `popBack`, which consults the back dispatcher first, so " +
-                    "`NavigationBackHandler` hears both and asks.",
+                    "`PopBackHandler` hears both and asks.",
             )
             Explanation(
                 "Discarding leaves with `popBackTo` instead, which deliberately does not consult " +

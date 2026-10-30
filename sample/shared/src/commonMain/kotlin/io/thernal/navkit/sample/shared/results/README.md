@@ -68,7 +68,7 @@ fun PickerHomeScreen() {
     val navigator = LocalNavigator.current
     var colour by rememberSaveable { mutableStateOf<String?>(null) }
 
-    ResultEffect(SelectedColour) { picked -> colour = picked }
+    NavigationResultEffect(SelectedColour) { picked -> colour = picked }
 
     ListRow(
         title = "Accent colour",
@@ -80,7 +80,7 @@ fun PickerHomeScreen() {
 
 What to notice:
 
-- **`ResultEffect` runs when this screen is composed.** Navigation3 composes only the current scene,
+- **`NavigationResultEffect` runs when this screen is composed.** Navigation3 composes only the current scene,
   so while the picker covers this screen the effect does not run; it runs when the user comes back,
   which is exactly when the result is wanted.
 - **`rememberSaveable`, not `remember`.** This screen leaves composition every time the picker covers
@@ -114,7 +114,7 @@ fun ReviewHomeScreen() {
     val model: ReviewHomeViewModel = viewModel { ReviewHomeViewModel() }
     val decision by model.decision.collectAsState()
 
-    ResultEffect(key = ReviewOutcome, onResult = model::onDecision)
+    NavigationResultEffect(key = ReviewOutcome, onResult = model::onDecision)
     // …
     SecondaryButton(
         label = "Reset the decision",
@@ -136,7 +136,7 @@ What to notice:
 - **`pending` exposes names, never values**, so one feature's results are not readable by every
   screen. The screen shows two readouts — what was pending when it came back, and what is pending
   now — because while a result is pending, the launcher is covered and not composed: the name can only
-  be seen at the moment it returns, before `ResultEffect` consumes it.
+  be seen at the moment it returns, before `NavigationResultEffect` consumes it.
 - **Why the mailbox is application-scoped rather than per host:** mount this flow as a nested host
   and the launcher lives in the outer host. A host-scoped mailbox would break exactly this case.
 - **`clear`** drops a value undelivered — for a flow that is abandoned rather than completed.
@@ -150,7 +150,7 @@ the name that was waiting.
 1. Declare `val X = resultKey<T>("feature.x")` next to the producing feature's routes.
 2. Producer: `LocalNavigationResults.current.post(X, value)`, then pop — `popBack()` for one screen,
    `popBackTo { it is LauncherRoute }` for a flow.
-3. Consumer: `ResultEffect(X) { value -> stateHolder.onX(value) }` in its composable.
+3. Consumer: `NavigationResultEffect(X) { value -> stateHolder.onX(value) }` in its composable.
 4. Keep what the result updates in `rememberSaveable` or an entry-scoped ViewModel.
 5. Treat "no result" as a first visit — results are in memory only and are lost on process death
    while the routes that would have consumed them are restored.

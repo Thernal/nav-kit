@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
-import io.thernal.navkit.navigation.api.presentation.result.ResultEffect
+import io.thernal.navkit.navigation.api.presentation.result.NavigationResultEffect
 import io.thernal.navkit.sample.shared.ui.ContentCard
 import io.thernal.navkit.sample.shared.ui.Explanation
 import io.thernal.navkit.sample.shared.ui.HeroCard
@@ -28,7 +28,7 @@ fun PostScreen() {
     var sharedWith by rememberSaveable { mutableStateOf<String?>(null) }
 
     // An overlay leaves this screen composed, so the row updates under the open sheet.
-    ResultEffect(SharedWith) { target -> sharedWith = target }
+    NavigationResultEffect(SharedWith) { target -> sharedWith = target }
 
     SampleScreen(
         title = "Field notes",
@@ -42,7 +42,7 @@ fun PostScreen() {
             )
             Explanation(
                 "A sheet is an *overlay*, so the screen under it keeps composing. That is what makes " +
-                    "the shared-with row change before the sheet closes: `ResultEffect` re-runs on the " +
+                    "the shared-with row change before the sheet closes: `NavigationResultEffect` re-runs on the " +
                     "post, not on the return. A pushed full screen would deliver the same value a " +
                     "moment later, when it is uncovered.",
             )

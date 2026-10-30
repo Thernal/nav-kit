@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
-import io.thernal.navkit.navigation.api.presentation.result.ResultEffect
+import io.thernal.navkit.navigation.api.presentation.result.NavigationResultEffect
 import io.thernal.navkit.sample.shared.ui.BottomAction
 import io.thernal.navkit.sample.shared.ui.ContentCard
 import io.thernal.navkit.sample.shared.ui.Explanation
@@ -39,7 +39,7 @@ fun BasketScreen() {
     var method by rememberSaveable { mutableStateOf<String?>(null) }
     var isPaid by rememberSaveable { mutableStateOf(false) }
 
-    ResultEffect(ChosenPaymentMethod) { chosen ->
+    NavigationResultEffect(ChosenPaymentMethod) { chosen ->
         method = chosen
         isPaid = false
     }

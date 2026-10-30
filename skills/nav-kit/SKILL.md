@@ -56,7 +56,7 @@ These hold everywhere; each reference builds on them.
 5. **Access rules are guards, not call-site checks.** Guards judge whole stacks for every command, for
    every stack handed to a host directly (deep links, restored state) and on invalidation. A check before
    `push` is bypassed by a deep link or `replaceAll`.
-6. **Results travel backwards, arguments forwards.** `resultKey` + `post` + `ResultEffect` for a value
+6. **Results travel backwards, arguments forwards.** `resultKey` + `post` + `NavigationResultEffect` for a value
    handed to a screen already on the stack; `argumentKey` + `put(…, whileInStack { … })` for a value read
    by screens about to open. Both are in memory only.
 7. **Deep links are resolved once, at the root**, by the state holder that owns the root stack. The
@@ -76,7 +76,7 @@ These hold everywhere; each reference builds on them.
 | tabs, a wizard with its own stack, bottom sheets, animations | nested host, `bottomSheetEntry`, `NavAnimations` | [screens-and-navigation.md](references/screens-and-navigation.md) |
 | members-only screens, sign-in redirect, remove a screen on sign-out, feature flags | `RouteGuard` + marker + `invalidations` | [guards.md](references/guards.md) |
 | 401 / PIN / token refresh before continuing | `GuardVerdict.Deferred` + `TransientRoute` | [guards.md](references/guards.md) |
-| "discard changes?" on back | `NavigationBackHandler` | [back-handling.md](references/back-handling.md) |
+| "discard changes?" on back | `PopBackHandler` | [back-handling.md](references/back-handling.md) |
 | forbid leaving a screen by any route | transition `NavigationGuard` | [guards.md](references/guards.md), [back-handling.md](references/back-handling.md) |
 | return a value; share a draft across steps | results; arguments | [passing-data.md](references/passing-data.md) |
 | open the app from a link or notification; build a link | `DeepLinkHandler`, `DeepLinkIngress` | [deep-links.md](references/deep-links.md) |
@@ -115,7 +115,8 @@ Before calling the work done, walk this:
 | `remember` for what a result updates | the waiting screen leaves composition while covered | `rememberSaveable` or an entry-scoped ViewModel |
 | a `TextField` bound to `arguments.get(key)` | the store is not snapshot state; typing is lost | own the field state, write each change through |
 | an argument scoped to one screen | dies when that route leaves the stack (a `replace`, a guard rewrite) while other steps still read it | scope to the flow's sealed type |
-| `NavigationBackHandler` to "block leaving" | only sees `popBack` while composed | a transition guard |
+| `PopBackHandler` to "block leaving" | only sees `popBack` while composed | a transition guard |
+| `ResultEffect` or `NavigationBackHandler` — the Navigation3 names | `androidx.navigation3.runtime.result.ResultEffect` reads a string-keyed bus nothing here posts to; `androidx.navigationevent.compose.NavigationBackHandler` hears the system gesture but never an in-app `popBack()` | `NavigationResultEffect`, `PopBackHandler` |
 | a deep-link handler checking the session | duplicated rule; the host guards the stack anyway | return the stack; let guards act |
 | a new scheme or domain added only to the manifest / `Info.plist` | its links start with no registered base: `NotFound` | also contribute a `DeepLinkBase` |
 | a link string concatenated by hand | drifts from what the parser reads | `buildDeepLinkUri(base, page, query)` on a registered base |

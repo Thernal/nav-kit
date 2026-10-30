@@ -33,7 +33,7 @@ Without skill-manager, the kit's `README.md` → Installing → *Without it* doe
 | Module | Add to | As |
 |---|---|---|
 | `:navigation:api` | every feature module; the app | `implementation` |
-| `:navigation:impl` | the module that builds the graph; modules using `NavigationBackHandler` or `NavAnimations` | `implementation` |
+| `:navigation:impl` | the module that builds the graph; modules using `PopBackHandler` or `NavAnimations` | `implementation` |
 | `:navigation:wiring` | the module declaring the Metro graph — skip when wiring by hand | `implementation` |
 
 Nothing is re-exported (`api(...)` is not used), so every module that uses a type from these

@@ -98,7 +98,7 @@ ListRow(
 What to notice:
 
 - **The screen underneath stays composed.** An overlay covers it without removing it, so
-  `ResultEffect` re-runs on the *post* rather than on the return: the "Shared with" row changes
+  `NavigationResultEffect` re-runs on the *post* rather than on the return: the "Shared with" row changes
   while the sheet is still open. A pushed full screen delivers the same value a moment later, when
   it is uncovered. It is the one behavioural difference between the two surfaces that a screen can
   actually observe.

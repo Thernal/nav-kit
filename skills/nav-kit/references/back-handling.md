@@ -11,14 +11,17 @@ and guard rewrites bypass it.
 
 | Goal | Use |
 |---|---|
-| ask "discard changes?" when the user goes back from this screen | `NavigationBackHandler` |
+| ask "discard changes?" when the user goes back from this screen | `PopBackHandler` |
 | refuse every way out of this screen | a transition guard — see guards.md, recipe 4 |
-| close an in-screen overlay (search mode, expanded panel) on back instead of leaving | `NavigationBackHandler(enabled = isOpen) { close() }` |
+| close an in-screen overlay (search mode, expanded panel) on back instead of leaving | `PopBackHandler(enabled = isOpen) { close() }` |
+
+Not `androidx.navigationevent.compose.NavigationBackHandler`: it hears the system gesture only, so a
+Back button in the screen that calls `popBack()` would leave without asking.
 
 ## Recipe: confirm on back
 
 ```kotlin
-import io.thernal.navkit.navigation.impl.presentation.back.NavigationBackHandler   // navigation/impl
+import io.thernal.navkit.navigation.impl.presentation.back.PopBackHandler   // navigation/impl
 
 @Composable
 fun DraftView() {
@@ -26,7 +29,7 @@ fun DraftView() {
     var text by rememberSaveable { mutableStateOf("") }
     var isAsking by rememberSaveable { mutableStateOf(false) }
 
-    NavigationBackHandler(enabled = text.isNotBlank()) { isAsking = true }
+    PopBackHandler(enabled = text.isNotBlank()) { isAsking = true }
 
     // … content …
 

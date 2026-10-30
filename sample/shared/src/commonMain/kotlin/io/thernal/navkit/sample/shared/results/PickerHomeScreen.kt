@@ -7,7 +7,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import io.thernal.navkit.navigation.api.presentation.navigator.LocalNavigator
-import io.thernal.navkit.navigation.api.presentation.result.ResultEffect
+import io.thernal.navkit.navigation.api.presentation.result.NavigationResultEffect
 import io.thernal.navkit.sample.shared.ui.Explanation
 import io.thernal.navkit.sample.shared.ui.HeroCard
 import io.thernal.navkit.sample.shared.ui.ListRow
@@ -33,7 +33,7 @@ fun PickerHomeScreen() {
     // Navigation3 composes only the entries of the current scene, so this screen is not composed
     // while the picker covers it and the effect does not run. It runs when the user comes back —
     // which is exactly when a returning result is wanted.
-    ResultEffect(SelectedColour) { picked -> colour = picked }
+    NavigationResultEffect(SelectedColour) { picked -> colour = picked }
 
     SampleScreen(
         title = "Appearance",
@@ -41,11 +41,11 @@ fun PickerHomeScreen() {
         howItWorks = {
             Explanation(
                 "The picker posts the colour under a typed key and pops; this screen consumes it " +
-                    "with `ResultEffect` when it is uncovered — once. The producer never learns " +
+                    "with `NavigationResultEffect` when it is uncovered — once. The producer never learns " +
                     "who consumed it.",
             )
             Explanation(
-                "`ResultEffect` reaches the mailbox through a composition local, which is what " +
+                "`NavigationResultEffect` reaches the mailbox through a composition local, which is what " +
                     "makes it possible at all: a composable cannot be constructor-injected. Results " +
                     "are in memory only, so a missing one is a first visit, never an error.",
             )

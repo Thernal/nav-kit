@@ -53,9 +53,9 @@ Inside `shared/src/commonMain/kotlin/io/thernal/navkit/sample/`:
 | Group | Simple | Advanced | Teaches |
 |---|---|---|---|
 | [Navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/basics/README.md) | Push and pop | Order flow | the command surface: `push`, `popBack`, `navigate` with a predicate, `popBackTo`, `replaceAll`, and reading `NavigationOutcome`; how a feature registers its screens |
-| [Results](shared/src/commonMain/kotlin/io/thernal/navkit/sample/results/README.md) | Pick a colour | Review request | a typed value handed back to a screen already on the stack: `resultKey`, `post`, `ResultEffect`, `pending`, `clear` |
+| [Results](shared/src/commonMain/kotlin/io/thernal/navkit/sample/results/README.md) | Pick a colour | Review request | a typed value handed back to a screen already on the stack: `resultKey`, `post`, `NavigationResultEffect`, `pending`, `clear` |
 | [Arguments](shared/src/commonMain/kotlin/io/thernal/navkit/sample/arguments/README.md) | One value, two screens | Checkout draft | a value shared forwards across a flow, its lifetime derived from the stack: `argumentKey`, `put`, `whileInStack` |
-| [Back handling](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) | Confirm before leaving | Unsaved work | `NavigationBackHandler` for "confirm on back", a transition guard for "refuse every way out" |
+| [Back handling](shared/src/commonMain/kotlin/io/thernal/navkit/sample/backoverride/README.md) | Confirm before leaving | Unsaved work | `PopBackHandler` for "confirm on back", a transition guard for "refuse every way out" |
 | [Guards](shared/src/commonMain/kotlin/io/thernal/navkit/sample/guards/README.md) | Members area | 401 and a PIN | `RouteGuard` with a redirect that keeps intent, `invalidations`, `GuardVerdict.Deferred`, `TransientRoute` |
 | [Nested navigation](shared/src/commonMain/kotlin/io/thernal/navkit/sample/tabs/README.md) | One host, tabs as its stack | — | a host inside a host, one entry per tab; an application-wide guard inside a tab; where a tab’s ViewModel has to be scoped; a host's own `transitionSpec` |
 | [Deep links](shared/src/commonMain/kotlin/io/thernal/navkit/sample/deeplinks/README.md) | One link, one route | Campaign links | registered link bases, handlers, stacks rather than destinations, the source, a link meeting a guard |
